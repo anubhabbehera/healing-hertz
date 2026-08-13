@@ -109,13 +109,12 @@
    a serif at 13px next to its meta line reads as a mistake. Values keep the
    sans tabular numerals: Trail's monospace is for dense data tables, and our
    tiles are display numbers. */
-:root[data-theme="trail"] h1,
-:root[data-theme="trail"] .brand {
+:root[data-theme="trail"] h1 {
   font-family: "Georgia", "Times New Roman", serif;
   letter-spacing: -0.02em;
+  font-size: 26px;
+  font-weight: 400;
 }
-:root[data-theme="trail"] h1 { font-size: 26px; font-weight: 400; }
-:root[data-theme="trail"] .brand { font-weight: 600; }
 :root[data-theme="trail"] .evidence-table td {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", monospace;
 }
@@ -157,38 +156,23 @@ a:hover { text-decoration: underline; }
   border-bottom: 1px solid var(--border-soft);
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-weight: 700;
-  font-size: 15.5px;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-.brand .logo {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-}
-.brand span { color: var(--accent); }
+/* The wordmark is drawn, not set — see components/BrandMark.tsx. It inherits
+   the bar's ink, so it recolors with the theme without a second asset. */
+.brand { display: flex; align-items: center; }
+.brandmark { height: 21px; width: auto; display: block; }
 
-.topbar nav { display: flex; gap: 4px; flex: 1; }
+/* Nav after Trail: no pills, just an accent rule under the current page. */
+.topbar nav { display: flex; gap: 22px; flex: 1; }
 .topbar nav a {
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 3px 1px;
+  border-bottom: 2px solid transparent;
   color: var(--ink-secondary);
   font-size: 13.5px;
   font-weight: 500;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: border-color 0.12s ease, color 0.12s ease;
 }
-.topbar nav a:hover { color: var(--ink); text-decoration: none; background: var(--surface-2); }
-.topbar nav a.active { background: var(--accent-soft); color: var(--accent); }
+.topbar nav a:hover { color: var(--ink); text-decoration: none; border-bottom-color: var(--border); }
+.topbar nav a.active { color: var(--ink); border-bottom-color: var(--accent); }
 
 .topbar-right { display: flex; align-items: center; gap: 12px; }
 .topbar .timestamp {
