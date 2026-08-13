@@ -252,10 +252,17 @@ async def load_history(session: AsyncSession, n: int = 5) -> RunHistory:
 
 
 def _run_summary(run: ScanRun) -> dict:
+    # Counts cover open findings only. Dismissed ones don't affect the health
+    # score, so counting them here would contradict the score right next to it.
     severities: dict[str, int] = {}
+    dismissed = 0
     for f in run.findings:
+        if f.dismissed:
+            dismissed += 1
+            continue
         severities[f.severity] = severities.get(f.severity, 0) + 1
     return {
+        "dismissed_count": dismissed,
         "id": run.id,
         "started_at": _utc(run.started_at).isoformat() if run.started_at else None,
         "finished_at": _utc(run.finished_at).isoformat() if run.finished_at else None,
@@ -296,17 +303,29 @@ def run_detail_dict(run: ScanRun) -> dict:
         m.metric: m.value for m in run.metrics if m.subject_type == "site"
     }
     detail["findings"] = [_finding_dict(f) for f in run.findings]
-    detail["suggestions"] = [
-        {
+
+    # A scan's advice is written before the operator may have dismissed
+    # anything. Drop suggestions whose every referenced rule is now fully
+    # dismissed, so the plan doesn't keep recommending work that was waived.
+    # Suggestions with no rule reference are general advice and always kept.
+    dismissed_rules = {f.rule_id for f in run.findings if f.dismissed}
+    open_rules = {f.rule_id for f in run.findings if not f.dismissed}
+    waived = dismissed_rules - open_rules
+
+    suggestions = []
+    for s in sorted(run.suggestions, key=lambda s: s.priority):
+        related = json.loads(s.related_rule_ids_json)
+        if related and set(related) <= waived:
+            continue
+        suggestions.append({
             "priority": s.priority,
             "title": s.title,
             "rationale": s.rationale,
             "steps": json.loads(s.steps_json),
             "effort": s.effort,
-            "related_rule_ids": json.loads(s.related_rule_ids_json),
-        }
-        for s in sorted(run.suggestions, key=lambda s: s.priority)
-    ]
+            "related_rule_ids": related,
+        })
+    detail["suggestions"] = suggestions
     detail["advice"] = json.loads(run.advice_json) if run.advice_json else None
     if run.unsupported_json is not None:
         detail["unsupported_checks"] = json.loads(run.unsupported_json)

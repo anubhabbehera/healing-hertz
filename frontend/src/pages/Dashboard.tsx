@@ -95,7 +95,10 @@ export default function Dashboard() {
   const m = run.site_metrics ?? {};
   const dnsQueries = m["dns.queries_24h"];
   const dnsBlocked = m["dns.blocked_pct"];
-  const preview = run.findings.slice(0, 8);
+  // Dismissed findings are deliberately absent here: this card is "what still
+  // needs attention". They remain listed on the Findings page.
+  const openFindings = run.findings.filter((f) => !f.dismissed);
+  const preview = openFindings.slice(0, 8);
 
   return (
     <div>
@@ -121,13 +124,18 @@ export default function Dashboard() {
       <div className="grid-2">
         <div className="card">
           <div className="card-head">
-            <h2>Findings</h2>
+            <h2>Open findings</h2>
             <Link to="/findings" className="meta">
+              {run.dismissed_count > 0 && `${run.dismissed_count} dismissed · `}
               view all →
             </Link>
           </div>
           {preview.length === 0 ? (
-            <p className="muted">No findings — the network looks healthy. 🎉</p>
+            <p className="muted">
+              {run.dismissed_count > 0
+                ? "Nothing outstanding — the remaining findings are all dismissed. 🎉"
+                : "No findings — the network looks healthy. 🎉"}
+            </p>
           ) : (
             preview.map((f) => (
               <div className="finding-row" key={f.id}>
@@ -148,6 +156,13 @@ export default function Dashboard() {
                 <span className="meta">{run.suggestions.length} suggestions</span>
               </div>
               <p style={{ marginTop: 0, fontSize: 13.5 }}>{run.advice.overall_assessment}</p>
+              {run.advice.items.length > run.suggestions.length && (
+                <p className="muted" style={{ fontSize: 12.5 }}>
+                  {run.advice.items.length - run.suggestions.length} suggestion(s) hidden —
+                  written before you dismissed those findings, so the summary above may
+                  still mention them.
+                </p>
+              )}
               {run.suggestions.slice(0, 3).map((s) => (
                 <div className="suggestion" key={s.priority}>
                   <div className="head">

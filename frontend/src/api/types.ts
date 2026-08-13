@@ -11,7 +11,9 @@ export interface RunSummary {
   client_count: number | null;
   advice_status: "ok" | "skipped" | "failed";
   advice_error: string | null;
+  /** Open findings only — dismissed ones are excluded, matching the score. */
   severity_counts: Partial<Record<Severity, number>>;
+  dismissed_count: number;
   error: string | null;
 }
 
