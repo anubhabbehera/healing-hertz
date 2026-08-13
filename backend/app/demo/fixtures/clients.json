@@ -1,0 +1,14 @@
+[
+  {"id": "c01", "name": "MacBook Pro", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:01", "ipAddress": "192.168.1.101", "connectedAt": "2026-08-12T07:15:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c02", "name": "iPhone", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:02", "ipAddress": "192.168.1.102", "connectedAt": "2026-08-12T06:40:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c03", "name": "Pixel 9", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:03", "ipAddress": "192.168.1.103", "connectedAt": "2026-08-11T22:05:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c04", "name": "Smart TV", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:04", "ipAddress": "192.168.1.104", "connectedAt": "2026-08-10T18:00:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c05", "name": "Thermostat", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:05", "ipAddress": "192.168.1.105", "connectedAt": "2026-08-01T12:00:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c06", "name": "Guest Phone", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:06", "ipAddress": "192.168.20.50", "connectedAt": "2026-08-12T09:10:00Z", "access": {"type": "GUEST", "authorized": false}},
+  {"id": "c07", "name": "NAS", "type": "WIRED", "macAddress": "aa:00:00:00:00:07", "ipAddress": "192.168.1.150", "connectedAt": "2026-07-20T00:00:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c08", "name": "Desktop", "type": "WIRED", "macAddress": "aa:00:00:00:00:08", "ipAddress": "192.168.1.151", "connectedAt": "2026-08-12T08:00:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c09", "name": "Printer", "type": "WIRED", "macAddress": "aa:00:00:00:00:09", "ipAddress": "192.168.1.152", "connectedAt": "2026-08-05T09:00:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c10", "name": "Work Laptop VPN", "type": "VPN", "macAddress": "aa:00:00:00:00:0a", "ipAddress": "192.168.30.10", "connectedAt": "2026-08-12T09:00:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c11", "name": "Doorbell", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:0b", "ipAddress": "192.168.1.106", "connectedAt": "2026-08-09T14:30:00Z", "access": {"type": "DEFAULT", "authorized": true}},
+  {"id": "c12", "name": "Tablet", "type": "WIRELESS", "macAddress": "aa:00:00:00:00:0c", "ipAddress": "192.168.1.107", "connectedAt": "2026-08-12T09:45:00Z", "access": {"type": "DEFAULT", "authorized": true}}
+]

@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# healing-hertz
+node_modules/
+frontend/dist/
+*.db
+*.tsbuildinfo

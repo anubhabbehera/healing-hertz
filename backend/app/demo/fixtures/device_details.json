@@ -1,0 +1,149 @@
+{
+  "gw1": {
+    "id": "gw1",
+    "macAddress": "74:ac:b9:00:00:01",
+    "ipAddress": "192.168.1.1",
+    "name": "Dream Machine Pro",
+    "model": "UDM-Pro",
+    "state": "ONLINE",
+    "supported": true,
+    "firmwareVersion": "4.1.13",
+    "firmwareUpdatable": false,
+    "features": {"gateway": {}, "switching": {}},
+    "uplink": null,
+    "interfaces": {
+      "ports": [
+        {"idx": 9, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": null},
+        {"idx": 10, "state": "UP", "connector": "SFPPLUS", "maxSpeedMbps": 10000, "speedMbps": 10000, "poe": null}
+      ],
+      "radios": []
+    }
+  },
+  "sw1": {
+    "id": "sw1",
+    "macAddress": "74:ac:b9:00:00:02",
+    "ipAddress": "192.168.1.2",
+    "name": "Rack Switch",
+    "model": "USW-24-PoE",
+    "state": "ONLINE",
+    "supported": true,
+    "firmwareVersion": "7.0.50",
+    "firmwareUpdatable": false,
+    "features": {"switching": {}},
+    "uplink": {"deviceId": "gw1"},
+    "interfaces": {
+      "ports": [
+        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": {"standard": "802.3at", "type": 2, "enabled": true, "state": "UP"}},
+        {"idx": 5, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": {"standard": "802.3at", "type": 2, "enabled": true, "state": "LIMITED"}},
+        {"idx": 25, "state": "UP", "connector": "SFP", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": null}
+      ],
+      "radios": []
+    }
+  },
+  "sw2": {
+    "id": "sw2",
+    "macAddress": "74:ac:b9:00:00:03",
+    "ipAddress": "192.168.1.3",
+    "name": "Office Switch",
+    "model": "USW-Lite-8-PoE",
+    "state": "ONLINE",
+    "supported": true,
+    "firmwareVersion": "6.6.10",
+    "firmwareUpdatable": true,
+    "features": {"switching": {}},
+    "uplink": {"deviceId": "sw1"},
+    "interfaces": {
+      "ports": [
+        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": {"standard": "802.3af", "type": 1, "enabled": true, "state": "UP"}},
+        {"idx": 8, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": null}
+      ],
+      "radios": []
+    }
+  },
+  "ap1": {
+    "id": "ap1",
+    "macAddress": "74:ac:b9:00:00:04",
+    "ipAddress": "192.168.1.10",
+    "name": "Office AP",
+    "model": "U6-Pro",
+    "state": "ONLINE",
+    "supported": true,
+    "firmwareVersion": "6.6.55",
+    "firmwareUpdatable": false,
+    "features": {"accessPoint": {}},
+    "uplink": {"deviceId": "sw1"},
+    "interfaces": {
+      "ports": [
+        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": null}
+      ],
+      "radios": [
+        {"wlanStandard": "802.11ax", "frequencyGHz": 2.4, "channelWidthMHz": 40, "channel": 3},
+        {"wlanStandard": "802.11ax", "frequencyGHz": 5, "channelWidthMHz": 80, "channel": 44}
+      ]
+    }
+  },
+  "ap2": {
+    "id": "ap2",
+    "macAddress": "74:ac:b9:00:00:05",
+    "ipAddress": "192.168.1.11",
+    "name": "Living Room AP",
+    "model": "U6-Lite",
+    "state": "ONLINE",
+    "supported": true,
+    "firmwareVersion": "6.6.55",
+    "firmwareUpdatable": true,
+    "features": {"accessPoint": {}},
+    "uplink": {"deviceId": "sw1"},
+    "interfaces": {
+      "ports": [
+        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": null}
+      ],
+      "radios": [
+        {"wlanStandard": "802.11ax", "frequencyGHz": 2.4, "channelWidthMHz": 20, "channel": 6},
+        {"wlanStandard": "802.11ax", "frequencyGHz": 5, "channelWidthMHz": 80, "channel": 149}
+      ]
+    }
+  },
+  "ap3": {
+    "id": "ap3",
+    "macAddress": "74:ac:b9:00:00:06",
+    "ipAddress": "192.168.1.12",
+    "name": "Garage AP",
+    "model": "UAP-AC-Lite",
+    "state": "OFFLINE",
+    "supported": true,
+    "firmwareVersion": "6.6.50",
+    "firmwareUpdatable": false,
+    "features": {"accessPoint": {}},
+    "uplink": {"deviceId": "sw1"},
+    "interfaces": {
+      "ports": [],
+      "radios": [
+        {"wlanStandard": "802.11ac", "frequencyGHz": 2.4, "channelWidthMHz": 20, "channel": 11},
+        {"wlanStandard": "802.11ac", "frequencyGHz": 5, "channelWidthMHz": 40, "channel": 36}
+      ]
+    }
+  },
+  "ap4": {
+    "id": "ap4",
+    "macAddress": "74:ac:b9:00:00:07",
+    "ipAddress": "192.168.1.13",
+    "name": "Patio AP",
+    "model": "U6-Mesh",
+    "state": "ONLINE",
+    "supported": true,
+    "firmwareVersion": "6.6.55",
+    "firmwareUpdatable": false,
+    "features": {"accessPoint": {}},
+    "uplink": {"deviceId": "sw2"},
+    "interfaces": {
+      "ports": [
+        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 100, "poe": null}
+      ],
+      "radios": [
+        {"wlanStandard": "802.11ax", "frequencyGHz": 2.4, "channelWidthMHz": 20, "channel": 6},
+        {"wlanStandard": "802.11ax", "frequencyGHz": 5, "channelWidthMHz": 80, "channel": 149}
+      ]
+    }
+  }
+}

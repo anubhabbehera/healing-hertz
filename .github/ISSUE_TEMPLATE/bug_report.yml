@@ -1,0 +1,41 @@
+name: Bug report
+description: Something is broken, or a finding is wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please don't paste API keys, MAC addresses or other real network identifiers.
+        For security problems use private reporting instead — see SECURITY.md.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: For a wrong finding, include the finding's evidence table.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+
+  - type: input
+    id: unifi
+    attributes:
+      label: UniFi Network version and console model
+      placeholder: "e.g. Network 9.3.45 on a UDM Pro"
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: How were you running it?
+      options:
+        - make dev (real console)
+        - make demo (sample data)
+        - Docker
+    validations:
+      required: true

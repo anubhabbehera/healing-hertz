@@ -1,0 +1,4 @@
+# Every change requires review from the repository owner.
+# Combined with "require review from Code Owners" in the main ruleset, this
+# means no outside contribution can merge without an explicit approval here.
+*       @anubhabbehera
