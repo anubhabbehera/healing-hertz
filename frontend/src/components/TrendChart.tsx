@@ -40,7 +40,9 @@ export default function TrendChart({ points, unit }: { points: TrendPoint[]; uni
           width={44}
         />
         <Tooltip
-          formatter={(value: number) => [`${value}${unit ?? ""}`, ""]}
+          // recharts 3 widened the formatter signature; let it infer the value
+          // type rather than pinning it to number.
+          formatter={(value) => [`${value}${unit ?? ""}`, ""]}
           separator=""
           cursor={{ stroke: colors.tick, strokeDasharray: "3 3" }}
           contentStyle={{
