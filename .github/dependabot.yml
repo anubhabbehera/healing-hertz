@@ -1,4 +1,14 @@
 version: 2
+
+# Grouping policy, in short:
+#   - Routine minor/patch bumps are noise → one PR per ecosystem per week.
+#   - Security fixes are grouped too, so a bad week doesn't bury you in PRs.
+#   - Major bumps stay SEPARATE on purpose: they're the ones that break the
+#     build, and separate PRs let you merge the ones that pass while parking
+#     the ones that don't.
+#   - Actions and base images are grouped wholesale — low risk, and they're
+#     verified by CI anyway.
+
 updates:
   - package-ecosystem: uv
     directory: /backend
@@ -7,7 +17,11 @@ updates:
     open-pull-requests-limit: 5
     groups:
       backend-minor-patch:
+        applies-to: version-updates
         update-types: [minor, patch]
+      backend-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directory: /frontend
@@ -16,17 +30,34 @@ updates:
     open-pull-requests-limit: 5
     groups:
       frontend-minor-patch:
+        applies-to: version-updates
         update-types: [minor, patch]
+      frontend-security:
+        applies-to: security-updates
+        patterns: ["*"]
 
-  # Keeps the SHA-pinned actions in .github/workflows current.
+  # Keeps the SHA-pinned actions in .github/workflows current. All bundled
+  # into one PR — three separate action bumps is pure noise.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
 
+  # Base images. Grouped, and majors ignored: the Python version is pinned to
+  # match `requires-python` in backend/pyproject.toml, so moving it is a
+  # deliberate decision rather than something to take automatically.
   - package-ecosystem: docker
     directories:
       - /backend
       - /frontend
     schedule:
       interval: weekly
+    groups:
+      base-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
