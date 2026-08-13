@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- build: compile the SPA from the committed lock ----------------------
-FROM node:20-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
