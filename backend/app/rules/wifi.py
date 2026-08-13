@@ -7,6 +7,12 @@ from app.collectors.snapshot import Snapshot
 from .base import Category, Finding, RunHistory, Severity
 
 GOOD_24_CHANNELS = {1, 6, 11}
+# 5 GHz channels that require radar detection. A radar hit forces the radio off
+# the channel for 30 minutes, which clients experience as a dropout.
+DFS_CHANNELS = set(range(52, 65)) | set(range(100, 145))
+# Pre-802.11n modes. Matched exactly, never by prefix — "802.11AC" and
+# "802.11AX" both start with "802.11A".
+PRE_N_STANDARDS = frozenset({"802.11A", "802.11B", "802.11G", "802.11BG", "802.11B/G"})
 
 
 def _online_ap_radios(snapshot: Snapshot):
@@ -147,6 +153,184 @@ class Wide24Width:
         return findings
 
 
+class DfsChannel:
+    """DFS channels are quiet until a radar hit clears the radio for 30 minutes.
+
+    UniFi's auto channel management (WiFi AI) picks them readily, which is the
+    single most-reported cause of "the WiFi drops for half an hour" in homes.
+    """
+
+    id = "wifi.dfs_channel"
+
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+        findings = []
+        for dev, radio in _online_ap_radios(snapshot):
+            if radio.frequency_ghz != 5 or radio.channel not in DFS_CHANNELS:
+                continue
+            findings.append(
+                Finding(
+                    rule_id=self.id,
+                    severity=Severity.MEDIUM,
+                    category=Category.WIFI,
+                    title=f"{dev.name} 5 GHz on DFS channel {radio.channel}",
+                    summary=(
+                        f"{dev.name} broadcasts on channel {radio.channel}, which requires radar "
+                        "detection. A radar event silences the radio for 30 minutes and every "
+                        "client on it is disconnected."
+                    ),
+                    evidence={"device": dev.name, "channel": radio.channel,
+                              "widthMHz": radio.channel_width_mhz},
+                    recommendation=(
+                        "Move to a non-DFS channel (36-48 or 149-165) unless the band is too "
+                        "congested to avoid DFS. If channels are auto-assigned, pin this radio "
+                        "manually — automatic selection keeps returning to DFS."
+                    ),
+                    subject_type="device",
+                    subject_id=dev.id,
+                    subject_name=dev.name,
+                )
+            )
+        return findings
+
+
+class Narrow5Width:
+    """80 MHz is the sweet spot on 5 GHz — but only when channels are scarce."""
+
+    id = "wifi.narrow_5_width"
+    # With more radios than this, narrow channels are the correct trade and
+    # widening them would create the co-channel interference we flag elsewhere.
+    _dense_radio_count = 3
+
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+        radios_5 = [
+            (dev, radio) for dev, radio in _online_ap_radios(snapshot)
+            if radio.frequency_ghz == 5
+        ]
+        if len(radios_5) > self._dense_radio_count:
+            return []
+        return [
+            Finding(
+                rule_id=self.id,
+                severity=Severity.LOW,
+                category=Category.WIFI,
+                title=f"{dev.name} 5 GHz width is {radio.channel_width_mhz} MHz",
+                summary=(
+                    f"{dev.name} runs a {radio.channel_width_mhz} MHz channel on 5 GHz. With only "
+                    f"{len(radios_5)} radio(s) on the band there is room for 80 MHz, which roughly "
+                    "doubles throughput for modern clients."
+                ),
+                evidence={"device": dev.name, "widthMHz": radio.channel_width_mhz,
+                          "channel": radio.channel, "radiosOn5GHz": len(radios_5)},
+                recommendation=(
+                    "Set the 5 GHz channel width to 80 MHz (VHT80/HE80). Keep it at 40 MHz only "
+                    "if you later add APs and channels start overlapping."
+                ),
+                subject_type="device",
+                subject_id=dev.id,
+                subject_name=dev.name,
+            )
+            for dev, radio in radios_5
+            if radio.channel_width_mhz is not None and radio.channel_width_mhz <= 40
+        ]
+
+
+class LegacyRadioStandard:
+    id = "wifi.legacy_radio_standard"
+
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+        findings = []
+        for dev, radio in _online_ap_radios(snapshot):
+            standard = (radio.wlan_standard or "").upper().replace("-", "").replace(" ", "")
+            if standard not in PRE_N_STANDARDS:
+                continue
+            findings.append(
+                Finding(
+                    rule_id=self.id,
+                    severity=Severity.LOW,
+                    category=Category.WIFI,
+                    title=f"{dev.name} {radio.frequency_ghz} GHz runs {radio.wlan_standard}",
+                    summary=(
+                        f"{dev.name}'s {radio.frequency_ghz} GHz radio operates at "
+                        f"{radio.wlan_standard}, a pre-802.11n standard. Legacy rates are slow and "
+                        "every frame sent at them consumes airtime the whole cell could be using."
+                    ),
+                    evidence={"device": dev.name, "wlanStandard": radio.wlan_standard,
+                              "frequencyGHz": radio.frequency_ghz},
+                    recommendation=(
+                        "Move the radio to 802.11n or later and disable legacy 802.11b data rates, "
+                        "unless a device on this network genuinely needs them."
+                    ),
+                    subject_type="device",
+                    subject_id=dev.id,
+                    subject_name=dev.name,
+                )
+            )
+        return findings
+
+
+class MeshUplink:
+    """An AP that reaches the network through another AP relays every frame.
+
+    Each wireless hop roughly halves throughput and adds latency, so a wired
+    uplink is the single biggest win available to a mesh-linked AP.
+    """
+
+    id = "wifi.mesh_uplink"
+
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+        ap_ids = {
+            dev_id for dev_id, detail in snapshot.device_details.items()
+            if detail.is_access_point
+        }
+        findings = []
+        for dev_id, detail in snapshot.device_details.items():
+            if dev_id not in ap_ids or detail.state != "ONLINE":
+                continue
+            uplink_id = detail.uplink.device_id if detail.uplink else None
+            if uplink_id is None or uplink_id not in ap_ids:
+                continue
+            # Walk up the mesh to see how many wireless hops this AP is from a
+            # wired device; guard against a cycle in the reported topology.
+            hops, seen, cursor = 1, {dev_id}, uplink_id
+            while cursor in ap_ids and cursor not in seen:
+                seen.add(cursor)
+                parent = snapshot.device_details.get(cursor)
+                parent_uplink = parent.uplink.device_id if parent and parent.uplink else None
+                if parent_uplink is None or parent_uplink not in ap_ids:
+                    break
+                hops += 1
+                cursor = parent_uplink
+            parent_name = (
+                snapshot.device_details[uplink_id].name
+                if uplink_id in snapshot.device_details else uplink_id
+            )
+            findings.append(
+                Finding(
+                    rule_id=self.id,
+                    severity=Severity.HIGH if hops >= 2 else Severity.MEDIUM,
+                    category=Category.WIFI,
+                    title=f"{detail.name} is wirelessly meshed via {parent_name}",
+                    summary=(
+                        f"{detail.name} uplinks through {parent_name} over the air"
+                        + (f" and sits {hops} wireless hops from a wired device" if hops >= 2 else "")
+                        + ". A meshed AP splits its radio time between serving clients and "
+                        "relaying, roughly halving throughput per hop."
+                    ),
+                    evidence={"device": detail.name, "uplinkDevice": parent_name,
+                              "wirelessHops": hops},
+                    recommendation=(
+                        "Run Ethernet to this AP if at all possible. If it must stay meshed, keep "
+                        "it within one hop of a wired AP and make sure both radios see each other "
+                        "well above -65 dBm."
+                    ),
+                    subject_type="device",
+                    subject_id=dev_id,
+                    subject_name=detail.name,
+                )
+            )
+        return findings
+
+
 class HighRetries:
     id = "wifi.high_retries"
 
@@ -230,7 +414,10 @@ class RetriesWorsening:
         return findings
 
 
-RULES: list = [Bad24Channel(), ChannelOverlap(), Wide24Width(), HighRetries(), RetriesWorsening()]
+RULES: list = [
+    Bad24Channel(), ChannelOverlap(), Wide24Width(), DfsChannel(), Narrow5Width(),
+    LegacyRadioStandard(), MeshUplink(), HighRetries(), RetriesWorsening(),
+]
 
 
 class WeakRssiClients:

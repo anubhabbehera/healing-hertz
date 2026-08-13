@@ -311,6 +311,82 @@ class FirmwareUpdateAvailable:
         ]
 
 
+class StaleUptime:
+    """Uptime this long means the device has skipped every firmware window."""
+
+    id = "device.stale_uptime"
+    _threshold_sec = 180 * DAY_SEC
+
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+        findings = []
+        for dev_id, stats in snapshot.device_stats.items():
+            up = stats.uptime_sec
+            if up is None or up < self._threshold_sec:
+                continue
+            dev = snapshot.device_details.get(dev_id)
+            name = dev.name if dev else dev_id
+            findings.append(
+                Finding(
+                    rule_id=self.id,
+                    severity=Severity.LOW,
+                    category=Category.DEVICE_HEALTH,
+                    title=f"{name} has been up for {up // DAY_SEC} days",
+                    summary=(
+                        f"{name} has not restarted in {up // DAY_SEC} days. Long uptime is not a "
+                        "problem in itself, but it means no firmware update has been applied in "
+                        "that window and any slow memory leak has had the whole time to grow."
+                    ),
+                    evidence={"device": name, "uptimeSec": up},
+                    recommendation=(
+                        "Check for a pending firmware update and reboot during a maintenance "
+                        "window; a device that reboots cleanly on your schedule beats one that "
+                        "reboots on its own."
+                    ),
+                    subject_type="device",
+                    subject_id=dev_id,
+                    subject_name=name,
+                )
+            )
+        return findings
+
+
+class MixedApFirmware:
+    """APs on different firmware negotiate roaming inconsistently."""
+
+    id = "firmware.version_drift"
+
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+        aps = [
+            d for d in snapshot.devices
+            if d.state == "ONLINE" and "accessPoint" in d.features and d.firmware_version
+        ]
+        versions = {d.firmware_version for d in aps}
+        if len(aps) < 2 or len(versions) < 2:
+            return []
+        by_version: dict[str, list[str]] = {}
+        for d in aps:
+            by_version.setdefault(d.firmware_version, []).append(d.name or d.model)
+        newest = max(versions)
+        return [
+            Finding(
+                rule_id=self.id,
+                severity=Severity.LOW,
+                category=Category.FIRMWARE,
+                title=f"Access points run {len(versions)} different firmware versions",
+                summary=(
+                    "Roaming, band steering and fast-transition behaviour are negotiated between "
+                    "APs. When they run different firmware those features can behave "
+                    "inconsistently, producing dropouts that look like RF problems."
+                ),
+                evidence={"versions": by_version, "newest": newest},
+                recommendation=(
+                    f"Bring every AP to the same version (currently {newest}) in one maintenance "
+                    "window rather than updating them piecemeal."
+                ),
+            )
+        ]
+
+
 RULES = [
     OfflineDevice(),
     DegradedState(),
@@ -321,5 +397,7 @@ RULES = [
     HighLoad(),
     RecentReboot(),
     RebootLoop(),
+    StaleUptime(),
     FirmwareUpdateAvailable(),
+    MixedApFirmware(),
 ]

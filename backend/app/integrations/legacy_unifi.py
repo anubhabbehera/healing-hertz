@@ -29,6 +29,18 @@ class ClientRF:
     signal_dbm: int | None  # negative dBm
     tx_rate_kbps: int | None
     rx_rate_kbps: int | None
+    channel: int | None = None
+
+    @property
+    def band_ghz(self) -> float | None:
+        """2.4, 5 or 6 GHz, derived from the channel the client sits on."""
+        if self.channel is None or self.channel <= 0:
+            return None
+        if self.channel <= 14:
+            return 2.4
+        # 6 GHz reuses low channel numbers, so the controller reports them above
+        # the 5 GHz range (channel 1-233 there); anything past 177 is 6 GHz.
+        return 6.0 if self.channel > 177 else 5.0
 
 
 @dataclass
@@ -100,6 +112,7 @@ class LegacyUnifiClient:
                 signal_dbm=int(signal) if signal is not None else None,
                 tx_rate_kbps=sta.get("tx_rate"),
                 rx_rate_kbps=sta.get("rx_rate"),
+                channel=int(sta["channel"]) if sta.get("channel") is not None else None,
             ))
         return clients
 

@@ -74,11 +74,11 @@
     "uplink": {"deviceId": "sw1"},
     "interfaces": {
       "ports": [
-        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 1000, "poe": null}
+        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 100, "poe": null}
       ],
       "radios": [
         {"wlanStandard": "802.11ax", "frequencyGHz": 2.4, "channelWidthMHz": 40, "channel": 3},
-        {"wlanStandard": "802.11ax", "frequencyGHz": 5, "channelWidthMHz": 80, "channel": 44}
+        {"wlanStandard": "802.11ax", "frequencyGHz": 5, "channelWidthMHz": 80, "channel": 100}
       ]
     }
   },
@@ -90,7 +90,7 @@
     "model": "U6-Lite",
     "state": "ONLINE",
     "supported": true,
-    "firmwareVersion": "6.6.55",
+    "firmwareVersion": "6.6.50",
     "firmwareUpdatable": true,
     "features": {"accessPoint": {}},
     "uplink": {"deviceId": "sw1"},
@@ -135,10 +135,10 @@
     "firmwareVersion": "6.6.55",
     "firmwareUpdatable": false,
     "features": {"accessPoint": {}},
-    "uplink": {"deviceId": "sw2"},
+    "uplink": {"deviceId": "ap2"},
     "interfaces": {
       "ports": [
-        {"idx": 1, "state": "UP", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": 100, "poe": null}
+        {"idx": 1, "state": "DOWN", "connector": "RJ45", "maxSpeedMbps": 1000, "speedMbps": null, "poe": null}
       ],
       "radios": [
         {"wlanStandard": "802.11ax", "frequencyGHz": 2.4, "channelWidthMHz": 20, "channel": 6},

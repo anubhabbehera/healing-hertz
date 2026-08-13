@@ -20,19 +20,30 @@ Every scan looks for problems across your whole site and rates each one from
 **Devices** — anything offline or in a degraded state, access points stuck waiting to
 be adopted, high CPU or memory, devices that have rebooted recently, and devices that
 keep rebooting over multiple scans (a pattern you'd rarely spot by eye). Also flags
-pending firmware updates.
+pending firmware updates, access points running mismatched firmware versions, and
+devices that haven't restarted in six months.
 
 **WiFi** — 2.4 GHz radios on channels other than 1, 6 or 11; two access points fighting
-over the same channel; channel widths that cause more interference than they cure; and
-radios with high transmission retry rates, including ones that are getting *worse*
-compared to your recent scans.
+over the same channel; channel widths that cause more interference than they cure;
+radios parked on DFS channels, where a radar hit silences them for half an hour;
+access points reaching the network over the air instead of over Ethernet; legacy
+802.11b/g rate sets; and radios with high transmission retry rates, including ones
+that are getting *worse* compared to your recent scans.
 
 **Wiring** — the classic one: a port negotiating 100 Mbps on a gigabit-capable link,
 which almost always means a damaged cable. Also PoE ports that can't deliver full
 power, and a gateway running close to its uplink capacity.
 
 **Clients** — guest devices stuck unauthorized, and (with an optional extra, see below)
-clients with weak signal or ones bouncing constantly between access points.
+clients with weak signal, clients bouncing constantly between access points, clients
+negotiating legacy data rates that eat everyone else's airtime, strong-signal clients
+stuck on 2.4 GHz when band steering should have moved them, and access points carrying
+more clients than a radio handles well.
+
+Settings the read-only Integration API doesn't expose — transmit power, band steering,
+DTIM, minimum RSSI, automatic channel selection, firewall and VLAN isolation — are
+listed as **not checkable**, together with what the community consensus recommends, so
+you can audit them yourself instead of assuming they were checked.
 
 **Internet & DNS** — connection latency and packet loss measured during each scan, plus
 optional NextDNS analysis that surfaces malware and phishing domains your devices tried
