@@ -35,6 +35,10 @@ class ScanRun(Base):
     advice_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     advice_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     unsupported_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Hardware inventory for this run. Metric snapshots keep the numbers, but the
+    # descriptive side (model, firmware, ports, radios) is only in the live
+    # snapshot, so healthy devices would otherwise leave no trace of a run.
+    devices_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     findings: Mapped[list["FindingRow"]] = relationship(

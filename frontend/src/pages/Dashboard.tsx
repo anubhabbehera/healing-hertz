@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import type { RunDetail, Severity } from "../api/types";
+import HardwareOverview from "../components/HardwareOverview";
 import SeverityBadge from "../components/SeverityBadge";
 
 const SEVERITIES: Severity[] = ["critical", "high", "medium", "low", "info"];
@@ -122,30 +123,34 @@ export default function Dashboard() {
       </div>
 
       <div className="grid-2">
-        <div className="card">
-          <div className="card-head">
-            <h2>Open findings</h2>
-            <Link to="/findings" className="meta">
-              {run.dismissed_count > 0 && `${run.dismissed_count} dismissed · `}
-              view all →
-            </Link>
+        <div>
+          <div className="card">
+            <div className="card-head">
+              <h2>Open findings</h2>
+              <Link to="/findings" className="meta">
+                {run.dismissed_count > 0 && `${run.dismissed_count} dismissed · `}
+                view all →
+              </Link>
+            </div>
+            {preview.length === 0 ? (
+              <p className="muted">
+                {run.dismissed_count > 0
+                  ? "Nothing outstanding — the remaining findings are all dismissed. 🎉"
+                  : "No findings — the network looks healthy. 🎉"}
+              </p>
+            ) : (
+              preview.map((f) => (
+                <div className="finding-row" key={f.id}>
+                  <span className={`dot ${f.severity}`} />
+                  <span className="title">{f.title}</span>
+                  {f.subject_name && <span className="subject">{f.subject_name}</span>}
+                  <SeverityBadge severity={f.severity} />
+                </div>
+              ))
+            )}
           </div>
-          {preview.length === 0 ? (
-            <p className="muted">
-              {run.dismissed_count > 0
-                ? "Nothing outstanding — the remaining findings are all dismissed. 🎉"
-                : "No findings — the network looks healthy. 🎉"}
-            </p>
-          ) : (
-            preview.map((f) => (
-              <div className="finding-row" key={f.id}>
-                <span className={`dot ${f.severity}`} />
-                <span className="title">{f.title}</span>
-                {f.subject_name && <span className="subject">{f.subject_name}</span>}
-                <SeverityBadge severity={f.severity} />
-              </div>
-            ))
-          )}
+
+          <HardwareOverview devices={run.devices ?? []} findings={run.findings} />
         </div>
 
         <div>
