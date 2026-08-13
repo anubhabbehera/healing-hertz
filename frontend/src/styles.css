@@ -198,22 +198,21 @@ a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 
-.theme-select {
+/* Cycles Frappé → Latte → Trail → Frappé; the icon is the theme you're in,
+   and the tooltip names it plus whatever the next click brings. */
+.theme-toggle {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--ink-secondary);
   border-radius: 8px;
+  width: 32px;
   height: 32px;
-  padding: 0 8px;
   cursor: pointer;
-  font-size: 12.5px;
-  font-family: inherit;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  font-size: 14px;
+  line-height: 1;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
-.theme-select:hover { color: var(--ink); border-color: var(--ink-muted); }
-/* The dropdown list itself is painted by the OS, which ignores the parent's
-   transparent background — give it an opaque one it can actually use. */
-.theme-select option { background: var(--bg); color: var(--ink); }
+.theme-toggle:hover { color: var(--ink); border-color: var(--ink-muted); transform: translateY(-1px); }
 
 /* scan progress attached to topbar */
 .scanwrap { position: relative; }

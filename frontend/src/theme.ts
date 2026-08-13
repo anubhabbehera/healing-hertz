@@ -2,14 +2,23 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type Theme = "dark" | "light" | "trail";
 
-export const THEMES: { id: Theme; label: string }[] = [
-  { id: "dark", label: "Frappé — dark" },
-  { id: "light", label: "Latte — light" },
-  { id: "trail", label: "Trail — dark" },
+export const THEMES: { id: Theme; label: string; icon: string }[] = [
+  { id: "dark", label: "Frappé — dark", icon: "☾" },
+  { id: "light", label: "Latte — light", icon: "☀" },
+  { id: "trail", label: "Trail — dark", icon: "◈" },
 ];
 
 const isTheme = (value: string | null): value is Theme =>
   THEMES.some((t) => t.id === value);
+
+/** The theme one click away, wrapping back to the first. */
+export function nextTheme(theme: Theme): Theme {
+  const index = THEMES.findIndex((t) => t.id === theme);
+  return THEMES[(index + 1) % THEMES.length].id;
+}
+
+export const themeMeta = (theme: Theme) =>
+  THEMES.find((t) => t.id === theme) ?? THEMES[0];
 
 export const ThemeContext = createContext<{
   theme: Theme;

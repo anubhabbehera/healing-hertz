@@ -7,11 +7,11 @@ import Findings from "./pages/Findings";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Trends from "./pages/Trends";
-import type { Theme } from "./theme";
-import { THEMES, ThemeContext, useThemeState } from "./theme";
+import { ThemeContext, nextTheme, themeMeta, useThemeState } from "./theme";
 
 export default function App() {
   const themeState = useThemeState();
+  const current = themeMeta(themeState.theme);
   const { data: latest } = useQuery({
     queryKey: ["latest"],
     queryFn: api.latestRun,
@@ -42,19 +42,16 @@ export default function App() {
             </span>
           )}
           <ScanButton />
-          <select
-            className="theme-select"
-            value={themeState.theme}
-            onChange={(e) => themeState.setTheme(e.target.value as Theme)}
-            aria-label="Color theme"
-            title="Color theme"
+          <button
+            className="theme-toggle"
+            onClick={() => themeState.setTheme(nextTheme(themeState.theme))}
+            title={`Theme: ${current.label} — click for ${themeMeta(nextTheme(themeState.theme)).label}`}
+            aria-label={`Color theme: ${current.label}. Activate for ${
+              themeMeta(nextTheme(themeState.theme)).label
+            }`}
           >
-            {THEMES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            {current.icon}
+          </button>
         </div>
       </header>
       <main className="content">
