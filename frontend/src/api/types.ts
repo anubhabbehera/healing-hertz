@@ -53,9 +53,44 @@ export interface AdvicePlan {
   quick_wins: string[];
 }
 
+export interface DeviceRadio {
+  frequency_ghz: number | null;
+  channel: number | null;
+  channel_width_mhz: number | null;
+  wlan_standard: string | null;
+  tx_retries_pct: number | null;
+}
+
+export interface DeviceHardware {
+  id: string;
+  name: string;
+  model: string;
+  mac: string;
+  ip: string | null;
+  kind: "gateway" | "access_point" | "switch" | "other";
+  state: string;
+  supported: boolean;
+  firmware_version: string | null;
+  firmware_updatable: boolean;
+  cpu_pct: number | null;
+  mem_pct: number | null;
+  load_5m: number | null;
+  load_15m: number | null;
+  uptime_sec: number | null;
+  last_heartbeat_at: string | null;
+  ports_total: number;
+  ports_up: number;
+  poe_ports_up: number;
+  uplink_tx_bps: number | null;
+  uplink_rx_bps: number | null;
+  radios: DeviceRadio[];
+}
+
 export interface RunDetail extends RunSummary {
   site_metrics: Record<string, number>;
   findings: Finding[];
+  /** Empty for runs scanned before the hardware inventory was persisted. */
+  devices?: DeviceHardware[];
   suggestions: Suggestion[];
   advice: AdvicePlan | null;
   unsupported_checks?: UnsupportedCheck[];

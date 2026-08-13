@@ -413,6 +413,74 @@ button.secondary:hover { border-color: var(--ink-muted); }
 .finding-row .title { flex: 1; }
 .finding-row .subject { color: var(--ink-muted); font-size: 12px; }
 
+/* ---------- hardware overview ---------- */
+
+/* Long inventories scroll inside the card so the AI column beside it stays
+   aligned with the findings preview. */
+.hw-list { max-height: 420px; overflow-y: auto; }
+
+.hw-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 13px;
+}
+.hw-row:first-of-type { border-top: none; }
+
+.hw-id { flex: 1; min-width: 130px; }
+.hw-id .name { font-weight: 600; }
+.hw-id .sub { color: var(--ink-muted); font-size: 11.5px; margin-top: 1px; }
+
+.hw-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.hw-chip {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.hw-chip.critical { background: var(--critical-soft); color: var(--critical); border-color: var(--critical); }
+.hw-chip.high     { background: var(--high-soft); color: var(--high); border-color: var(--high); }
+.hw-chip.medium   { background: var(--medium-soft); color: var(--medium); border-color: var(--medium); }
+.hw-chip.low      { background: var(--low-soft); color: var(--low); border-color: var(--low); }
+.hw-chip.info     { background: var(--info-soft); color: var(--info); border-color: var(--info); }
+
+.hw-meter { width: 76px; flex-shrink: 0; }
+.hw-meter .label {
+  font-size: 10px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.hw-meter .label .num { font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.hw-meter .bar { height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.hw-meter .fill { height: 100%; border-radius: 3px; }
+.hw-meter .fill.good { background: var(--good); }
+.hw-meter .fill.warn { background: var(--medium); }
+.hw-meter .fill.bad { background: var(--critical); }
+.hw-meter .num.good { color: var(--ink-secondary); }
+.hw-meter .num.warn { color: var(--medium); }
+.hw-meter .num.bad { color: var(--critical); }
+
+.hw-meta { width: 58px; flex-shrink: 0; text-align: right; }
+.hw-meta .label {
+  font-size: 10px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.hw-meta .value { font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 3px; }
+
+@media (max-width: 720px) {
+  .hw-row { flex-wrap: wrap; }
+  .hw-id { flex-basis: 100%; }
+}
+
 /* ---------- tables ---------- */
 
 table.data { width: 100%; border-collapse: collapse; }

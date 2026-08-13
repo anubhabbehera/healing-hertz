@@ -30,7 +30,7 @@ async def init_db() -> None:
         # Minimal in-place migration for pre-existing DBs (no Alembic in v1).
         result = await conn.execute(text("PRAGMA table_info(scan_runs)"))
         columns = {row[1] for row in result}
-        for column in ("unsupported_json", "advice_error"):
+        for column in ("unsupported_json", "advice_error", "devices_json"):
             if column not in columns:
                 await conn.execute(text(f"ALTER TABLE scan_runs ADD COLUMN {column} TEXT"))
         result = await conn.execute(text("PRAGMA table_info(findings)"))

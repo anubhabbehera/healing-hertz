@@ -10,6 +10,7 @@ from app.advisor.schema import AdvicePlan
 from app.collectors.snapshot import Snapshot
 from app.rules import score_from_severities
 from app.rules.base import Finding, HistoricalRun, RunHistory, UnsupportedCheck
+from app.unifi.models import DeviceDetail, DeviceOverview
 
 from .models import Dismissal, FindingRow, MetricSnapshot, ScanRun, SuggestionRow
 
@@ -92,6 +93,81 @@ def _metric_rows(run_id: str, snapshot: Snapshot, score: int) -> list[MetricSnap
     return rows
 
 
+def _device_kind(overview: DeviceOverview, detail: DeviceDetail | None) -> str:
+    """Coarse hardware class, from whichever feature shape the API returned."""
+    if detail is not None and detail.features is not None:
+        if detail.features.gateway is not None:
+            return "gateway"
+        if detail.features.access_point is not None:
+            return "access_point"
+        if detail.features.switching is not None:
+            return "switch"
+    features = set(overview.features)
+    if "gateway" in features:
+        return "gateway"
+    if "accessPoint" in features:
+        return "access_point"
+    if "switching" in features:
+        return "switch"
+    return "other"
+
+
+def _device_rows(snapshot: Snapshot) -> list[dict]:
+    """Flatten the snapshot into one hardware record per adopted device."""
+    rows = []
+    for dev in snapshot.devices:
+        detail = snapshot.device_details.get(dev.id)
+        stats = snapshot.device_stats.get(dev.id)
+        ports = detail.interfaces.ports if detail else []
+        radios = detail.interfaces.radios if detail else []
+        # Stats carry per-radio retries keyed only by band, so join on frequency.
+        retries = {
+            r.frequency_ghz: r.tx_retries_pct
+            for r in (stats.interfaces.radios if stats else [])
+            if r.frequency_ghz is not None
+        }
+        rows.append({
+            "id": dev.id,
+            "name": dev.name,
+            "model": dev.model,
+            "mac": dev.mac_address,
+            "ip": dev.ip_address,
+            "kind": _device_kind(dev, detail),
+            "state": dev.state,
+            "supported": dev.supported,
+            "firmware_version": dev.firmware_version,
+            "firmware_updatable": dev.firmware_updatable,
+            "cpu_pct": stats.cpu_utilization_pct if stats else None,
+            "mem_pct": stats.memory_utilization_pct if stats else None,
+            "load_5m": stats.load_average_5_min if stats else None,
+            "load_15m": stats.load_average_15_min if stats else None,
+            "uptime_sec": stats.uptime_sec if stats else None,
+            "last_heartbeat_at": (
+                _utc(stats.last_heartbeat_at).isoformat()
+                if stats and stats.last_heartbeat_at
+                else None
+            ),
+            "ports_total": len(ports),
+            "ports_up": sum(1 for p in ports if p.state == "UP"),
+            "poe_ports_up": sum(
+                1 for p in ports if p.poe is not None and p.poe.state == "UP"
+            ),
+            "uplink_tx_bps": stats.uplink.tx_rate_bps if stats and stats.uplink else None,
+            "uplink_rx_bps": stats.uplink.rx_rate_bps if stats and stats.uplink else None,
+            "radios": [
+                {
+                    "frequency_ghz": r.frequency_ghz,
+                    "channel": r.channel,
+                    "channel_width_mhz": r.channel_width_mhz,
+                    "wlan_standard": r.wlan_standard,
+                    "tx_retries_pct": retries.get(r.frequency_ghz),
+                }
+                for r in radios
+            ],
+        })
+    return rows
+
+
 async def save_run_results(
     session: AsyncSession,
     run_id: str,
@@ -109,6 +185,7 @@ async def save_run_results(
         [{"rule_id": u.rule_id, "title": u.title, "reason": u.reason}
          for u in (unsupported or [])]
     )
+    run.devices_json = json.dumps(_device_rows(snapshot))
     run.status = "completed"
     run.finished_at = datetime.now(UTC)
     run.site_id = snapshot.site.id
@@ -303,6 +380,9 @@ def run_detail_dict(run: ScanRun) -> dict:
         m.metric: m.value for m in run.metrics if m.subject_type == "site"
     }
     detail["findings"] = [_finding_dict(f) for f in run.findings]
+    # Empty for runs recorded before the inventory was persisted; the dashboard
+    # hides the hardware card rather than showing a half-empty table.
+    detail["devices"] = json.loads(run.devices_json) if run.devices_json else []
 
     # A scan's advice is written before the operator may have dismissed
     # anything. Drop suggestions whose every referenced rule is now fully
