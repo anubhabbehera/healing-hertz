@@ -148,10 +148,10 @@ async def test_payload_is_sanitized_and_compact(snapshot):
     from app.integrations.legacy_unifi import ClientRF, RfSnapshot
 
     snapshot.rf = RfSnapshot(
-        clients=[ClientRF(mac="aa:bb:cc:dd:ee:01", name="Anubhabs-iPhone",
+        clients=[ClientRF(mac="aa:bb:cc:dd:ee:01", name="Personal-Phone",
                           ap_mac="aa:bb:cc:dd:ee:ff", essid="HomeWifi",
                           signal_dbm=-88, tx_rate_kbps=None, rx_rate_kbps=None)],
-        roam_counts={"Anubhabs-iPhone": 15},
+        roam_counts={"Personal-Phone": 15},
         roam_data_available=True,
     )
     findings, _ = run_rules(snapshot)
@@ -161,7 +161,7 @@ async def test_payload_is_sanitized_and_compact(snapshot):
     assert not MAC_RE.search(payload)
     assert not IPV4_RE.search(payload)
     # No client hostnames or SSIDs; pseudonyms instead
-    assert "Anubhabs-iPhone" not in payload
+    assert "Personal-Phone" not in payload
     assert "HomeWifi" not in payload
     assert "Guest Phone" not in payload  # demo fixture guest client name
     assert "client-1" in payload
