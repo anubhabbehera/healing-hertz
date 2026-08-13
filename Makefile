@@ -47,6 +47,10 @@ restart: stop dev
 test:
 	cd $(BACKEND) && uv run pytest -q
 
+## coverage: run the backend suite and write coverage.xml (what CI uploads)
+coverage:
+	cd $(BACKEND) && uv run pytest -q --cov=app --cov-report=xml --cov-report=term-missing
+
 ## lint: ruff (backend) and TypeScript typecheck (frontend)
 lint:
 	cd $(BACKEND) && uv run ruff check app tests

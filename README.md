@@ -1,7 +1,15 @@
-# healing-hertz
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/wordmark-dark.svg">
+  <img src="docs/wordmark-light.svg" alt="healing hertz" width="276">
+</picture>
 
-**A health check for your UniFi network.** Point it at your UniFi console, press one
-button, and get a plain-language report of what's wrong and what to do about it.
+[![CI](https://github.com/anubhabbehera/healing-hertz/actions/workflows/ci.yml/badge.svg)](https://github.com/anubhabbehera/healing-hertz/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/anubhabbehera/healing-hertz/branch/main/graph/badge.svg)](https://codecov.io/gh/anubhabbehera/healing-hertz)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
+**A health check for your [UniFi](https://ui.com/) network.** Point it at your UniFi
+console, press one button, and get a plain-language report of what's wrong and what to
+do about it.
 
 Most UniFi dashboards tell you *what* your network is doing. healing-hertz tells you
 what's **wrong with it** — the access point on a bad channel, the cable that's quietly
@@ -113,7 +121,9 @@ network, and this app talks directly to your console.
 
 In your UniFi console, go to **Settings → Control Plane → Integrations → Create API
 Key**. (On some versions it's under **Settings → API**, or in your admin profile.
-You'll need UniFi Network 9.0 or newer.)
+You'll need UniFi Network 9.0 or newer.) That key is for the
+[UniFi Network Integration API](https://developer.ui.com/unifi-api/) — Ubiquiti's
+supported, read-and-write-scoped interface, of which this app only ever reads.
 
 **Recommended:** first create a separate admin account with the **View Only** role, log
 in as that account, and create the key there. The app never writes to your network, and
@@ -177,7 +187,41 @@ nothing is silently missing.
 |---|---|
 | **Weak-signal clients** and **devices roaming between access points** | Add `UNIFI_USERNAME` / `UNIFI_PASSWORD` for a **View Only** local admin account. Uses an older UniFi interface that Ubiquiti doesn't officially document, so it may change with firmware updates — failures are skipped, never fatal. |
 | **Internet latency and packet loss** | On by default. Measured from the computer running the app during each scan, and tracked over time. |
-| **DNS problems, malware and phishing blocks** | Add `NEXTDNS_API_KEY` (from your NextDNS account) and `NEXTDNS_PROFILE_ID` (the short ID in your NextDNS profile URL). Surfaces security blocks and unusual spikes in blocked traffic. |
+| **DNS problems, malware and phishing blocks** | Add `NEXTDNS_API_KEY` (from your [NextDNS](https://nextdns.io/) account settings) and `NEXTDNS_PROFILE_ID` (the short ID in your profile URL, e.g. `abc123`). Surfaces security blocks and unusual spikes in blocked traffic. See below for pointing your network at NextDNS in the first place. |
+
+### Pointing UniFi at NextDNS over encrypted DNS
+
+The NextDNS check reads your profile's analytics, so it only says something useful once
+your network actually resolves through NextDNS. Doing that over **encrypted DNS** means
+your queries can't be read or rewritten between your gateway and the resolver — worth
+having regardless of this app.
+
+Create a profile at [my.nextdns.io](https://my.nextdns.io/) and note its ID, then pick
+whichever route matches your console:
+
+**1. Native encrypted DNS (recent UniFi Network builds).** Under **Settings → Security**
+you'll find UniFi's encrypted-DNS control (named *DNS Shield* on current builds). Set it
+to the manual/custom option, choose **NextDNS** as the provider and paste your profile
+ID. Your gateway then resolves over DoH for every client on the network.
+
+**2. A DNSCrypt stamp (builds whose field rejects a plain URL).** Some versions accept
+only an `sdns://` stamp and will refuse `https://dns.nextdns.io/abc123`. Generate one at
+[dnscrypt.info/stamps](https://dnscrypt.info/stamps/) using host `dns.nextdns.io` and
+path `/abc123`. Append a device name to the path — `/abc123/gateway` — if you want the
+queries to show up under a name in NextDNS analytics rather than as *unidentified*.
+
+**3. The NextDNS client on UniFi OS.** For full control, including per-VLAN profiles,
+install NextDNS's own client on the gateway by following the
+[NextDNS UnifiOS guide](https://github.com/nextdns/nextdns/wiki/UnifiOS). It survives
+firmware updates less gracefully than the built-in options, so prefer 1 or 2 if they
+work for you.
+
+Two things to check afterwards: visit [test.nextdns.io](https://test.nextdns.io/) from a
+client to confirm queries are arriving encrypted, and remember that anything setting its
+own DNS (a device with hardcoded resolvers, or a browser doing its own DoH) bypasses the
+gateway entirely. UniFi's exact menu wording moves between releases — if *DNS Shield*
+isn't where this says, look for "encrypted DNS" or "secure DNS" under Security or the
+Internet/WAN settings.
 
 ## Using a different AI provider
 
@@ -213,9 +257,12 @@ normal for local network tools, but it does mean your API key is protected by tr
 your own network rather than by the certificate itself. If your console has a proper
 certificate, set `UNIFI_TLS_VERIFY=true`.
 
-**What it can't see.** UniFi's official interface doesn't expose system logs, event
-history or alarms, so those aren't covered. Ubiquiti also doesn't provide historical
-statistics — which is exactly why this app saves each scan itself.
+**What it can't see.** The [Integration API](https://developer.ui.com/unifi-api/)
+doesn't expose system logs, event history or alarms, so those aren't covered. Nor does
+it expose wireless *configuration* — transmit power, band steering, DTIM, minimum RSSI,
+firewall and VLAN isolation — so those checks are listed in-app as "not checkable" with
+the recommended setting, rather than guessed at. Ubiquiti also doesn't provide
+historical statistics, which is exactly why this app saves each scan itself.
 
 ## Troubleshooting
 

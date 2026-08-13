@@ -19,6 +19,10 @@ jobs:
   test:
     name: lint & test
     runs-on: ubuntu-latest
+    # Job-level so the upload step can test for it in `if:`; a step cannot read
+    # an env var it defines itself.
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       # Actions are pinned to commit SHAs, not tags: a tag can be moved to
       # point at new code, a SHA cannot.
@@ -43,7 +47,18 @@ jobs:
         run: make lint
 
       - name: Test
-        run: make test
+        run: make coverage
+
+      # Coverage reporting must never be the reason a green build looks red:
+      # the upload is best-effort and skipped entirely when no token is set.
+      - name: Upload coverage to Codecov
+        if: env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        continue-on-error: true
+        with:
+          files: backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
 
       - name: Build frontend
         run: make build
