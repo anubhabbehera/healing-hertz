@@ -81,5 +81,15 @@ gh api -X PATCH "repos/$REPO" \
   -F delete_branch_on_merge=true -F allow_update_branch=true --silent \
   && echo "  Merge hygiene ✓"
 
+# A workflow token that can't write can't be turned into a supply-chain foothold.
+gh api -X PUT "repos/$REPO/actions/permissions/workflow" \
+  -f default_workflow_permissions=read -F can_approve_pull_request_reviews=false --silent \
+  && echo "  GITHUB_TOKEN read-only ✓"
+
 echo
 echo "Done. Verify at: https://github.com/$REPO/settings/rules"
+echo
+echo "Two settings still need the web UI (no REST endpoint):"
+echo "  • Settings → Actions → 'Require approval for all external contributors'"
+echo "    — stops drive-by PRs from running workflows on your runners."
+echo "  • Security → Code scanning → set up CodeQL (default setup)."
