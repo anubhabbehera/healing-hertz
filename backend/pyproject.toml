@@ -1,0 +1,49 @@
+[project]
+name = "healing-hertz-backend"
+version = "0.1.0"
+description = "UniFi network diagnostics backend: collectors, rule engine, LLM advisor"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "Anubhab Behera" }]
+# Ranges are pinned to the current major/minor so a surprise upstream release
+# can't change behavior; uv.lock holds the exact resolved versions and is what
+# CI and the Docker build install from (`uv sync --frozen`).
+dependencies = [
+    "fastapi>=0.141.1,<0.142",
+    "uvicorn[standard]>=0.52.1,<0.53",
+    "httpx>=0.28.1,<0.29",
+    "sqlalchemy[asyncio]>=2.0.52,<2.1",
+    "aiosqlite>=0.22.1,<0.23",
+    "pydantic>=2.13.4,<3",
+    "pydantic-settings>=2.15.0,<3",
+    "anthropic>=0.121.0,<0.122",
+    "sse-starlette>=3.4.8,<4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1,<10",
+    "pytest-asyncio>=1.4.0,<2",
+    "respx>=0.23.1,<0.24",
+    "ruff>=0.16.2,<0.17",
+    "pip-audit>=2.7,<3",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection markers are meant to sit in argument defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

@@ -1,0 +1,77 @@
+{
+  "gw1": {
+    "uptimeSec": 2592000,
+    "lastHeartbeatAt": "2026-08-12T09:59:30Z",
+    "loadAverage1Min": 3.1,
+    "loadAverage5Min": 2.9,
+    "loadAverage15Min": 2.8,
+    "cpuUtilizationPct": 93.4,
+    "memoryUtilizationPct": 71.2,
+    "uplink": {"txRateBps": 48000000, "rxRateBps": 210000000},
+    "interfaces": {"radios": []}
+  },
+  "sw1": {
+    "uptimeSec": 2591800,
+    "lastHeartbeatAt": "2026-08-12T09:59:31Z",
+    "loadAverage1Min": 0.4,
+    "loadAverage5Min": 0.4,
+    "loadAverage15Min": 0.3,
+    "cpuUtilizationPct": 21.0,
+    "memoryUtilizationPct": 44.5,
+    "uplink": {"txRateBps": 12000000, "rxRateBps": 90000000},
+    "interfaces": {"radios": []}
+  },
+  "sw2": {
+    "uptimeSec": 1209600,
+    "lastHeartbeatAt": "2026-08-12T09:59:29Z",
+    "loadAverage1Min": 0.2,
+    "loadAverage5Min": 0.2,
+    "loadAverage15Min": 0.2,
+    "cpuUtilizationPct": 14.8,
+    "memoryUtilizationPct": 38.0,
+    "uplink": {"txRateBps": 2000000, "rxRateBps": 15000000},
+    "interfaces": {"radios": []}
+  },
+  "ap1": {
+    "uptimeSec": 864000,
+    "lastHeartbeatAt": "2026-08-12T09:59:33Z",
+    "loadAverage1Min": 0.8,
+    "loadAverage5Min": 0.7,
+    "loadAverage15Min": 0.7,
+    "cpuUtilizationPct": 35.2,
+    "memoryUtilizationPct": 58.9,
+    "uplink": {"txRateBps": 30000000, "rxRateBps": 8000000},
+    "interfaces": {"radios": [
+      {"frequencyGHz": 2.4, "txRetriesPct": 22.4},
+      {"frequencyGHz": 5, "txRetriesPct": 4.1}
+    ]}
+  },
+  "ap2": {
+    "uptimeSec": 863900,
+    "lastHeartbeatAt": "2026-08-12T09:59:32Z",
+    "loadAverage1Min": 0.5,
+    "loadAverage5Min": 0.5,
+    "loadAverage15Min": 0.4,
+    "cpuUtilizationPct": 28.7,
+    "memoryUtilizationPct": 52.3,
+    "uplink": {"txRateBps": 18000000, "rxRateBps": 5000000},
+    "interfaces": {"radios": [
+      {"frequencyGHz": 2.4, "txRetriesPct": 8.9},
+      {"frequencyGHz": 5, "txRetriesPct": 3.2}
+    ]}
+  },
+  "ap4": {
+    "uptimeSec": 432000,
+    "lastHeartbeatAt": "2026-08-12T09:59:34Z",
+    "loadAverage1Min": 0.6,
+    "loadAverage5Min": 0.6,
+    "loadAverage15Min": 0.5,
+    "cpuUtilizationPct": 31.5,
+    "memoryUtilizationPct": 55.1,
+    "uplink": {"txRateBps": 22000000, "rxRateBps": 6000000},
+    "interfaces": {"radios": [
+      {"frequencyGHz": 2.4, "txRetriesPct": 11.2},
+      {"frequencyGHz": 5, "txRetriesPct": 5.7}
+    ]}
+  }
+}

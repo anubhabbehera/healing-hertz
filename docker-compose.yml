@@ -1,0 +1,46 @@
+name: healing-hertz
+
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        VERSION: ${VERSION:-0.1.0}
+        REVISION: ${REVISION:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-}
+    image: healing-hertz-backend:${VERSION:-0.1.0}
+    env_file: .env
+    environment:
+      DB_PATH: /data/healing_hertz.db
+    volumes:
+      - db-data:/data
+    # Bound to loopback: the API has no authentication, so it must not be
+    # reachable from the LAN. Change deliberately if you add auth or a proxy.
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VERSION: ${VERSION:-0.1.0}
+        REVISION: ${REVISION:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-}
+    image: healing-hertz-frontend:${VERSION:-0.1.0}
+    ports:
+      - "127.0.0.1:5173:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  db-data:
