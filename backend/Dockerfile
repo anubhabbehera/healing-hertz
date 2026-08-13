@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- build: resolve dependencies from the committed lock -----------------
-FROM python:3.12-slim AS build
+FROM python:3.14-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /bin/uv
 
 ENV UV_COMPILE_BYTECODE=1 \
@@ -16,7 +16,7 @@ COPY app ./app
 RUN uv sync --frozen --no-dev
 
 # --- runtime -------------------------------------------------------------
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ARG VERSION=0.1.0
 ARG REVISION=unknown
