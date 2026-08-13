@@ -65,6 +65,64 @@
   color-scheme: light;
 }
 
+/* Trail — zinc surfaces, one violet accent, serif hierarchy, monospace data.
+   Palette and type scale adapted from mkmlman/trail (MIT). Trail defines only
+   green/red semantics, so the five severity steps are filled in from the same
+   Tailwind 400 family: bright enough to read as text on zinc, dark enough ink
+   on a solid badge. Dark only by design — there is no Trail light mode. */
+:root[data-theme="trail"] {
+  --bg: #18181b;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --ink: #f5f5f5;
+  --ink-secondary: rgba(228, 228, 231, 0.85);
+  /* Trail's own muted step is 0.75 alpha; raised to 0.9 because we use it for
+     11px labels, where 0.75 lands at 4.2:1 on a raised surface — under AA. */
+  --ink-muted: rgba(161, 161, 170, 0.9);
+  --accent: #a78bfa;        /* violet-400 — the accent as text/hairlines */
+  --accent-strong: #7c3aed; /* trail's violet — solid fills only */
+  --accent-ink: #f5f5f5;
+  --accent-soft: rgba(124, 58, 237, 0.12);
+  --badge-ink: #18181b;
+  --blue: #a78bfa;
+  --good: #4ade80;
+  --critical: #f87171;
+  --critical-soft: rgba(248, 113, 113, 0.14);
+  --high: #fb923c;
+  --high-soft: rgba(251, 146, 60, 0.13);
+  --medium: #fbbf24;
+  --medium-soft: rgba(251, 191, 36, 0.13);
+  --low: #2dd4bf;
+  --low-soft: rgba(45, 212, 191, 0.13);
+  --info: #a1a1aa;
+  --info-soft: rgba(161, 161, 170, 0.14);
+  /* "Minimal decoration": borders carry the separation, not shadows. */
+  --shadow: none;
+  color-scheme: dark;
+}
+
+/* Serif for hierarchy — but only where a heading has room to be one. Page
+   titles scale up so Georgia reads as a headline rather than as body text set
+   in the wrong face; card headings stay the sans micro-label they are, because
+   a serif at 13px next to its meta line reads as a mistake. Values keep the
+   sans tabular numerals: Trail's monospace is for dense data tables, and our
+   tiles are display numbers. */
+:root[data-theme="trail"] h1 {
+  font-family: "Georgia", "Times New Roman", serif;
+  letter-spacing: -0.02em;
+  font-size: 26px;
+  font-weight: 400;
+}
+:root[data-theme="trail"] .evidence-table td {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", monospace;
+}
+:root[data-theme="trail"] .card { border-radius: 18px; }
+:root[data-theme="trail"] .tile,
+:root[data-theme="trail"] .mini { border-radius: 12px; }
+:root[data-theme="trail"] .topbar nav a.active { color: var(--ink); }
+
 * { box-sizing: border-box; }
 
 html { scrollbar-color: var(--border) transparent; }
@@ -98,38 +156,23 @@ a:hover { text-decoration: underline; }
   border-bottom: 1px solid var(--border-soft);
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-weight: 700;
-  font-size: 15.5px;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-.brand .logo {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-}
-.brand span { color: var(--accent); }
+/* The wordmark is drawn, not set — see components/BrandMark.tsx. It inherits
+   the bar's ink, so it recolors with the theme without a second asset. */
+.brand { display: flex; align-items: center; }
+.brandmark { height: 21px; width: auto; display: block; }
 
-.topbar nav { display: flex; gap: 4px; flex: 1; }
+/* Nav after Trail: no pills, just an accent rule under the current page. */
+.topbar nav { display: flex; gap: 22px; flex: 1; }
 .topbar nav a {
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 3px 1px;
+  border-bottom: 2px solid transparent;
   color: var(--ink-secondary);
   font-size: 13.5px;
   font-weight: 500;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: border-color 0.12s ease, color 0.12s ease;
 }
-.topbar nav a:hover { color: var(--ink); text-decoration: none; background: var(--surface-2); }
-.topbar nav a.active { background: var(--accent-soft); color: var(--accent); }
+.topbar nav a:hover { color: var(--ink); text-decoration: none; border-bottom-color: var(--border); }
+.topbar nav a.active { color: var(--ink); border-bottom-color: var(--accent); }
 
 .topbar-right { display: flex; align-items: center; gap: 12px; }
 .topbar .timestamp {
@@ -139,6 +182,8 @@ a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 
+/* Cycles Frappé → Latte → Trail → Frappé; the icon is the theme you're in,
+   and the tooltip names it plus whatever the next click brings. */
 .theme-toggle {
   background: transparent;
   border: 1px solid var(--border);

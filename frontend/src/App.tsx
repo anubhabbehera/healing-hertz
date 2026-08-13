@@ -1,16 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { api, ApiError } from "./api/client";
+import BrandMark from "./components/BrandMark";
 import ScanButton from "./components/ScanButton";
 import Dashboard from "./pages/Dashboard";
 import Findings from "./pages/Findings";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Trends from "./pages/Trends";
-import { ThemeContext, useThemeState } from "./theme";
+import { ThemeContext, nextTheme, themeMeta, useThemeState } from "./theme";
 
 export default function App() {
   const themeState = useThemeState();
+  const current = themeMeta(themeState.theme);
   const { data: latest } = useQuery({
     queryKey: ["latest"],
     queryFn: api.latestRun,
@@ -22,8 +24,7 @@ export default function App() {
     <ThemeContext.Provider value={themeState}>
       <header className="topbar">
         <div className="brand">
-          <span className="logo">◉</span>
-          healing<span>hertz</span>
+          <BrandMark />
         </div>
         <nav>
           <NavLink to="/" end>
@@ -43,11 +44,13 @@ export default function App() {
           <ScanButton />
           <button
             className="theme-toggle"
-            onClick={themeState.toggle}
-            title={themeState.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            aria-label="Toggle color theme"
+            onClick={() => themeState.setTheme(nextTheme(themeState.theme))}
+            title={`Theme: ${current.label} — click for ${themeMeta(nextTheme(themeState.theme)).label}`}
+            aria-label={`Color theme: ${current.label}. Activate for ${
+              themeMeta(nextTheme(themeState.theme)).label
+            }`}
           >
-            {themeState.theme === "dark" ? "☀" : "☾"}
+            {current.icon}
           </button>
         </div>
       </header>
