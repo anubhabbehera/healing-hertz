@@ -122,3 +122,91 @@ async def test_duplicate_dismissal_is_idempotent(api):
 
 async def test_delete_unknown_dismissal_404s(api):
     assert (await api.delete("/api/dismissals/9999")).status_code == 404
+
+
+async def test_dismissed_excluded_from_severity_counts(api):
+    await run_scan(api)
+    before = (await api.get("/api/runs/latest")).json()
+    assert before["dismissed_count"] == 0
+    critical_before = before["severity_counts"].get("critical", 0)
+    assert critical_before == 1
+
+    offline = next(f for f in before["findings"] if f["rule_id"] == "device.offline")
+    await api.post("/api/dismissals", json={
+        "rule_id": offline["rule_id"], "subject_id": offline["subject_id"],
+    })
+
+    after = (await api.get("/api/runs/latest")).json()
+    # The dashboard's severity tiles read these counts; leaving the dismissed
+    # finding in would contradict the health score displayed beside them.
+    assert after["severity_counts"].get("critical", 0) == 0
+    assert after["dismissed_count"] == 1
+    # …but the finding itself is still returned, flagged, for the Findings page.
+    assert any(f["rule_id"] == "device.offline" and f["dismissed"] for f in after["findings"])
+
+
+async def test_suggestions_for_dismissed_findings_are_hidden(api, db):
+    """Advice written before a dismissal must stop recommending waived work."""
+    from app.db import repo
+    from app.db.engine import get_session_factory
+
+    await run_scan(api)
+    run_id = (await api.get("/api/runs/latest")).json()["id"]
+
+    # Stand in for an LLM plan: one suggestion about a rule we will dismiss,
+    # one about a rule we keep, and one piece of general advice.
+    factory = get_session_factory()
+    async with factory() as session:
+        run = await repo.get_run(session, run_id)
+        from app.db.models import SuggestionRow
+        session.add_all([
+            SuggestionRow(run_id=run.id, priority=1, title="Fix the offline AP",
+                          rationale="…", steps_json='["a"]', effort="low",
+                          related_rule_ids_json='["device.offline"]'),
+            SuggestionRow(run_id=run.id, priority=2, title="Fix the channel plan",
+                          rationale="…", steps_json='["b"]', effort="low",
+                          related_rule_ids_json='["wifi.bad_24_channel"]'),
+            SuggestionRow(run_id=run.id, priority=3, title="General hygiene",
+                          rationale="…", steps_json='["c"]', effort="low",
+                          related_rule_ids_json='[]'),
+        ])
+        await session.commit()
+
+    def titles(detail):
+        return {s["title"] for s in detail["suggestions"]}
+
+    assert titles((await api.get("/api/runs/latest")).json()) == {
+        "Fix the offline AP", "Fix the channel plan", "General hygiene",
+    }
+
+    await api.post("/api/dismissals", json={"rule_id": "device.offline"})
+
+    after = titles((await api.get("/api/runs/latest")).json())
+    assert "Fix the offline AP" not in after, "advice for a dismissed finding must be hidden"
+    assert "Fix the channel plan" in after, "unrelated advice must survive"
+    assert "General hygiene" in after, "advice with no rule reference is always kept"
+
+
+async def test_advisor_is_not_given_dismissed_findings(api, snapshot, monkeypatch):
+    """Root cause: the advisor used to receive dismissed findings and write
+    plans for problems the operator had already waived."""
+    import app.scan.orchestrator as orch
+
+    seen: list[list] = []
+
+    async def spy(findings, snap, history, settings):
+        seen.append(list(findings))
+        return None, "skipped", None
+
+    monkeypatch.setattr(orch, "generate_advice", spy)
+
+    await run_scan(api)
+    assert seen and any(f.rule_id == "device.offline" for f in seen[0])
+
+    await api.post("/api/dismissals", json={"rule_id": "device.offline"})
+    seen.clear()
+    await run_scan(api)
+
+    assert seen, "advisor should still be called"
+    assert all(not f.dismissed for f in seen[0]), "dismissed findings must not be sent"
+    assert not any(f.rule_id == "device.offline" for f in seen[0])

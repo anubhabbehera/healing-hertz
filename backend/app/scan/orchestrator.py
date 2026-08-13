@@ -48,8 +48,11 @@ async def run_scan(
         await progress.emit("analyze", f"{len(findings)} findings, health score {score}", 65)
 
         await progress.emit("advise", "Generating remediation plan", 70)
+        # Only unresolved problems go to the advisor: writing a remediation plan
+        # for something the operator has explicitly dismissed is noise, and it
+        # wastes payload budget on findings that will never be acted on.
         advice, advice_status, advice_error = await generate_advice(
-            findings, snapshot, history, settings
+            [f for f in findings if not f.dismissed], snapshot, history, settings
         )
         await progress.emit("advise", f"Advice: {advice_status}", 90)
 
