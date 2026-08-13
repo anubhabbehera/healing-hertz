@@ -14,6 +14,13 @@ def rule_ids(findings):
     return {f.rule_id for f in findings}
 
 
+# Checks no enrichment can unlock: they need configuration state the read-only
+# Integration API never exposes, so they are always listed as not checkable.
+CONFIG_ONLY_CHECKS = {
+    "wifi.radio_config_audit", "wifi.auto_optimize", "security.policy_audit",
+}
+
+
 # --- WAN probe aggregation ---
 
 def test_wan_aggregate_healthy():
@@ -96,7 +103,9 @@ async def test_rf_rules_and_unsupported_shrinks(snapshot):
     findings, unsupported = run_rules(snapshot)
     assert {u["rule_id"] if isinstance(u, dict) else u.rule_id for u in unsupported} == {
         "wifi.weak_rssi_clients", "clients.excessive_roaming",
-        "wan.latency_loss", "dns.anomalies",
+        "clients.slow_phy_rate", "wifi.band_steering_ineffective",
+        "capacity.ap_client_load", "wan.latency_loss", "dns.anomalies",
+        *CONFIG_ONLY_CHECKS,
     }
 
     snapshot.rf = RfSnapshot(
@@ -157,5 +166,53 @@ async def test_healthy_enrichments_stay_quiet(snapshot):
     findings, unsupported = run_rules(snapshot)
     ids = rule_ids(findings)
     assert not ids & {"wan.latency_loss", "dns.anomalies", "dns.security_blocks",
-                      "wifi.weak_rssi_clients", "clients.excessive_roaming"}
-    assert unsupported == []
+                      "wifi.weak_rssi_clients", "clients.excessive_roaming",
+                      "clients.slow_phy_rate", "wifi.band_steering_ineffective",
+                      "capacity.ap_client_load"}
+    # Every enrichment-backed check is covered; only the config-only ones remain.
+    assert {u.rule_id for u in unsupported} == CONFIG_ONLY_CHECKS
+
+
+async def test_rf_rules_for_slow_clients_band_and_load(snapshot):
+    ap_mac = snapshot.devices[3].mac_address  # Office AP
+    snapshot.rf = RfSnapshot(
+        clients=[
+            # Strong signal but parked on 2.4 GHz: band steering isn't working.
+            *[ClientRF(mac=f"bb:{i}", name=f"phone-{i}", ap_mac=ap_mac, essid="Home",
+                       signal_dbm=-52, tx_rate_kbps=115_000, rx_rate_kbps=115_000,
+                       channel=6)
+              for i in range(3)],
+            # Legacy rate: eats airtime out of proportion to the data it moves.
+            ClientRF(mac="bb:old", name="old-printer", ap_mac=ap_mac, essid="Home",
+                     signal_dbm=-60, tx_rate_kbps=24_000, rx_rate_kbps=24_000,
+                     channel=6),
+            *[ClientRF(mac=f"cc:{i}", name=f"laptop-{i}", ap_mac=ap_mac, essid="Home",
+                       signal_dbm=-58, tx_rate_kbps=600_000, rx_rate_kbps=600_000,
+                       channel=44)
+              for i in range(35)],
+        ],
+        roam_counts={},
+        roam_data_available=True,
+    )
+    findings, unsupported = run_rules(snapshot)
+    ids = rule_ids(findings)
+    assert "wifi.band_steering_ineffective" in ids
+    assert "clients.slow_phy_rate" in ids
+    assert "capacity.ap_client_load" in ids
+    assert not {"clients.slow_phy_rate", "capacity.ap_client_load"} & {
+        u.rule_id for u in unsupported
+    }
+    load = next(f for f in findings if f.rule_id == "capacity.ap_client_load")
+    assert load.evidence["ap"] == "Office AP"  # resolved from the AP's MAC
+
+
+def test_client_band_derived_from_channel():
+    def client(channel):
+        return ClientRF(mac="aa", name="c", ap_mac=None, essid=None, signal_dbm=-50,
+                        tx_rate_kbps=None, rx_rate_kbps=None, channel=channel)
+
+    assert client(6).band_ghz == 2.4
+    assert client(44).band_ghz == 5.0
+    assert client(200).band_ghz == 6.0
+    assert client(None).band_ghz is None
+    assert client(0).band_ghz is None  # radio reported as disabled

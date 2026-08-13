@@ -18,7 +18,10 @@ async def test_demo_snapshot_trips_seeded_rules(snapshot):
     assert "wifi.wide_24_width" in ids        # Office AP 40 MHz on 2.4
     assert "wifi.channel_overlap" in ids      # ap2 + ap4 share channel 6
     assert "wifi.high_retries" in ids         # Office AP 22.4% retries
-    assert "wired.uplink_negotiation" in ids  # Patio AP 100 Mbps link
+    assert "wifi.dfs_channel" in ids          # Office AP 5 GHz on channel 100
+    assert "wifi.mesh_uplink" in ids          # Patio AP uplinks via Living Room AP
+    assert "firmware.version_drift" in ids    # ap2 on 6.6.50, ap1/ap4 on 6.6.55
+    assert "wired.uplink_negotiation" in ids  # Office AP 100 Mbps link
     assert "wired.poe_limited" in ids         # Rack Switch port 5
     assert "clients.unauthorized_guests" in ids
     # Non-triggering rules stay quiet
@@ -43,6 +46,76 @@ async def test_health_score(snapshot):
     score = health_score(findings)
     assert 0 <= score < 100
     assert health_score([]) == 100
+
+
+async def test_narrow_5ghz_width_only_flagged_when_channels_are_free(snapshot):
+    # Three online APs broadcast on 5 GHz; at that density 80 MHz is the right
+    # call and a 40 MHz radio is leaving throughput on the table.
+    snapshot.device_details["ap1"].interfaces.radios[1].channel_width_mhz = 40
+    findings, _ = run_rules(snapshot)
+    assert "wifi.narrow_5_width" in rule_ids(findings)
+
+    # Add a fourth 5 GHz radio and the band is busy enough that narrow channels
+    # are a deliberate trade, not a mistake.
+    from app.unifi.models import Radio
+
+    snapshot.device_details["ap2"].interfaces.radios.append(
+        Radio(wlanStandard="802.11ax", frequencyGHz=5, channelWidthMHz=80, channel=36)
+    )
+    findings, _ = run_rules(snapshot)
+    assert "wifi.narrow_5_width" not in rule_ids(findings)
+
+
+async def test_mesh_hop_depth_escalates_severity(snapshot):
+    # ap4 -> ap2 is one hop (already in the fixtures); chain ap2 -> ap1 to make
+    # ap4 two hops from anything wired.
+    snapshot.device_details["ap2"].uplink.device_id = "ap1"
+    findings, _ = run_rules(snapshot)
+    mesh = {f.subject_id: f for f in findings if f.rule_id == "wifi.mesh_uplink"}
+    assert mesh["ap2"].severity == Severity.MEDIUM  # one hop, parent is wired
+    assert mesh["ap4"].severity == Severity.HIGH    # two hops
+    assert mesh["ap4"].evidence["wirelessHops"] == 2
+
+
+async def test_mesh_uplink_survives_a_topology_cycle(snapshot):
+    # A controller that reports each AP as the other's uplink must not hang the
+    # scan; the walk stops as soon as it revisits a device.
+    snapshot.device_details["ap2"].uplink.device_id = "ap4"
+    findings, _ = run_rules(snapshot)
+    assert {f.subject_id for f in findings if f.rule_id == "wifi.mesh_uplink"} == {"ap2", "ap4"}
+
+
+async def test_legacy_radio_standard_flags_pre_n_only(snapshot):
+    findings, _ = run_rules(snapshot)
+    assert "wifi.legacy_radio_standard" not in rule_ids(findings)  # 11ac/11ax fleet
+
+    snapshot.device_details["ap1"].interfaces.radios[0].wlan_standard = "802.11g"
+    findings, _ = run_rules(snapshot)
+    legacy = [f for f in findings if f.rule_id == "wifi.legacy_radio_standard"]
+    assert [f.subject_id for f in legacy] == ["ap1"]
+
+
+async def test_stale_uptime(snapshot):
+    findings, _ = run_rules(snapshot)
+    assert "device.stale_uptime" not in rule_ids(findings)  # fixtures top out at 30d
+
+    snapshot.device_stats["gw1"].uptime_sec = 200 * 86400
+    findings, _ = run_rules(snapshot)
+    stale = next(f for f in findings if f.rule_id == "device.stale_uptime")
+    assert stale.severity == Severity.LOW
+    assert "200 days" in stale.title
+
+
+async def test_firmware_drift_ignores_offline_and_single_version(snapshot):
+    drift = next(f for f in run_rules(snapshot)[0] if f.rule_id == "firmware.version_drift")
+    # ap3 is OFFLINE on 6.6.50 — its version must not count as drift.
+    assert set(drift.evidence["versions"]) == {"6.6.50", "6.6.55"}
+    assert "Garage AP" not in str(drift.evidence)
+
+    for dev in snapshot.devices:
+        if "accessPoint" in dev.features:
+            dev.firmware_version = "6.6.55"
+    assert "firmware.version_drift" not in rule_ids(run_rules(snapshot)[0])
 
 
 async def test_reboot_loop_needs_history(snapshot):

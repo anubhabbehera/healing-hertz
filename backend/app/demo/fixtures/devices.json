@@ -55,7 +55,7 @@
     "model": "U6-Lite",
     "state": "ONLINE",
     "supported": true,
-    "firmwareVersion": "6.6.55",
+    "firmwareVersion": "6.6.50",
     "firmwareUpdatable": true,
     "features": ["accessPoint"]
   },
