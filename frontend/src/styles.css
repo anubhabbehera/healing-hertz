@@ -65,6 +65,65 @@
   color-scheme: light;
 }
 
+/* Trail — zinc surfaces, one violet accent, serif hierarchy, monospace data.
+   Palette and type scale adapted from mkmlman/trail (MIT). Trail defines only
+   green/red semantics, so the five severity steps are filled in from the same
+   Tailwind 400 family: bright enough to read as text on zinc, dark enough ink
+   on a solid badge. Dark only by design — there is no Trail light mode. */
+:root[data-theme="trail"] {
+  --bg: #18181b;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --ink: #f5f5f5;
+  --ink-secondary: rgba(228, 228, 231, 0.85);
+  /* Trail's own muted step is 0.75 alpha; raised to 0.9 because we use it for
+     11px labels, where 0.75 lands at 4.2:1 on a raised surface — under AA. */
+  --ink-muted: rgba(161, 161, 170, 0.9);
+  --accent: #a78bfa;        /* violet-400 — the accent as text/hairlines */
+  --accent-strong: #7c3aed; /* trail's violet — solid fills only */
+  --accent-ink: #f5f5f5;
+  --accent-soft: rgba(124, 58, 237, 0.12);
+  --badge-ink: #18181b;
+  --blue: #a78bfa;
+  --good: #4ade80;
+  --critical: #f87171;
+  --critical-soft: rgba(248, 113, 113, 0.14);
+  --high: #fb923c;
+  --high-soft: rgba(251, 146, 60, 0.13);
+  --medium: #fbbf24;
+  --medium-soft: rgba(251, 191, 36, 0.13);
+  --low: #2dd4bf;
+  --low-soft: rgba(45, 212, 191, 0.13);
+  --info: #a1a1aa;
+  --info-soft: rgba(161, 161, 170, 0.14);
+  /* "Minimal decoration": borders carry the separation, not shadows. */
+  --shadow: none;
+  color-scheme: dark;
+}
+
+/* Serif for hierarchy — but only where a heading has room to be one. Page
+   titles scale up so Georgia reads as a headline rather than as body text set
+   in the wrong face; card headings stay the sans micro-label they are, because
+   a serif at 13px next to its meta line reads as a mistake. Values keep the
+   sans tabular numerals: Trail's monospace is for dense data tables, and our
+   tiles are display numbers. */
+:root[data-theme="trail"] h1,
+:root[data-theme="trail"] .brand {
+  font-family: "Georgia", "Times New Roman", serif;
+  letter-spacing: -0.02em;
+}
+:root[data-theme="trail"] h1 { font-size: 26px; font-weight: 400; }
+:root[data-theme="trail"] .brand { font-weight: 600; }
+:root[data-theme="trail"] .evidence-table td {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", monospace;
+}
+:root[data-theme="trail"] .card { border-radius: 18px; }
+:root[data-theme="trail"] .tile,
+:root[data-theme="trail"] .mini { border-radius: 12px; }
+:root[data-theme="trail"] .topbar nav a.active { color: var(--ink); }
+
 * { box-sizing: border-box; }
 
 html { scrollbar-color: var(--border) transparent; }
@@ -139,19 +198,22 @@ a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 
-.theme-toggle {
+.theme-select {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--ink-secondary);
   border-radius: 8px;
-  width: 32px;
   height: 32px;
+  padding: 0 8px;
   cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  font-size: 12.5px;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
-.theme-toggle:hover { color: var(--ink); border-color: var(--ink-muted); transform: translateY(-1px); }
+.theme-select:hover { color: var(--ink); border-color: var(--ink-muted); }
+/* The dropdown list itself is painted by the OS, which ignores the parent's
+   transparent background — give it an opaque one it can actually use. */
+.theme-select option { background: var(--bg); color: var(--ink); }
 
 /* scan progress attached to topbar */
 .scanwrap { position: relative; }
