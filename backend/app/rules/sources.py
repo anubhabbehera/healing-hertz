@@ -60,6 +60,80 @@ def get(name: str) -> Source:
         raise KeyError(f"unknown source {name!r}; known sources: {known}") from None
 
 
+# --- devices ---------------------------------------------------------------
+
+# Rules display a device by whichever identifier it actually has, so the
+# fallbacks are bindings rather than something templates try to express.
+_DEVICE_BINDINGS = {
+    "device_id", "device_name", "device_model", "device_mac", "device_ip",
+    "device_state", "device_supported",
+    "device_firmware_version", "device_firmware_updatable",
+    "is_access_point", "is_switch", "is_gateway",
+    "name_or_model", "name_or_mac",
+}
+
+
+@register(
+    "devices",
+    _DEVICE_BINDINGS,
+    doc="Every adopted device, from the Integration API device list.",
+)
+def _devices(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    for d in snapshot.devices:
+        yield Row(
+            vars={
+                "device_id": d.id,
+                "device_name": d.name,
+                "device_model": d.model,
+                "device_mac": d.mac_address,
+                "device_ip": d.ip_address,
+                "device_state": d.state,
+                "device_supported": d.supported,
+                "device_firmware_version": d.firmware_version,
+                "device_firmware_updatable": d.firmware_updatable,
+                # Booleans rather than the raw feature list: a list is not a
+                # primitive, and every rule only ever asks "is it one of these".
+                "is_access_point": "accessPoint" in d.features,
+                "is_switch": "switching" in d.features,
+                "is_gateway": "gateway" in d.features,
+                "name_or_model": d.name or d.model,
+                "name_or_mac": d.name or d.mac_address,
+            },
+            subject_type="device",
+            subject_id=d.id,
+            subject_name=d.name,
+        )
+
+
+# --- pending devices -------------------------------------------------------
+
+_PENDING_BINDINGS = {
+    "pending_id", "pending_name", "pending_model", "pending_mac",
+    "name_or_model_or_mac",
+}
+
+
+@register(
+    "pending_devices",
+    _PENDING_BINDINGS,
+    doc="Devices visible on the network but not adopted into this site.",
+)
+def _pending_devices(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    for p in snapshot.pending_devices:
+        yield Row(
+            vars={
+                "pending_id": p.id,
+                "pending_name": p.name,
+                "pending_model": p.model,
+                "pending_mac": p.mac_address,
+                "name_or_model_or_mac": p.name or p.model or p.mac_address,
+            },
+            subject_type="device",
+            subject_id=p.id,
+            subject_name=p.name,
+        )
+
+
 # --- device ports ----------------------------------------------------------
 
 _DEVICE_PORT_BINDINGS = {

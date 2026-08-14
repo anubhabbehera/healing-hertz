@@ -1,125 +1,10 @@
 from __future__ import annotations
 
-from typing import ClassVar
-
 from app.collectors.snapshot import Snapshot
 
 from .base import Category, Finding, RunHistory, Severity
 
 DAY_SEC = 86400
-
-
-class OfflineDevice:
-    id = "device.offline"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        return [
-            Finding(
-                rule_id=self.id,
-                severity=Severity.CRITICAL,
-                category=Category.DEVICE_HEALTH,
-                title=f"{d.name or d.model} is offline",
-                summary=f"Device {d.name or d.mac_address} ({d.model}) is not reachable by the controller.",
-                evidence={"device": d.name, "model": d.model, "mac": d.mac_address, "state": d.state},
-                recommendation=(
-                    "Check power and PoE on the device's switch port, verify the uplink cable, "
-                    "and power-cycle the device. If it stays offline, factory-reset and re-adopt."
-                ),
-                subject_type="device",
-                subject_id=d.id,
-                subject_name=d.name,
-            )
-            for d in snapshot.devices
-            if d.state == "OFFLINE"
-        ]
-
-
-class DegradedState:
-    id = "device.degraded_state"
-    _states: ClassVar[set[str]] = {
-        "CONNECTION_INTERRUPTED", "ISOLATED", "U5G_INCORRECT_TOPOLOGY"
-    }
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        return [
-            Finding(
-                rule_id=self.id,
-                severity=Severity.HIGH,
-                category=Category.DEVICE_HEALTH,
-                title=f"{d.name or d.model} is in state {d.state}",
-                summary=f"Device {d.name or d.mac_address} reports a degraded connection state ({d.state}).",
-                evidence={"device": d.name, "model": d.model, "state": d.state},
-                recommendation=(
-                    "Inspect the device's uplink path (cable, switch port, mesh signal). ISOLATED APs "
-                    "have lost their wired uplink; CONNECTION_INTERRUPTED often indicates flapping links."
-                ),
-                subject_type="device",
-                subject_id=d.id,
-                subject_name=d.name,
-            )
-            for d in snapshot.devices
-            if d.state in self._states
-        ]
-
-
-class PendingAdoption:
-    id = "device.pending_adoption"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = [
-            Finding(
-                rule_id=self.id,
-                severity=Severity.MEDIUM,
-                category=Category.DEVICE_HEALTH,
-                title=f"{p.name or p.model or p.mac_address} awaiting adoption",
-                summary="A UniFi device is visible on the network but not adopted into this site.",
-                evidence={"device": p.name, "model": p.model, "mac": p.mac_address},
-                recommendation="Adopt the device in the UniFi console, or remove it from the network if unexpected.",
-                subject_type="device",
-                subject_id=p.id,
-                subject_name=p.name,
-            )
-            for p in snapshot.pending_devices
-        ]
-        findings += [
-            Finding(
-                rule_id=self.id,
-                severity=Severity.MEDIUM,
-                category=Category.DEVICE_HEALTH,
-                title=f"{d.name or d.model} stuck in PENDING_ADOPTION",
-                summary="An adopted device has fallen back to pending-adoption state.",
-                evidence={"device": d.name, "model": d.model, "state": d.state},
-                recommendation="Re-adopt the device; if it loops, verify the inform URL and controller reachability.",
-                subject_type="device",
-                subject_id=d.id,
-                subject_name=d.name,
-            )
-            for d in snapshot.devices
-            if d.state == "PENDING_ADOPTION"
-        ]
-        return findings
-
-
-class UnsupportedDevice:
-    id = "device.unsupported"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        return [
-            Finding(
-                rule_id=self.id,
-                severity=Severity.LOW,
-                category=Category.DEVICE_HEALTH,
-                title=f"{d.name or d.model} is no longer supported",
-                summary="This device model is not fully supported by the current Network application.",
-                evidence={"device": d.name, "model": d.model, "firmware": d.firmware_version},
-                recommendation="Plan a hardware refresh; unsupported devices stop receiving security fixes.",
-                subject_type="device",
-                subject_id=d.id,
-                subject_name=d.name,
-            )
-            for d in snapshot.devices
-            if not d.supported
-        ]
 
 
 class HighCpu:
@@ -284,31 +169,6 @@ class RebootLoop:
                 )
             )
         return findings
-
-
-class FirmwareUpdateAvailable:
-    id = "firmware.update_available"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        return [
-            Finding(
-                rule_id=self.id,
-                severity=Severity.MEDIUM,
-                category=Category.FIRMWARE,
-                title=f"Firmware update available for {d.name or d.model}",
-                summary=f"{d.name or d.mac_address} is on {d.firmware_version} with an update available.",
-                evidence={"device": d.name, "model": d.model, "currentFirmware": d.firmware_version},
-                recommendation=(
-                    "Review the release notes and update during a maintenance window. Keep all APs on "
-                    "the same firmware to avoid roaming quirks."
-                ),
-                subject_type="device",
-                subject_id=d.id,
-                subject_name=d.name,
-            )
-            for d in snapshot.devices
-            if d.firmware_updatable
-        ]
 
 
 class StaleUptime:

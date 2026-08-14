@@ -1,31 +1,98 @@
 # Device reachability, state, resource pressure and firmware.
 #
-# Each entry is one diagnostic check. `kind: python` means the predicate still
-# lives in app/rules/device_health.py; the catalog owns the rule's identity and metadata.
+# `kind: declarative` rules express their predicate and prose here. `kind: python`
+# means the algorithm is too involved to be data and stays in
+# app/rules/device_health.py; the catalog still owns the rule's identity and
+# metadata.
+#
 # Entry order here is evaluation order, which is user-visible: findings are sorted
 # by severity with a stable sort, so within a severity band they appear in the
 # order their rules ran.
 
 rules:
   - id: device.offline
-    kind: python
-    impl: app.rules.device_health:OfflineDevice
+    kind: declarative
     category: device_health
+    emits:
+      - source: devices
+        where: [device_state, eq, OFFLINE]
+        severity: critical
+        title: "{name_or_model} is offline"
+        summary: "Device {name_or_mac} ({device_model}) is not reachable by the controller."
+        recommendation: >-
+          Check power and PoE on the device's switch port, verify the uplink cable,
+          and power-cycle the device. If it stays offline, factory-reset and re-adopt.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          mac: {raw: device_mac}
+          state: {raw: device_state}
 
   - id: device.degraded_state
-    kind: python
-    impl: app.rules.device_health:DegradedState
+    kind: declarative
     category: device_health
+    emits:
+      - source: devices
+        where:
+          - device_state
+          - in
+          - [CONNECTION_INTERRUPTED, ISOLATED, U5G_INCORRECT_TOPOLOGY]
+        severity: high
+        title: "{name_or_model} is in state {device_state}"
+        summary: "Device {name_or_mac} reports a degraded connection state ({device_state})."
+        recommendation: >-
+          Inspect the device's uplink path (cable, switch port, mesh signal). ISOLATED APs
+          have lost their wired uplink; CONNECTION_INTERRUPTED often indicates flapping links.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          state: {raw: device_state}
 
+  # Two ways to be un-adopted: never adopted (visible but not claimed), or
+  # adopted and fallen back. Same rule id, so they share a dismissal.
   - id: device.pending_adoption
-    kind: python
-    impl: app.rules.device_health:PendingAdoption
+    kind: declarative
     category: device_health
+    emits:
+      - source: pending_devices
+        severity: medium
+        title: "{name_or_model_or_mac} awaiting adoption"
+        summary: "A UniFi device is visible on the network but not adopted into this site."
+        recommendation: >-
+          Adopt the device in the UniFi console, or remove it from the network if unexpected.
+        evidence:
+          device: {raw: pending_name}
+          model: {raw: pending_model}
+          mac: {raw: pending_mac}
+
+      - source: devices
+        where: [device_state, eq, PENDING_ADOPTION]
+        severity: medium
+        title: "{name_or_model} stuck in PENDING_ADOPTION"
+        summary: "An adopted device has fallen back to pending-adoption state."
+        recommendation: >-
+          Re-adopt the device; if it loops, verify the inform URL and controller reachability.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          state: {raw: device_state}
 
   - id: device.unsupported
-    kind: python
-    impl: app.rules.device_health:UnsupportedDevice
+    kind: declarative
     category: device_health
+    emits:
+      - source: devices
+        where: [device_supported, eq, false]
+        severity: low
+        title: "{name_or_model} is no longer supported"
+        summary: >-
+          This device model is not fully supported by the current Network application.
+        recommendation: >-
+          Plan a hardware refresh; unsupported devices stop receiving security fixes.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          firmware: {raw: device_firmware_version}
 
   - id: device.high_cpu
     kind: python
@@ -58,9 +125,21 @@ rules:
     category: device_health
 
   - id: firmware.update_available
-    kind: python
-    impl: app.rules.device_health:FirmwareUpdateAvailable
+    kind: declarative
     category: firmware
+    emits:
+      - source: devices
+        where: [device_firmware_updatable, eq, true]
+        severity: medium
+        title: "Firmware update available for {name_or_model}"
+        summary: "{name_or_mac} is on {device_firmware_version} with an update available."
+        recommendation: >-
+          Review the release notes and update during a maintenance window. Keep all APs on
+          the same firmware to avoid roaming quirks.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          currentFirmware: {raw: device_firmware_version}
 
   - id: firmware.version_drift
     kind: python

@@ -179,24 +179,35 @@ def test_template_naming_an_unknown_binding_is_rejected():
 # --- source contract -------------------------------------------------------
 
 
-async def test_sources_yield_only_their_declared_bindings(snapshot):
-    from app.rules.base import RunHistory
+async def _rows_by_source():
+    """Every row every source produces, across all scenarios."""
+    from tests.rule_scenarios import SCENARIOS, build_snapshot
 
-    for name, source in sources.REGISTRY.items():
-        rows = list(source.iterate(snapshot, RunHistory()))
-        assert rows, f"source {name!r} yielded nothing on the demo snapshot"
+    out: dict[str, list] = {name: [] for name in sources.REGISTRY}
+    for scenario in SCENARIOS:
+        snapshot = await build_snapshot(scenario)
+        for name, source in sources.REGISTRY.items():
+            out[name].extend(source.iterate(snapshot, scenario.history))
+    return out
+
+
+async def test_sources_yield_only_their_declared_bindings():
+    """A source's declared bindings are what rules validate against, so they
+    must match what it actually yields -- otherwise validation passes and the
+    scan KeyErrors."""
+    for name, rows in (await _rows_by_source()).items():
+        declared = set(sources.REGISTRY[name].bindings)
+        assert rows, f"source {name!r} yields nothing in any scenario"
         for row in rows:
-            assert set(row.vars) == set(source.bindings), (
+            assert set(row.vars) == declared, (
                 f"source {name!r} yields keys that differ from its declared bindings"
             )
 
 
-async def test_source_bindings_are_primitives(snapshot):
+async def test_source_bindings_are_primitives():
     """Templates must have nothing to traverse, even if the validator is bypassed."""
-    from app.rules.base import RunHistory
-
-    for name, source in sources.REGISTRY.items():
-        for row in source.iterate(snapshot, RunHistory()):
+    for name, rows in (await _rows_by_source()).items():
+        for row in rows:
             for key, value in row.vars.items():
                 assert isinstance(value, PRIMITIVES), f"{name}.{key} is {type(value)}"
 
