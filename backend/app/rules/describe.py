@@ -27,21 +27,6 @@ from .loader import CATALOG_DIR, DisabledRule, Provenance, user_rules_dir
 from .schema import DeclarativeEntry, PythonEntry, SeveritySpec
 from .sources import REGISTRY as SOURCE_REGISTRY
 
-# The upstream project. Hardcoded rather than read from git: there is no .git in
-# a container, and a request path should not depend on one. A fork's rules will
-# link upstream, which is why the UI labels the link and keeps copy-path primary.
-REPO_URL = "https://github.com/anubhabbehera/healing-hertz"
-# No revision is available at runtime -- the Dockerfile declares ARG REVISION but
-# only consumes it in a LABEL -- so links point at the default branch and say so.
-REPO_REF = "main"
-
-_CATALOG_REPO_DIR = "backend/app/rules/catalog"
-_RULES_REPO_DIR = "backend/app/rules"
-
-
-def _github(repo_path: str) -> str:
-    return f"{REPO_URL}/blob/{REPO_REF}/{repo_path}"
-
 
 def path_scope() -> str:
     """Whether the paths this module reports mean anything outside the process.
@@ -59,21 +44,23 @@ def _is_user_rule(rule_id: str) -> bool:
 
 
 def _catalog_file(provenance: Provenance, rule_id: str) -> dict:
-    """Where a rule's YAML lives, in every form that might be useful."""
+    """Where a rule's YAML lives on this machine.
+
+    ``editable`` is what the UI keys its controls off: a rule in RULES_DIR is
+    the operator's to change, a built-in one ships with the app and is switched
+    off through the overrides file instead.
+    """
     if _is_user_rule(rule_id):
         directory = user_rules_dir()
         return {
             "name": provenance.file,
             "path": str(directory / provenance.file) if directory else None,
-            "repo_path": None,
-            "github_url": None,
+            "editable": True,
         }
-    repo_path = f"{_CATALOG_REPO_DIR}/{provenance.file}"
     return {
         "name": provenance.file,
         "path": str(CATALOG_DIR / provenance.file),
-        "repo_path": repo_path,
-        "github_url": _github(repo_path),
+        "editable": False,
     }
 
 
@@ -140,7 +127,6 @@ def _impl_info(rule: Any) -> dict:
     """
     cls = type(rule.impl)
     module = cls.__module__
-    repo_path = f"{_RULES_REPO_DIR}/{module.rsplit('.', 1)[-1]}.py"
     try:
         line = inspect.getsourcelines(cls)[1]
         path = inspect.getfile(cls)
@@ -154,8 +140,6 @@ def _impl_info(rule: Any) -> dict:
         "doc": doc.split("\n\n", 1)[0],
         "path": path,
         "line": line,
-        "repo_path": repo_path,
-        "github_url": _github(repo_path),
     }
 
 
@@ -216,7 +200,6 @@ def describe_disabled(disabled: DisabledRule) -> dict:
 def describe_unsupported(check: UnsupportedCheck, enrichment: str | None,
                          configured: bool) -> dict:
     """A check that cannot run until an integration supplies its data."""
-    repo_path = f"{_RULES_REPO_DIR}/unsupported.py"
     return {
         "id": check.rule_id,
         "kind": "none",
@@ -233,8 +216,7 @@ def describe_unsupported(check: UnsupportedCheck, enrichment: str | None,
         "source_file": {
             "name": "unsupported.py",
             "path": str(Path(__file__).parent / "unsupported.py"),
-            "repo_path": repo_path,
-            "github_url": _github(repo_path),
+            "editable": False,
         },
         "emits": [],
     }
@@ -256,8 +238,7 @@ def describe_problem(problem: UnsupportedCheck) -> dict:
         "source_file": {
             "name": name,
             "path": str(directory / name) if directory else None,
-            "repo_path": None,
-            "github_url": None,
+            "editable": True,
         },
         "emits": [],
     }
