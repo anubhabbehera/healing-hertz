@@ -60,6 +60,29 @@ to reach.
 Each finding comes with the **evidence** behind it — the actual channel, the actual
 CPU percentage — so you can judge it yourself rather than taking the tool's word.
 
+### Adding your own checks
+
+Every check is a YAML entry in a rule catalog, not code — so you can add your own
+without forking. Point `RULES_DIR` at a directory of rule files and they load
+alongside the built-in ones:
+
+```yaml
+- id: custom.spare_port
+  kind: declarative
+  category: wired
+  emits:
+    - source: device_ports
+      where: [port_state, eq, DOWN]
+      severity: info
+      title: "{device_name} port {port_idx} is down"
+      summary: "Port {port_idx} on {device_name} has no link."
+      recommendation: "Nothing to do if the port is deliberately unused."
+```
+
+A file that doesn't parse is skipped and reported in the UI rather than failing
+your scan. See **[docs/rules.md](docs/rules.md)** for the full syntax — sources,
+predicates, severity grading and aggregation.
+
 ## Health score, trends and history
 
 Every scan produces a score out of 100. Findings cost points by severity, so the number
@@ -285,8 +308,8 @@ build up history.
 ## Contributing
 
 Bug reports, new diagnostic checks and improvements are welcome — see
-[CONTRIBUTING.md](CONTRIBUTING.md) for how the project is put together and how to add
-your own checks.
+[CONTRIBUTING.md](CONTRIBUTING.md) for how the project is put together, and
+[docs/rules.md](docs/rules.md) for the rule syntax in full.
 
 ## Licence
 

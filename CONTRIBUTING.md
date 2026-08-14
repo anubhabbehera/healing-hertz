@@ -72,6 +72,10 @@ frontend/src/
 
 This is the most valuable contribution, and most checks are pure YAML.
 
+> **[docs/rules.md](docs/rules.md) is the full reference** — every source and its
+> bindings, all operators, severity grading, computed values, aggregation, and
+> the Python escape hatch. What follows is the short version.
+
 Every rule is declared in the catalog at `app/rules/catalog/`, one file per area.
 The catalog is the registry: it owns each check's id, category, severity,
 thresholds and prose. Most rules express their logic there too; a few whose
