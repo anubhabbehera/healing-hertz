@@ -46,6 +46,13 @@ jobs:
       - name: Lint (ruff + tsc)
         run: make lint
 
+      # The rule catalog is data, so a bad edit is not a syntax error anywhere.
+      # Checking it loads catches a malformed entry here rather than at the
+      # first scan, where a silently-reduced rule set would report a network as
+      # healthier than it is.
+      - name: Validate rule catalog
+        run: make validate-rules
+
       - name: Test
         run: make coverage
 
