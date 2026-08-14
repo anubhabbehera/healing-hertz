@@ -427,3 +427,40 @@ def test_every_rule_keeps_its_prose_in_the_catalog():
         if isinstance(r, CatalogRule) and not r.emits
     ]
     assert silent == []
+
+
+# --- documentation --------------------------------------------------------
+
+
+def _documented_sources():
+    """Parse the source table out of the Sources section of docs/rules.md."""
+    import re
+    from pathlib import Path
+
+    doc = (Path(__file__).parents[2] / "docs" / "rules.md").read_text()
+    section = doc.split("\n## Sources\n", 1)[1].split("\n## ", 1)[0]
+    out = {}
+    for line in section.splitlines():
+        m = re.match(r"^\|\s*`(\w+)`\s*\|[^|]*\|(.+?)\|\s*$", line)
+        if m:
+            out[m.group(1)] = set(re.findall(r"`(\w+)`", m.group(2)))
+    return out
+
+
+def test_docs_list_every_source():
+    """A source nobody documented is a source nobody can use."""
+    documented = _documented_sources()
+    assert set(documented) == set(sources.REGISTRY), (
+        "docs/rules.md source table is out of sync with the registry"
+    )
+
+
+def test_docs_list_every_binding():
+    """Binding tables rot silently; this is what stops them."""
+    for name, documented in _documented_sources().items():
+        actual = set(sources.REGISTRY[name].bindings)
+        assert documented == actual, (
+            f"docs/rules.md bindings for {name!r} are out of sync: "
+            f"missing {sorted(actual - documented)}, "
+            f"stale {sorted(documented - actual)}"
+        )
