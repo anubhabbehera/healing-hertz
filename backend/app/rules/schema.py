@@ -117,10 +117,74 @@ class RawValue(CatalogModel):
     raw: str
 
 
+class Escalation(CatalogModel):
+    when: Predicate
+    to: Severity
+
+
+class SeveritySpec(CatalogModel):
+    """A severity graded by the value that matched.
+
+    Escalations are tried in order and the first match wins, falling back to
+    ``base``.
+    """
+
+    base: Severity
+    escalate: list[Escalation] = Field(default_factory=list)
+
+
+# --- computed values -------------------------------------------------------
+#
+# Templates do no arithmetic. Anything a rule's prose needs beyond a raw
+# binding is named here first, which is what keeps a replacement field a bare
+# identifier and therefore safe to validate.
+#
+# This vocabulary is deliberately closed. A rule that needs an operation not
+# listed is a rule whose logic is not data; it belongs in a Python impl. Resist
+# adding one op per rule -- that is how a small set of names turns into an
+# expression language by accretion.
+
+
+class FloorDivOp(CatalogModel):
+    """Integer division, e.g. seconds to whole days."""
+
+    op: Literal["floordiv"]
+    of: str
+    by: float
+
+
+class RatioOp(CatalogModel):
+    """of / per. Null when either side is missing, or the denominator is <= 0."""
+
+    op: Literal["ratio"]
+    of: str
+    per: str
+
+
+class ScaleOp(CatalogModel):
+    op: Literal["scale"]
+    of: str
+    by: float
+
+
+class RoundOp(CatalogModel):
+    op: Literal["round"]
+    of: str
+    digits: int = 0
+
+
+RowCompute = Annotated[
+    FloorDivOp | RatioOp | ScaleOp | RoundOp,
+    Field(discriminator="op"),
+]
+
+
 class EmitBlock(CatalogModel):
     source: str
+    # Computed before `where`, so a predicate can test a derived value too.
+    compute: dict[str, RowCompute] = Field(default_factory=dict)
     where: Predicate | None = None
-    severity: Severity
+    severity: Severity | SeveritySpec
     # "source" takes the subject the source attached to the row (usually a
     # device); "site" makes the finding site-scoped.
     subject: Literal["source", "site"] = "source"

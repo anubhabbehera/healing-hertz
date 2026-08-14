@@ -134,6 +134,47 @@ def _pending_devices(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
         )
 
 
+# --- device telemetry ------------------------------------------------------
+
+_DEVICE_STATS_BINDINGS = {
+    "device_id", "device_name",
+    "uptime_sec", "cpu_pct", "memory_pct",
+    "load_1_min", "load_5_min", "load_15_min",
+    "uplink_tx_bps", "uplink_rx_bps",
+}
+
+
+@register(
+    "device_stats",
+    _DEVICE_STATS_BINDINGS,
+    doc="Per-device telemetry, joined to device details for a display name.",
+)
+def _device_stats(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    for dev_id, stats in snapshot.device_stats.items():
+        detail = snapshot.device_details.get(dev_id)
+        # Stats can arrive for a device the detail fetch missed; the id is a
+        # worse name than the real one but better than nothing.
+        name = detail.name if detail else dev_id
+        uplink = stats.uplink
+        yield Row(
+            vars={
+                "device_id": dev_id,
+                "device_name": name,
+                "uptime_sec": stats.uptime_sec,
+                "cpu_pct": stats.cpu_utilization_pct,
+                "memory_pct": stats.memory_utilization_pct,
+                "load_1_min": stats.load_average_1_min,
+                "load_5_min": stats.load_average_5_min,
+                "load_15_min": stats.load_average_15_min,
+                "uplink_tx_bps": uplink.tx_rate_bps if uplink else None,
+                "uplink_rx_bps": uplink.rx_rate_bps if uplink else None,
+            },
+            subject_type="device",
+            subject_id=dev_id,
+            subject_name=name,
+        )
+
+
 # --- radios of online access points ----------------------------------------
 
 _AP_RADIO_BINDINGS = {

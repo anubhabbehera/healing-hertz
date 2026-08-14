@@ -15,7 +15,15 @@ from app.collectors.snapshot import Snapshot
 from . import sources
 from .base import Category, Finding, RunHistory
 from .render import make_finding, render, template_fields, validate_template
-from .schema import AllOf, AnyOf, Comparison, DeclarativeEntry, EmitBlock, NotOf
+from .schema import (
+    AllOf,
+    AnyOf,
+    Comparison,
+    DeclarativeEntry,
+    EmitBlock,
+    NotOf,
+    SeveritySpec,
+)
 
 
 class RuleCompileError(Exception):
@@ -69,6 +77,50 @@ def matches(node: Any, bindings: dict[str, Any]) -> bool:
     raise RuleCompileError(f"unknown predicate node {node!r}")  # pragma: no cover
 
 
+# --- computed values -------------------------------------------------------
+
+
+def _apply_compute(spec: Any, bindings: dict[str, Any]) -> Any:
+    op = spec.op
+    if op == "ratio":
+        of, per = bindings.get(spec.of), bindings.get(spec.per)
+        # A non-positive denominator has no meaningful ratio, which is the same
+        # thing the Python rules said with an explicit `<= 0` guard.
+        if of is None or per is None or per <= 0:
+            return None
+        return of / per
+
+    value = bindings.get(spec.of)
+    if value is None:
+        return None
+    if op == "floordiv":
+        return int(value // spec.by)
+    if op == "scale":
+        return value * spec.by
+    if op == "round":
+        return round(value, spec.digits)
+    raise RuleCompileError(f"unknown compute op {op!r}")  # pragma: no cover - schema guards
+
+
+def _computed(block: EmitBlock, row_vars: dict[str, Any]) -> dict[str, Any]:
+    if not block.compute:
+        return row_vars
+    out = dict(row_vars)
+    for name, spec in block.compute.items():
+        out[name] = _apply_compute(spec, out)
+    return out
+
+
+def _severity_for(block: EmitBlock, bindings: dict[str, Any]) -> str:
+    spec = block.severity
+    if not isinstance(spec, SeveritySpec):
+        return spec
+    for step in spec.escalate:
+        if matches(step.when, bindings):
+            return step.to
+    return spec.base
+
+
 def _predicate_bindings(node: Any) -> set[str]:
     if isinstance(node, Comparison):
         return {node.binding}
@@ -104,22 +156,23 @@ class DeclarativeRule:
         for emit in self.emits:
             block = emit.block
             for row in emit.source.iterate(snapshot, history):
-                if block.where is not None and not matches(block.where, row.vars):
+                bindings = _computed(block, row.vars)
+                if block.where is not None and not matches(block.where, bindings):
                     continue
-                findings.append(self._build(block, row))
+                findings.append(self._build(block, row, bindings))
         return findings
 
-    def _build(self, block: EmitBlock, row: sources.Row) -> Finding:
+    def _build(self, block: EmitBlock, row: sources.Row, bindings: dict[str, Any]) -> Finding:
         where = f"{self.provenance}"
         site_scoped = block.subject == "site"
         return make_finding(
             rule_id=self.id,
             category=self.category,
-            severity=block.severity,
-            title=render(block.title, row.vars, where),
-            summary=render(block.summary, row.vars, where),
-            recommendation=render(block.recommendation, row.vars, where),
-            evidence={k: row.vars[v.raw] for k, v in block.evidence.items()},
+            severity=_severity_for(block, bindings),
+            title=render(block.title, bindings, where),
+            summary=render(block.summary, bindings, where),
+            recommendation=render(block.recommendation, bindings, where),
+            evidence={k: bindings[v.raw] for k, v in block.evidence.items()},
             subject_type="site" if site_scoped else row.subject_type,
             subject_id=None if site_scoped else row.subject_id,
             subject_name=None if site_scoped else row.subject_name,
@@ -135,8 +188,27 @@ def compile_declarative(entry: DeclarativeEntry, provenance: Any) -> Declarative
         except KeyError as exc:
             raise RuleCompileError(f"{where}: {exc}") from None
 
-        available = source.bindings
+        available = set(source.bindings)
+
+        # Computed values are resolved in declaration order, so each may read
+        # the source's bindings plus anything computed before it.
+        for name, spec in block.compute.items():
+            if name in source.bindings:
+                raise RuleCompileError(
+                    f"{where}: compute {name!r} shadows a binding of source {source.name!r}"
+                )
+            reads = {spec.of, spec.per} if spec.op == "ratio" else {spec.of}
+            missing = reads - available
+            if missing:
+                raise RuleCompileError(
+                    f"{where}: compute {name!r} reads {sorted(missing)}, "
+                    f"which is not available at that point"
+                )
+            available.add(name)
+
         unknown = _predicate_bindings(block.where) - available
+        for step in getattr(block.severity, "escalate", []):
+            unknown |= _predicate_bindings(step.when) - available
         if unknown:
             raise RuleCompileError(
                 f"{where}: predicate reads {sorted(unknown)}, "
@@ -145,7 +217,7 @@ def compile_declarative(entry: DeclarativeEntry, provenance: Any) -> Declarative
 
         for label, template in (("title", block.title), ("summary", block.summary),
                                 ("recommendation", block.recommendation)):
-            validate_template(template, set(available), f"{where}.{label}")
+            validate_template(template, available, f"{where}.{label}")
 
         for key, value in block.evidence.items():
             if value.raw not in available:
