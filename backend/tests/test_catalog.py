@@ -152,6 +152,50 @@ def test_unknown_class_is_rejected():
         _compile(_entry(impl="app.rules.wifi:NoSuchRule"))
 
 
+def test_unknown_severity_does_not_break_scoring():
+    """apply_dismissals re-scores every stored run; one bad string must not brick it."""
+    from app.rules import score_from_severities
+
+    assert score_from_severities(["critical", "high"]) == 100 - 25 - 10
+    # A severity the current code doesn't recognise costs nothing, but scoring
+    # still completes for the rest of the run.
+    assert score_from_severities(["critical", "wat", "high"]) == 100 - 25 - 10
+
+
+async def test_a_failing_rule_does_not_abort_the_scan(snapshot, monkeypatch):
+    import app.rules as rules_pkg
+    from app.rules import run_rules
+    from app.rules.base import Category
+    from app.rules.loader import CatalogRule, Provenance, load_catalog
+
+    class Exploding:
+        def evaluate(self, snapshot, history):
+            raise RuntimeError("boom")
+
+    broken = CatalogRule(
+        id="wifi.exploding",
+        category=Category.WIFI,
+        provenance=Provenance("test.yaml", "wifi.exploding"),
+        impl=Exploding(),
+    )
+    monkeypatch.setattr(rules_pkg, "load_catalog", lambda: [*load_catalog(), broken])
+
+    findings, unsupported = run_rules(snapshot)
+
+    assert findings, "the other rules must still have run"
+    failed = next(u for u in unsupported if u.rule_id == "wifi.exploding")
+    assert "boom" in failed.reason
+
+
+def test_extending_unsupported_does_not_mutate_shared_state():
+    """unsupported_checks() must hand back a fresh list, not a module-level one."""
+    from app.rules.unsupported import unsupported_checks
+
+    first = unsupported_checks()
+    first.append("scribble")
+    assert "scribble" not in unsupported_checks()
+
+
 def test_disabled_entry_is_not_loaded():
     """Disabling beats deleting: the id stays declared, so dismissals survive."""
     assert _compile(_entry(enabled=False)) == []
