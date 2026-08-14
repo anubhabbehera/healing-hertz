@@ -1,5 +1,22 @@
 {
   "demo_baseline": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -281,6 +298,23 @@
     ]
   },
   "degraded_and_pending": {
+    "order": [
+      "device.offline",
+      "device.degraded_state",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "device.pending_adoption",
+      "device.pending_adoption",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -545,6 +579,24 @@
     ]
   },
   "unsupported_device": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "device.unsupported",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -842,6 +894,26 @@
     ]
   },
   "memory_load_recent_reboot": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "device.high_memory",
+      "wired.uplink_negotiation",
+      "device.high_load",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "device.recent_reboot"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -1169,6 +1241,24 @@
     ]
   },
   "stale_uptime": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "device.stale_uptime",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -1465,6 +1555,25 @@
     ]
   },
   "reboot_loop": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "device.reboot_loop",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "device.recent_reboot"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -1777,6 +1886,24 @@
     ]
   },
   "narrow_5_width": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "wifi.narrow_5_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -2075,6 +2202,23 @@
     ]
   },
   "narrow_5_width_dense_stays_quiet": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -2356,6 +2500,24 @@
     ]
   },
   "legacy_radio_standard": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "wifi.legacy_radio_standard",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -2653,6 +2815,24 @@
     ]
   },
   "legacy_radio_standard_5ghz": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "wifi.legacy_radio_standard",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -2950,6 +3130,24 @@
     ]
   },
   "mesh_two_hops": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wifi.mesh_uplink",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -3247,6 +3445,24 @@
     ]
   },
   "mesh_topology_cycle": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wifi.mesh_uplink",
+      "wifi.mesh_uplink",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -3544,6 +3760,22 @@
     ]
   },
   "firmware_drift_cleared": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -3802,6 +4034,24 @@
     ]
   },
   "retries_worsening": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wifi.retries_worsening",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -4100,6 +4350,23 @@
     ]
   },
   "disabled_radio_channel_zero": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -4381,6 +4648,24 @@
     ]
   },
   "gateway_saturation": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "site.gateway_saturation",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -4679,6 +4964,23 @@
     ]
   },
   "no_wireless_clients": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.none_on_ap"
+    ],
     "findings": [
       {
         "rule_id": "clients.none_on_ap",
@@ -4959,6 +5261,25 @@
     ]
   },
   "rf_weak_and_roaming": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wifi.weak_rssi_clients",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "clients.excessive_roaming",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.excessive_roaming",
@@ -5271,6 +5592,26 @@
     ]
   },
   "rf_slow_band_load": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "capacity.ap_client_load",
+      "wifi.band_steering_ineffective",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "clients.slow_phy_rate"
+    ],
     "findings": [
       {
         "rule_id": "capacity.ap_client_load",
@@ -5622,6 +5963,26 @@
     ]
   },
   "wan_degraded": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "wan.latency_loss",
+      "wan.latency_loss",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "wan.latency_worsening",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -5949,6 +6310,23 @@
     ]
   },
   "wan_healthy_stays_quiet": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -6229,6 +6607,26 @@
     ]
   },
   "dns_spike": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "dns.security_blocks",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "dns.anomalies",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "dns.anomalies"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",
@@ -6577,6 +6975,23 @@
     ]
   },
   "all_enrichments_healthy": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
     "findings": [
       {
         "rule_id": "clients.unauthorized_guests",

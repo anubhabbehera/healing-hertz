@@ -32,6 +32,8 @@ async def test_findings_match_golden(scenario):
     expected = GOLDEN[scenario.name]
     actual = sorted((finding_dict(f) for f in findings), key=sort_key)
 
+    assert [f.rule_id for f in findings] == expected["order"], "emission order changed"
+
     # Compare rule-by-rule first: a wording change should point at the rule that
     # changed, not dump 30 findings of unrelated context.
     assert [f["rule_id"] for f in actual] == [f["rule_id"] for f in expected["findings"]]

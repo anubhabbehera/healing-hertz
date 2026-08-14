@@ -275,6 +275,11 @@ async def collect_all() -> dict:
         snapshot = await build_snapshot(scenario)
         findings, unsupported = run_rules(snapshot, scenario.history)
         out[scenario.name] = {
+            # Emission order is user-visible: run_rules sorts by severity only,
+            # and that sort is stable, so within a severity band the order is
+            # the rule registration order. Pinned separately from the sorted
+            # bodies so a reordering shows up as a one-line diff.
+            "order": [f.rule_id for f in findings],
             "findings": sorted((finding_dict(f) for f in findings), key=sort_key),
             "unsupported": sorted(u.rule_id for u in unsupported),
         }
