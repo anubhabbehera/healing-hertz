@@ -1,4 +1,6 @@
 import type {
+  RuleFilesResponse,
+  RuleSaveResult,
   RulesResponse,
   RuleValidation,
   CompareResponse,
@@ -66,6 +68,31 @@ export const api = {
       }),
     }),
   rules: () => request<RulesResponse>("/api/rules"),
+
+  ruleFiles: () => request<RuleFilesResponse>("/api/rules/files"),
+
+  saveRuleFile: (name: string, content: string) =>
+    request<RuleSaveResult>(`/api/rules/files/${encodeURIComponent(name)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    }),
+
+  deleteRuleFile: (name: string) =>
+    request<{ deleted: string; catalog: RulesResponse }>(
+      `/api/rules/files/${encodeURIComponent(name)}`,
+      { method: "DELETE" },
+    ),
+
+  setRuleOverride: (rule_id: string, disabled: boolean) =>
+    request<{ rule_id: string; disabled: boolean; catalog: RulesResponse }>(
+      "/api/rules/overrides",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rule_id, disabled }),
+      },
+    ),
 
   reloadRules: () => request<RulesResponse>("/api/rules/reload", { method: "POST" }),
 

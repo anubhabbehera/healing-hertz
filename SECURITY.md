@@ -25,7 +25,19 @@ vulnerability in the app — but reports of anything that *bypasses* the loopbac
 are very welcome.
 
 **It is read-only against UniFi.** Only `GET` requests are issued. A change that
-introduces a write path, or a way to coerce one, is a security issue.
+introduces a write path to your console, or a way to coerce one, is a security issue.
+
+**It writes your own rule files, and nothing else.** The Rules tab creates, edits and
+deletes diagnostic checks, because configuring them locally is the point of the tool.
+That write is bounded on every axis: only inside `RULES_DIR`, only names matching a
+strict pattern with no separators or traversal, only files ending `.yaml`, and only
+content that validates as a declarative rule — an invalid file is never written. A rule
+file cannot name Python to import, so it is data, not code. Nothing else on the
+filesystem is writable through the API, and no endpoint accepts a path.
+
+Because there is no authentication, that write is available to anyone who can reach the
+port, which is why the loopback default matters. A report of anything that escapes
+`RULES_DIR`, or turns rule content into code execution, is very welcome.
 
 ## Handling of credentials
 

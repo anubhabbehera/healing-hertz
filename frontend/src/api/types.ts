@@ -196,8 +196,8 @@ export interface RuleEmit {
 export interface RuleFile {
   name: string;
   path: string | null;
-  repo_path: string | null;
-  github_url: string | null;
+  /** True when the file lives in RULES_DIR and is the operator's to change. */
+  editable: boolean;
 }
 
 export interface RuleSummary {
@@ -215,8 +215,7 @@ export interface RuleSummary {
   enrichment?: string | null;
   enrichment_configured?: boolean;
   /** python only */
-  impl?: { ref: string; doc: string; path: string | null; line: number | null;
-           repo_path: string; github_url: string };
+  impl?: { ref: string; doc: string; path: string | null; line: number | null };
   provides?: string[];
 }
 
@@ -229,7 +228,8 @@ export interface SourceInfo {
 export interface RulesResponse {
   loaded_at: string;
   path_scope: "host" | "container";
-  repo_ref: string;
+  /** Rule ids switched off locally, via the overrides file. */
+  overrides: string[];
   rules_dir: { configured: boolean; path: string | null; exists: boolean };
   counts: Partial<Record<RuleStatus, number>>;
   categories: string[];
@@ -249,4 +249,22 @@ export interface RuleValidation {
     findings: { severity: Severity; title: string; summary: string;
                 subject_name: string | null }[];
   } | null;
+}
+
+export interface RuleFileContent {
+  name: string;
+  path: string;
+  content: string;
+}
+
+export interface RuleFilesResponse {
+  dir: string | null;
+  files: RuleFileContent[];
+}
+
+export interface RuleSaveResult extends RuleValidation {
+  saved: boolean;
+  name: string;
+  path: string;
+  catalog?: RulesResponse;
 }

@@ -310,6 +310,28 @@ built-ins. Empty by default, so a standard deployment gains no new surface.
 RULES_DIR=/etc/healing-hertz/rules.d
 ```
 
+**The Rules tab is the easiest way in.** It lists every check, and with
+`RULES_DIR` set it will build a rule, check it, and save it for you — creating,
+editing and deleting files in that directory. Content is validated before it is
+written, so an invalid rule never lands on disk. Everything it writes is plain
+YAML you can also edit by hand.
+
+### Turning a built-in check off
+
+You don't have to edit the shipped catalog — and in a container you can't, since
+those files are inside the image. Press **Disable** on any built-in rule and it
+is recorded in `RULES_DIR/_overrides.yaml`:
+
+```yaml
+disabled:
+  - wifi.dfs_channel
+  - device.recent_reboot
+```
+
+Your choice survives an upgrade, because the shipped catalog is untouched. Files
+starting with `_` are settings rather than rules, so the loader never reads this
+one looking for checks.
+
 The schema is identical, with two restrictions:
 
 - **Every id must start with `custom.`** Rule ids key dismissals and the

@@ -79,9 +79,14 @@ alongside the built-in ones:
       recommendation: "Nothing to do if the port is deliberately unused."
 ```
 
-A file that doesn't parse is skipped and reported in the UI rather than failing
-your scan. See **[docs/rules.md](docs/rules.md)** for the full syntax — sources,
-predicates, severity grading and aggregation.
+The **Rules** tab lists every check the app knows about and lets you write, edit
+and delete your own from the browser — it validates a rule before saving, so a
+broken one never lands on disk. You can also switch off any built-in check
+without editing the shipped files.
+
+Everything it writes is plain YAML you can edit by hand. See
+**[docs/rules.md](docs/rules.md)** for the full syntax — sources, predicates,
+severity grading and aggregation.
 
 ## Health score, trends and history
 
