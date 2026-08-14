@@ -22,7 +22,8 @@ from pydantic import ValidationError
 from app.collectors.snapshot import Snapshot
 
 from .base import Category, Finding, RunHistory
-from .schema import CatalogEntry, CatalogFile
+from .declarative import RuleCompileError, compile_declarative
+from .schema import CatalogEntry, CatalogFile, DeclarativeEntry, PythonEntry
 
 CATALOG_DIR = Path(__file__).parent / "catalog"
 
@@ -64,7 +65,7 @@ class CatalogRule:
         return self.impl.evaluate(snapshot, history)
 
 
-def _resolve_impl(entry: CatalogEntry, provenance: Provenance) -> object:
+def _resolve_impl(entry: PythonEntry, provenance: Provenance) -> object:
     """Import and instantiate the class an entry names.
 
     The module path is already constrained to ``app.rules.*`` by the schema, so
@@ -100,10 +101,10 @@ def _read_file(path: Path) -> list[CatalogEntry]:
         raise CatalogError(f"{path.name}: {exc}") from exc
 
 
-def compile_entries(entries: list[tuple[Path, CatalogEntry]]) -> list[CatalogRule]:
-    """Bind parsed entries to their implementations, rejecting duplicate ids."""
+def compile_entries(entries: list[tuple[Path, object]]) -> list[object]:
+    """Compile parsed entries into runnable rules, rejecting duplicate ids."""
     seen: dict[str, Provenance] = {}
-    rules: list[CatalogRule] = []
+    rules: list[object] = []
     for path, entry in entries:
         provenance = Provenance(path.name, entry.id)
         if entry.id in seen:
@@ -113,14 +114,21 @@ def compile_entries(entries: list[tuple[Path, CatalogEntry]]) -> list[CatalogRul
         seen[entry.id] = provenance
         if not entry.enabled:
             continue
-        rules.append(
-            CatalogRule(
-                id=entry.id,
-                category=entry.category,
-                provenance=provenance,
-                impl=_resolve_impl(entry, provenance),
+
+        if isinstance(entry, DeclarativeEntry):
+            try:
+                rules.append(compile_declarative(entry, provenance))
+            except RuleCompileError as exc:
+                raise CatalogError(str(exc)) from exc
+        else:
+            rules.append(
+                CatalogRule(
+                    id=entry.id,
+                    category=entry.category,
+                    provenance=provenance,
+                    impl=_resolve_impl(entry, provenance),
+                )
             )
-        )
     return rules
 
 

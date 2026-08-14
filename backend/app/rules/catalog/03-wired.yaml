@@ -1,21 +1,67 @@
 # Switch ports, PoE delivery and gateway uplink capacity.
 #
-# Each entry is one diagnostic check. `kind: python` means the predicate still
-# lives in app/rules/wired.py; the catalog owns the rule's identity and metadata.
+# `kind: declarative` rules express their predicate and prose here. `kind: python`
+# means the algorithm is too involved to be data and stays in app/rules/wired.py;
+# the catalog still owns the rule's identity and metadata.
+#
 # Entry order here is evaluation order, which is user-visible: findings are sorted
 # by severity with a stable sort, so within a severity band they appear in the
 # order their rules ran.
 
 rules:
   - id: wired.uplink_negotiation
-    kind: python
-    impl: app.rules.wired:UplinkNegotiation
+    kind: declarative
     category: wired
+    emits:
+      - source: device_ports
+        # A port that came up slower than it is capable of. Both comparisons are
+        # against the same constant, which is what the chained `speed <= 100 <
+        # max_speed` in the original said. A missing reading never matches.
+        where:
+          all:
+            - [port_state, eq, UP]
+            - [port_speed_mbps, lte, 100]
+            - [port_max_speed_mbps, gt, 100]
+        severity: high
+        title: >-
+          {device_name} port {port_idx} linked at {port_speed_mbps} Mbps (capable of
+          {port_max_speed_mbps})
+        summary: >-
+          Port {port_idx} on {device_name} negotiated only {port_speed_mbps} Mbps on a
+          faster-capable link — the classic signature of a damaged cable or bad
+          termination (a failed wire pair forces 100 Mbps).
+        recommendation: >-
+          Re-terminate or replace the cable on this port, then confirm it renegotiates
+          at full speed. Also check for a forced-speed setting.
+        evidence:
+          device: {raw: device_name}
+          port: {raw: port_idx}
+          speedMbps: {raw: port_speed_mbps}
+          maxSpeedMbps: {raw: port_max_speed_mbps}
+          connector: {raw: port_connector}
 
   - id: wired.poe_limited
-    kind: python
-    impl: app.rules.wired:PoeLimited
+    kind: declarative
     category: wired
+    emits:
+      # PoE state DOWN on an enabled port is normal (a non-PoE client is
+      # attached); only LIMITED signals a genuine power-delivery problem. A port
+      # with no PoE at all binds poe_state to null, which never equals LIMITED.
+      - source: device_ports
+        where: [poe_state, eq, LIMITED]
+        severity: medium
+        title: "PoE limited on {device_name} port {port_idx}"
+        summary: >-
+          Port {port_idx} on {device_name} is delivering limited PoE — the attached
+          device may be underpowered, causing instability or reduced performance.
+        recommendation: >-
+          Check the switch's total PoE budget and the attached device's power class;
+          move high-draw devices to a port/switch with headroom or use a PoE+ injector.
+        evidence:
+          device: {raw: device_name}
+          port: {raw: port_idx}
+          poeStandard: {raw: poe_standard}
+          poeState: {raw: poe_state}
 
   - id: site.gateway_saturation
     kind: python

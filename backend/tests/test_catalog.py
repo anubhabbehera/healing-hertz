@@ -74,10 +74,10 @@ def _compile(*entries):
     from pathlib import Path
 
     from app.rules.loader import compile_entries
-    from app.rules.schema import CatalogEntry
+    from app.rules.schema import CatalogEntryAdapter
 
     return compile_entries(
-        [(Path("test.yaml"), CatalogEntry.model_validate(e)) for e in entries]
+        [(Path("test.yaml"), CatalogEntryAdapter.validate_python(e)) for e in entries]
     )
 
 
@@ -91,11 +91,11 @@ def test_catalog_declares_every_rule_exactly_once():
 def test_catalog_entry_rejects_unknown_field():
     from pydantic import ValidationError
 
-    from app.rules.schema import CatalogEntry
+    from app.rules.schema import CatalogEntryAdapter
 
     # A typo'd key must fail loudly rather than ship an empty field to the UI.
     with pytest.raises(ValidationError):
-        CatalogEntry.model_validate(_entry(recomendation="oops"))
+        CatalogEntryAdapter.validate_python(_entry(recomendation="oops"))
 
 
 @pytest.mark.parametrize(
@@ -112,29 +112,29 @@ def test_catalog_entry_rejects_impl_outside_package(bad_impl):
     """impl is an import target, so the catalog must never reach outside app.rules."""
     from pydantic import ValidationError
 
-    from app.rules.schema import CatalogEntry
+    from app.rules.schema import CatalogEntryAdapter
 
     with pytest.raises(ValidationError):
-        CatalogEntry.model_validate(_entry(impl=bad_impl))
+        CatalogEntryAdapter.validate_python(_entry(impl=bad_impl))
 
 
 @pytest.mark.parametrize("bad_id", ["nodots", "Wifi.Upper", "wifi..double", "1wifi.x", ""])
 def test_catalog_entry_rejects_malformed_rule_id(bad_id):
     from pydantic import ValidationError
 
-    from app.rules.schema import CatalogEntry
+    from app.rules.schema import CatalogEntryAdapter
 
     with pytest.raises(ValidationError):
-        CatalogEntry.model_validate(_entry(id=bad_id))
+        CatalogEntryAdapter.validate_python(_entry(id=bad_id))
 
 
 def test_catalog_entry_rejects_unknown_category():
     from pydantic import ValidationError
 
-    from app.rules.schema import CatalogEntry
+    from app.rules.schema import CatalogEntryAdapter
 
     with pytest.raises(ValidationError):
-        CatalogEntry.model_validate(_entry(category="not_a_category"))
+        CatalogEntryAdapter.validate_python(_entry(category="not_a_category"))
 
 
 def test_duplicate_rule_id_is_rejected():
