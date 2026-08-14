@@ -1,19 +1,11 @@
 from collections.abc import Iterable
+from typing import Any
 
 from app.collectors.snapshot import Snapshot
 
-from . import clients, device_health, dns, wan, wifi, wired
 from .base import Finding, RunHistory, Severity, UnsupportedCheck
+from .loader import load_catalog
 from .unsupported import unsupported_checks
-
-RULES = [
-    *device_health.RULES,
-    *wifi.RULES,
-    *wired.RULES,
-    *clients.RULES,
-    *wan.RULES,
-    *dns.RULES,
-]
 
 _SEVERITY_ORDER = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
 _PENALTY = {
@@ -25,12 +17,24 @@ _PENALTY = {
 }
 
 
+def __getattr__(name: str) -> Any:
+    """Expose RULES without building the catalog at import time.
+
+    Loading eagerly would turn a malformed catalog into an ImportError that
+    breaks unrelated tests confusingly; this way it surfaces where it belongs,
+    as an error from the scan that needed it.
+    """
+    if name == "RULES":
+        return load_catalog()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 def run_rules(
     snapshot: Snapshot, history: RunHistory | None = None
 ) -> tuple[list[Finding], list[UnsupportedCheck]]:
     history = history or RunHistory()
     findings: list[Finding] = []
-    for rule in RULES:
+    for rule in load_catalog():
         findings.extend(rule.evaluate(snapshot, history))
     findings.sort(key=lambda f: _SEVERITY_ORDER.index(f.severity))
     return findings, unsupported_checks(snapshot)

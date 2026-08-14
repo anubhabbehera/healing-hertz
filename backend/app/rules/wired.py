@@ -123,6 +123,3 @@ class GatewaySaturation:
                 )
             )
         return findings
-
-
-RULES = [UplinkNegotiation(), PoeLimited(), GatewaySaturation()]

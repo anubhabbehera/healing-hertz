@@ -1,0 +1,38 @@
+# Connected-client population, authorisation and airtime behaviour.
+#
+# Each entry is one diagnostic check. `kind: python` means the predicate still
+# lives in app/rules/clients.py; the catalog owns the rule's identity and metadata.
+# Entry order here is evaluation order, which is user-visible: findings are sorted
+# by severity with a stable sort, so within a severity band they appear in the
+# order their rules ran.
+
+rules:
+  - id: clients.none_on_ap
+    kind: python
+    impl: app.rules.clients:NoWirelessClients
+    category: clients
+
+  - id: clients.unauthorized_guests
+    kind: python
+    impl: app.rules.clients:UnauthorizedGuests
+    category: clients
+
+  - id: clients.excessive_roaming
+    kind: python
+    impl: app.rules.clients:ExcessiveRoaming
+    category: wifi
+
+  - id: clients.slow_phy_rate
+    kind: python
+    impl: app.rules.clients:SlowPhyRate
+    category: wifi
+
+  - id: capacity.ap_client_load
+    kind: python
+    impl: app.rules.clients:ApClientLoad
+    category: capacity
+
+  - id: wifi.band_steering_ineffective
+    kind: python
+    impl: app.rules.clients:BandSteeringIneffective
+    category: wifi

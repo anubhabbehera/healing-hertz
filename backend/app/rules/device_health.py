@@ -385,19 +385,3 @@ class MixedApFirmware:
                 ),
             )
         ]
-
-
-RULES = [
-    OfflineDevice(),
-    DegradedState(),
-    PendingAdoption(),
-    UnsupportedDevice(),
-    HighCpu(),
-    HighMemory(),
-    HighLoad(),
-    RecentReboot(),
-    RebootLoop(),
-    StaleUptime(),
-    FirmwareUpdateAvailable(),
-    MixedApFirmware(),
-]

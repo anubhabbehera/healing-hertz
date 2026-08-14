@@ -84,6 +84,3 @@ class DnsBlockedSpike:
                 ),
             ))
         return findings
-
-
-RULES = [DnsSecurityBlocks(), DnsBlockedSpike()]

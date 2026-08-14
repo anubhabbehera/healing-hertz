@@ -55,3 +55,104 @@ def test_golden_covers_every_registered_rule():
 def test_golden_is_not_empty():
     assert len(GOLDEN) == len(SCENARIOS)
     assert sum(len(s["findings"]) for s in GOLDEN.values()) > 300
+
+
+# --- catalog loading and validation ---------------------------------------
+
+
+def _entry(**over):
+    base = {
+        "id": "wifi.dfs_channel",
+        "kind": "python",
+        "impl": "app.rules.wifi:DfsChannel",
+        "category": "wifi",
+    }
+    return {**base, **over}
+
+
+def _compile(*entries):
+    from pathlib import Path
+
+    from app.rules.loader import compile_entries
+    from app.rules.schema import CatalogEntry
+
+    return compile_entries(
+        [(Path("test.yaml"), CatalogEntry.model_validate(e)) for e in entries]
+    )
+
+
+def test_catalog_declares_every_rule_exactly_once():
+    from app.rules.loader import load_catalog
+
+    ids = [r.id for r in load_catalog()]
+    assert len(ids) == len(set(ids)) == 35
+
+
+def test_catalog_entry_rejects_unknown_field():
+    from pydantic import ValidationError
+
+    from app.rules.schema import CatalogEntry
+
+    # A typo'd key must fail loudly rather than ship an empty field to the UI.
+    with pytest.raises(ValidationError):
+        CatalogEntry.model_validate(_entry(recomendation="oops"))
+
+
+@pytest.mark.parametrize(
+    "bad_impl",
+    [
+        "os:system",                     # outside the package entirely
+        "app.evil:Thing",                # right prefix, wrong package
+        "app.rules.wifi.DfsChannel",     # dot instead of colon
+        "app.rules..wifi:DfsChannel",
+        "builtins:eval",
+    ],
+)
+def test_catalog_entry_rejects_impl_outside_package(bad_impl):
+    """impl is an import target, so the catalog must never reach outside app.rules."""
+    from pydantic import ValidationError
+
+    from app.rules.schema import CatalogEntry
+
+    with pytest.raises(ValidationError):
+        CatalogEntry.model_validate(_entry(impl=bad_impl))
+
+
+@pytest.mark.parametrize("bad_id", ["nodots", "Wifi.Upper", "wifi..double", "1wifi.x", ""])
+def test_catalog_entry_rejects_malformed_rule_id(bad_id):
+    from pydantic import ValidationError
+
+    from app.rules.schema import CatalogEntry
+
+    with pytest.raises(ValidationError):
+        CatalogEntry.model_validate(_entry(id=bad_id))
+
+
+def test_catalog_entry_rejects_unknown_category():
+    from pydantic import ValidationError
+
+    from app.rules.schema import CatalogEntry
+
+    with pytest.raises(ValidationError):
+        CatalogEntry.model_validate(_entry(category="not_a_category"))
+
+
+def test_duplicate_rule_id_is_rejected():
+    """Two rules sharing an id would collide in dismissals and run diffs."""
+    from app.rules.loader import CatalogError
+
+    with pytest.raises(CatalogError, match="duplicate rule id"):
+        _compile(_entry(), _entry(impl="app.rules.wifi:Wide24Width"))
+
+
+def test_unknown_class_is_rejected():
+    from app.rules.loader import CatalogError
+
+    with pytest.raises(CatalogError, match="no attribute"):
+        _compile(_entry(impl="app.rules.wifi:NoSuchRule"))
+
+
+def test_disabled_entry_is_not_loaded():
+    """Disabling beats deleting: the id stays declared, so dismissals survive."""
+    assert _compile(_entry(enabled=False)) == []
+    assert len(_compile(_entry())) == 1

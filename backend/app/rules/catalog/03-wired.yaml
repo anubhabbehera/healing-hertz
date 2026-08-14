@@ -1,0 +1,23 @@
+# Switch ports, PoE delivery and gateway uplink capacity.
+#
+# Each entry is one diagnostic check. `kind: python` means the predicate still
+# lives in app/rules/wired.py; the catalog owns the rule's identity and metadata.
+# Entry order here is evaluation order, which is user-visible: findings are sorted
+# by severity with a stable sort, so within a severity band they appear in the
+# order their rules ran.
+
+rules:
+  - id: wired.uplink_negotiation
+    kind: python
+    impl: app.rules.wired:UplinkNegotiation
+    category: wired
+
+  - id: wired.poe_limited
+    kind: python
+    impl: app.rules.wired:PoeLimited
+    category: wired
+
+  - id: site.gateway_saturation
+    kind: python
+    impl: app.rules.wired:GatewaySaturation
+    category: capacity

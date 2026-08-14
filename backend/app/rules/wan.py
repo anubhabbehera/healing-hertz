@@ -81,6 +81,3 @@ class WanLatencyWorsening:
                 "QoS misconfiguration, or ISP degradation."
             ),
         )]
-
-
-RULES = [WanLatencyLoss(), WanLatencyWorsening()]

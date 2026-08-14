@@ -67,9 +67,6 @@ class UnauthorizedGuests:
         ]
 
 
-RULES = [NoWirelessClients(), UnauthorizedGuests()]
-
-
 class ExcessiveRoaming:
     id = "clients.excessive_roaming"
     _threshold = 10  # roam events per client per 24h
@@ -219,6 +216,3 @@ class BandSteeringIneffective:
                 "will stay on 2.4 GHz on their own."
             ),
         )]
-
-
-RULES += [ExcessiveRoaming(), SlowPhyRate(), ApClientLoad(), BandSteeringIneffective()]

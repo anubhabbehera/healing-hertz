@@ -1,0 +1,18 @@
+# Internet path latency and packet loss.
+#
+# Each entry is one diagnostic check. `kind: python` means the predicate still
+# lives in app/rules/wan.py; the catalog owns the rule's identity and metadata.
+# Entry order here is evaluation order, which is user-visible: findings are sorted
+# by severity with a stable sort, so within a severity band they appear in the
+# order their rules ran.
+
+rules:
+  - id: wan.latency_loss
+    kind: python
+    impl: app.rules.wan:WanLatencyLoss
+    category: capacity
+
+  - id: wan.latency_worsening
+    kind: python
+    impl: app.rules.wan:WanLatencyWorsening
+    category: capacity

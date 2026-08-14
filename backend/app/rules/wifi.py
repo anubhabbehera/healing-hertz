@@ -414,12 +414,6 @@ class RetriesWorsening:
         return findings
 
 
-RULES: list = [
-    Bad24Channel(), ChannelOverlap(), Wide24Width(), DfsChannel(), Narrow5Width(),
-    LegacyRadioStandard(), MeshUplink(), HighRetries(), RetriesWorsening(),
-]
-
-
 class WeakRssiClients:
     id = "wifi.weak_rssi_clients"
 
@@ -449,6 +443,3 @@ class WeakRssiClients:
                 "raise minimum RSSI on the AP so distant clients roam instead of clinging."
             ),
         )]
-
-
-RULES.append(WeakRssiClients())

@@ -1,0 +1,58 @@
+# Radio configuration, channel planning, mesh topology and RF quality.
+#
+# Each entry is one diagnostic check. `kind: python` means the predicate still
+# lives in app/rules/wifi.py; the catalog owns the rule's identity and metadata.
+# Entry order here is evaluation order, which is user-visible: findings are sorted
+# by severity with a stable sort, so within a severity band they appear in the
+# order their rules ran.
+
+rules:
+  - id: wifi.bad_24_channel
+    kind: python
+    impl: app.rules.wifi:Bad24Channel
+    category: wifi
+
+  - id: wifi.channel_overlap
+    kind: python
+    impl: app.rules.wifi:ChannelOverlap
+    category: wifi
+
+  - id: wifi.wide_24_width
+    kind: python
+    impl: app.rules.wifi:Wide24Width
+    category: wifi
+
+  - id: wifi.dfs_channel
+    kind: python
+    impl: app.rules.wifi:DfsChannel
+    category: wifi
+
+  - id: wifi.narrow_5_width
+    kind: python
+    impl: app.rules.wifi:Narrow5Width
+    category: wifi
+
+  - id: wifi.legacy_radio_standard
+    kind: python
+    impl: app.rules.wifi:LegacyRadioStandard
+    category: wifi
+
+  - id: wifi.mesh_uplink
+    kind: python
+    impl: app.rules.wifi:MeshUplink
+    category: wifi
+
+  - id: wifi.high_retries
+    kind: python
+    impl: app.rules.wifi:HighRetries
+    category: wifi
+
+  - id: wifi.retries_worsening
+    kind: python
+    impl: app.rules.wifi:RetriesWorsening
+    category: wifi
+
+  - id: wifi.weak_rssi_clients
+    kind: python
+    impl: app.rules.wifi:WeakRssiClients
+    category: wifi
