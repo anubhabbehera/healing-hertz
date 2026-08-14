@@ -195,7 +195,12 @@ export interface RuleEmit {
 
 export interface RuleFile {
   name: string;
-  path: string | null;
+  /**
+   * Relative to `base`, never absolute — the same string on every install.
+   * Where the base actually lives is reported once, not per rule.
+   */
+  path: string;
+  base: "app" | "rules_dir";
   /** True when the file lives in RULES_DIR and is the operator's to change. */
   editable: boolean;
 }
@@ -227,7 +232,6 @@ export interface SourceInfo {
 
 export interface RulesResponse {
   loaded_at: string;
-  path_scope: "host" | "container";
   /** Rule ids switched off locally, via the overrides file. */
   overrides: string[];
   rules_dir: { configured: boolean; path: string | null; exists: boolean };

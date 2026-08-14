@@ -1,22 +1,26 @@
-"""Browse the rule catalog, and check a draft rule before saving it.
+"""Browse the rule catalog, and manage the operator's own checks.
 
-**Nothing here writes to the filesystem, and nothing here takes a path.**
+Configuring checks here rather than in the repo is the point of the tool, so
+these endpoints do write to disk. What they are allowed to touch is bounded on
+every axis, and `loader.user_rule_path` is the single gate every read, write and
+delete passes through:
 
-That is deliberate and load-bearing. The app has no authentication and is
-loopback-only by design (SECURITY.md); a write endpoint would therefore be an
-arbitrary-file-write primitive for anything able to issue a request from the
-host. CORS does not help -- it governs who may *read* a response, while a simple
-POST still executes, and the side effect is the whole point of such an attack.
+  * only inside RULES_DIR -- a strict name pattern with no separators, no
+    traversal and no reserved underscore prefix, then a resolved-parent check
+    that also catches a symlink pointing out of the directory;
+  * only files ending .yaml;
+  * only content that validates as declarative rules, checked before anything is
+    written, so an invalid file is never created;
+  * never Python, because a user rule may not name code to import. Rule content
+    is data.
 
-So authoring a rule is deliberately generate-and-copy: the operator gets
-validated YAML and saves it themselves. If you are here to add a "save to
-RULES_DIR" endpoint, that is the thing this design exists to avoid.
+No endpoint takes a path, and none reads or writes anywhere else. If you are
+adding one that does, that is the boundary being crossed.
 
-Validation is not a write path under SECURITY.md's read-only rule, which scopes
-"only GET requests are issued" to outbound console traffic: it issues no UniFi
-request, opens no database session, and reads nothing beyond the catalog files
-the process already loads. POST /api/settings/test-connection is the existing
-precedent for a POST that computes and mutates nothing.
+This does not touch the UniFi console, so SECURITY.md's "read-only against
+UniFi" guarantee is unaffected -- that one is about never changing the
+operator's network. The relevant caveat is different: there is no
+authentication, so the loopback bind is what keeps these endpoints private.
 """
 
 from __future__ import annotations
@@ -113,7 +117,6 @@ def _catalog_payload() -> dict:
 
     return {
         "loaded_at": catalog.loaded_at.isoformat(),
-        "path_scope": describe.path_scope(),
         "overrides": sorted(load_overrides()),
         "rules_dir": _rules_dir_info(),
         "counts": counts,

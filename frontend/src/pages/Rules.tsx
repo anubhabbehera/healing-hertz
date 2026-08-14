@@ -100,12 +100,11 @@ function RuleDetail({ rule, data, onEdit, onToggle }: {
       ))}
 
       <div className="mini-row">
-        {rule.source_file.path && (
-          <>
-            <code className="muted">{rule.source_file.path}</code>
-            <CopyPath label="Copy path" value={rule.source_file.path} />
-          </>
-        )}
+        <code className="muted">
+          {rule.source_file.base === "rules_dir" ? "RULES_DIR/" : ""}
+          {rule.source_file.path}
+        </code>
+        <CopyPath label="Copy path" value={rule.source_file.path} />
         {rule.source_file.editable && onEdit && (
           <button className="secondary mini" onClick={() => onEdit(rule.source_file.name)}>
             Edit
@@ -122,9 +121,7 @@ function RuleDetail({ rule, data, onEdit, onToggle }: {
           </button>
         )}
       </div>
-      {data.path_scope === "container" && (
-        <p className="muted">That path is inside the container.</p>
-      )}
+
     </div>
   );
 }
@@ -185,12 +182,8 @@ export default function Rules() {
         <div className="callout error">
           <code>RULES_DIR</code> is set to <code>{dir.path}</code>, which does not exist,
           so no custom rules are loaded.
-          {data.path_scope === "container" && (
-            <>
-              {" "}That path is read <strong>inside the container</strong> — mount a
-              directory there in <code>docker-compose.yml</code> for it to work.
-            </>
-          )}
+          {" "}Under Docker it is read <strong>inside the container</strong> — mount a
+          directory there in <code>docker-compose.yml</code> for it to work.
         </div>
       )}
 

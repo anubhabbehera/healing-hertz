@@ -260,12 +260,39 @@ async def test_overriding_an_unknown_rule_is_404(api, rules_dir):
     assert resp.status_code == 404
 
 
-async def test_the_api_reports_local_paths_and_no_links(api):
+async def test_the_api_reports_no_repo_links(api):
     """Rules are configured on this machine; a repo URL is not an identity."""
     import json
 
+    assert "github" not in json.dumps((await api.get("/api/rules")).json()).lower()
+
+
+async def test_paths_are_relative_so_they_mean_the_same_everywhere(api, rules_dir):
+    """An absolute path is specific to one install -- a different checkout, a
+    different RULES_DIR, or a container where it names a file with no host
+    counterpart. The identity of a rule file has to be portable."""
+    await api.put("/api/rules/files/mine.yaml", json={"content": RULE})
     body = (await api.get("/api/rules")).json()
-    assert "github" not in json.dumps(body).lower()
+
+    for rule in body["rules"]:
+        path = rule["source_file"]["path"]
+        assert not path.startswith("/"), f"{rule['id']} reports an absolute path"
+        assert str(rules_dir) not in path
+        assert rule["source_file"]["base"] in ("app", "rules_dir")
+
     builtin = next(r for r in body["rules"] if r["id"] == "wifi.dfs_channel")
-    assert builtin["source_file"]["path"].endswith("02-wifi.yaml")
+    assert builtin["source_file"]["path"] == "app/rules/catalog/02-wifi.yaml"
+    assert builtin["source_file"]["base"] == "app"
     assert builtin["source_file"]["editable"] is False
+
+    mine = next(r for r in body["rules"] if r["id"] == "custom.spare_port")
+    assert mine["source_file"]["path"] == "mine.yaml"
+    assert mine["source_file"]["base"] == "rules_dir"
+    assert mine["source_file"]["editable"] is True
+
+
+async def test_python_impl_paths_are_relative_too(api):
+    body = (await api.get("/api/rules")).json()
+    impl = next(r["impl"] for r in body["rules"] if r.get("impl"))
+    assert not impl["path"].startswith("/")
+    assert impl["path"].startswith("app/rules/")
