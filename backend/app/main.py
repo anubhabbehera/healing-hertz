@@ -3,7 +3,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import routes_dismissals, routes_runs, routes_scan, routes_settings
+from app.api import (
+    routes_dismissals,
+    routes_rules,
+    routes_runs,
+    routes_scan,
+    routes_settings,
+)
 from app.db.engine import dispose, init_db
 
 
@@ -26,6 +32,7 @@ def create_app() -> FastAPI:
     app.include_router(routes_runs.router)
     app.include_router(routes_settings.router)
     app.include_router(routes_dismissals.router)
+    app.include_router(routes_rules.router)
 
     @app.get("/api/health")
     async def health() -> dict:
