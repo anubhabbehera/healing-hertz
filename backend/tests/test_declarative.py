@@ -228,7 +228,7 @@ def test_declarative_entry_rejects_impl():
     with pytest.raises(ValidationError):
         CatalogEntryAdapter.validate_python({
             "id": "test.rule", "kind": "declarative", "category": "wifi",
-            "impl": "app.rules.wifi:DfsChannel",
+            "impl": "app.rules.wifi:ChannelOverlap",
             "emits": [{"source": "device_ports", "severity": "low",
                        "title": "t", "summary": "s", "recommendation": "r"}],
         })

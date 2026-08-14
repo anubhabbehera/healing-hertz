@@ -64,7 +64,7 @@ def _entry(**over):
     base = {
         "id": "wifi.dfs_channel",
         "kind": "python",
-        "impl": "app.rules.wifi:DfsChannel",
+        "impl": "app.rules.wifi:ChannelOverlap",
         "category": "wifi",
     }
     return {**base, **over}
@@ -103,8 +103,8 @@ def test_catalog_entry_rejects_unknown_field():
     [
         "os:system",                     # outside the package entirely
         "app.evil:Thing",                # right prefix, wrong package
-        "app.rules.wifi.DfsChannel",     # dot instead of colon
-        "app.rules..wifi:DfsChannel",
+        "app.rules.wifi.ChannelOverlap", # dot instead of colon
+        "app.rules..wifi:ChannelOverlap",
         "builtins:eval",
     ],
 )
@@ -142,7 +142,7 @@ def test_duplicate_rule_id_is_rejected():
     from app.rules.loader import CatalogError
 
     with pytest.raises(CatalogError, match="duplicate rule id"):
-        _compile(_entry(), _entry(impl="app.rules.wifi:Wide24Width"))
+        _compile(_entry(), _entry(impl="app.rules.wifi:Narrow5Width"))
 
 
 def test_unknown_class_is_rejected():

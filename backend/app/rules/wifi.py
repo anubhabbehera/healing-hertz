@@ -6,14 +6,6 @@ from app.collectors.snapshot import Snapshot
 
 from .base import Category, Finding, RunHistory, Severity
 
-GOOD_24_CHANNELS = {1, 6, 11}
-# 5 GHz channels that require radar detection. A radar hit forces the radio off
-# the channel for 30 minutes, which clients experience as a dropout.
-DFS_CHANNELS = set(range(52, 65)) | set(range(100, 145))
-# Pre-802.11n modes. Matched exactly, never by prefix — "802.11AC" and
-# "802.11AX" both start with "802.11A".
-PRE_N_STANDARDS = frozenset({"802.11A", "802.11B", "802.11G", "802.11BG", "802.11B/G"})
-
 
 def _online_ap_radios(snapshot: Snapshot):
     """Yield (device_detail, radio) for broadcasting radios of online APs.
@@ -31,37 +23,6 @@ def _online_ap_radios(snapshot: Snapshot):
             if not radio.channel:
                 continue
             yield detail, radio
-
-
-class Bad24Channel:
-    id = "wifi.bad_24_channel"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = []
-        for dev, radio in _online_ap_radios(snapshot):
-            if radio.frequency_ghz != 2.4 or radio.channel is None:
-                continue
-            if radio.channel in GOOD_24_CHANNELS:
-                continue
-            findings.append(
-                Finding(
-                    rule_id=self.id,
-                    severity=Severity.MEDIUM,
-                    category=Category.WIFI,
-                    title=f"{dev.name} 2.4 GHz on channel {radio.channel}",
-                    summary=(
-                        f"{dev.name} uses 2.4 GHz channel {radio.channel}; only channels 1, 6 and 11 "
-                        "are non-overlapping, so this channel interferes with two channel groups at once."
-                    ),
-                    evidence={"device": dev.name, "channel": radio.channel,
-                              "widthMHz": radio.channel_width_mhz},
-                    recommendation="Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
-                    subject_type="device",
-                    subject_id=dev.id,
-                    subject_name=dev.name,
-                )
-            )
-        return findings
 
 
 class ChannelOverlap:
@@ -122,77 +83,6 @@ class ChannelOverlap:
         return findings
 
 
-class Wide24Width:
-    id = "wifi.wide_24_width"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = []
-        for dev, radio in _online_ap_radios(snapshot):
-            if radio.frequency_ghz != 2.4:
-                continue
-            if radio.channel_width_mhz is None or radio.channel_width_mhz <= 20:
-                continue
-            findings.append(
-                Finding(
-                    rule_id=self.id,
-                    severity=Severity.LOW,
-                    category=Category.WIFI,
-                    title=f"{dev.name} 2.4 GHz width is {radio.channel_width_mhz} MHz",
-                    summary=(
-                        "40 MHz on 2.4 GHz consumes most of the band and almost always increases "
-                        "interference more than it adds throughput."
-                    ),
-                    evidence={"device": dev.name, "widthMHz": radio.channel_width_mhz,
-                              "channel": radio.channel},
-                    recommendation="Set 2.4 GHz channel width to 20 MHz.",
-                    subject_type="device",
-                    subject_id=dev.id,
-                    subject_name=dev.name,
-                )
-            )
-        return findings
-
-
-class DfsChannel:
-    """DFS channels are quiet until a radar hit clears the radio for 30 minutes.
-
-    UniFi's auto channel management (WiFi AI) picks them readily, which is the
-    single most-reported cause of "the WiFi drops for half an hour" in homes.
-    """
-
-    id = "wifi.dfs_channel"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = []
-        for dev, radio in _online_ap_radios(snapshot):
-            if radio.frequency_ghz != 5 or radio.channel not in DFS_CHANNELS:
-                continue
-            findings.append(
-                Finding(
-                    rule_id=self.id,
-                    severity=Severity.MEDIUM,
-                    category=Category.WIFI,
-                    title=f"{dev.name} 5 GHz on DFS channel {radio.channel}",
-                    summary=(
-                        f"{dev.name} broadcasts on channel {radio.channel}, which requires radar "
-                        "detection. A radar event silences the radio for 30 minutes and every "
-                        "client on it is disconnected."
-                    ),
-                    evidence={"device": dev.name, "channel": radio.channel,
-                              "widthMHz": radio.channel_width_mhz},
-                    recommendation=(
-                        "Move to a non-DFS channel (36-48 or 149-165) unless the band is too "
-                        "congested to avoid DFS. If channels are auto-assigned, pin this radio "
-                        "manually — automatic selection keeps returning to DFS."
-                    ),
-                    subject_type="device",
-                    subject_id=dev.id,
-                    subject_name=dev.name,
-                )
-            )
-        return findings
-
-
 class Narrow5Width:
     """80 MHz is the sweet spot on 5 GHz — but only when channels are scarce."""
 
@@ -232,40 +122,6 @@ class Narrow5Width:
             for dev, radio in radios_5
             if radio.channel_width_mhz is not None and radio.channel_width_mhz <= 40
         ]
-
-
-class LegacyRadioStandard:
-    id = "wifi.legacy_radio_standard"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = []
-        for dev, radio in _online_ap_radios(snapshot):
-            standard = (radio.wlan_standard or "").upper().replace("-", "").replace(" ", "")
-            if standard not in PRE_N_STANDARDS:
-                continue
-            findings.append(
-                Finding(
-                    rule_id=self.id,
-                    severity=Severity.LOW,
-                    category=Category.WIFI,
-                    title=f"{dev.name} {radio.frequency_ghz} GHz runs {radio.wlan_standard}",
-                    summary=(
-                        f"{dev.name}'s {radio.frequency_ghz} GHz radio operates at "
-                        f"{radio.wlan_standard}, a pre-802.11n standard. Legacy rates are slow and "
-                        "every frame sent at them consumes airtime the whole cell could be using."
-                    ),
-                    evidence={"device": dev.name, "wlanStandard": radio.wlan_standard,
-                              "frequencyGHz": radio.frequency_ghz},
-                    recommendation=(
-                        "Move the radio to 802.11n or later and disable legacy 802.11b data rates, "
-                        "unless a device on this network genuinely needs them."
-                    ),
-                    subject_type="device",
-                    subject_id=dev.id,
-                    subject_name=dev.name,
-                )
-            )
-        return findings
 
 
 class MeshUplink:

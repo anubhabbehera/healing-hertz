@@ -26,10 +26,43 @@ from .declarative import RuleCompileError, compile_declarative
 from .schema import CatalogEntry, CatalogFile, DeclarativeEntry, PythonEntry
 
 CATALOG_DIR = Path(__file__).parent / "catalog"
+CONSTANTS_FILE = CATALOG_DIR / "_constants.yaml"
 
 
 class CatalogError(Exception):
     """A catalog file is malformed or names something that does not exist."""
+
+
+def _load_constants() -> dict[str, object]:
+    if not CONSTANTS_FILE.exists():
+        return {}
+    try:
+        raw = yaml.safe_load(CONSTANTS_FILE.read_text()) or {}
+    except yaml.YAMLError as exc:
+        raise CatalogError(f"{CONSTANTS_FILE.name}: invalid YAML: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise CatalogError(f"{CONSTANTS_FILE.name}: expected a mapping of name to value")
+    return raw
+
+
+def _substitute(node: object, constants: dict[str, object], where: str) -> object:
+    """Replace "$NAME" with its constant, anywhere in a parsed catalog file.
+
+    Named constants keep sets like the DFS channel list in one place instead of
+    inline in each rule that reads them, and give them a name a reader
+    recognises.
+    """
+    if isinstance(node, str) and node.startswith("$"):
+        name = node[1:]
+        if name not in constants:
+            known = ", ".join(sorted(constants)) or "none defined"
+            raise CatalogError(f"{where}: unknown constant {node!r}; defined: {known}")
+        return constants[name]
+    if isinstance(node, dict):
+        return {k: _substitute(v, constants, where) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_substitute(v, constants, where) for v in node]
+    return node
 
 
 @dataclass(frozen=True)
@@ -87,7 +120,7 @@ def _resolve_impl(entry: PythonEntry, provenance: Provenance) -> object:
     return instance
 
 
-def _read_file(path: Path) -> list[CatalogEntry]:
+def _read_file(path: Path, constants: dict[str, object]) -> list[CatalogEntry]:
     try:
         raw = yaml.safe_load(path.read_text())
     except yaml.YAMLError as exc:
@@ -95,6 +128,7 @@ def _read_file(path: Path) -> list[CatalogEntry]:
 
     if raw is None:
         return []
+    raw = _substitute(raw, constants, path.name)
     try:
         return CatalogFile.model_validate(raw).rules
     except ValidationError as exc:
@@ -140,8 +174,11 @@ def load_catalog() -> list[CatalogRule]:
     CatalogError from the first scan, not as an ImportError that breaks
     unrelated tests confusingly.
     """
-    paths = sorted(CATALOG_DIR.glob("*.yaml"))
+    # Leading underscore means "not a rule file" -- _constants.yaml is data the
+    # rule files reference, not a source of entries.
+    paths = sorted(p for p in CATALOG_DIR.glob("*.yaml") if not p.name.startswith("_"))
     if not paths:
         raise CatalogError(f"no catalog files found in {CATALOG_DIR}")
-    entries = [(path, entry) for path in paths for entry in _read_file(path)]
+    constants = _load_constants()
+    entries = [(path, entry) for path in paths for entry in _read_file(path, constants)]
     return compile_entries(entries)

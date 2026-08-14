@@ -134,6 +134,55 @@ def _pending_devices(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
         )
 
 
+# --- radios of online access points ----------------------------------------
+
+_AP_RADIO_BINDINGS = {
+    "device_id", "device_name", "device_model",
+    "radio_channel", "radio_width_mhz", "radio_frequency_ghz",
+    "radio_standard", "radio_standard_normalized",
+}
+
+
+@register(
+    "online_ap_radios",
+    _AP_RADIO_BINDINGS,
+    doc=(
+        "Broadcasting radios of online access points. Joins the device list to "
+        "device details for ONLINE state, and skips disabled radios."
+    ),
+)
+def _online_ap_radios(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    online = {d.id for d in snapshot.devices if d.state == "ONLINE"}
+    for dev_id, detail in snapshot.device_details.items():
+        if dev_id not in online or not detail.is_access_point:
+            continue
+        for radio in detail.interfaces.radios:
+            # A disabled radio is reported with channel 0 (or no channel) by the
+            # Integration API. It can't cause RF problems, so it isn't a row.
+            if not radio.channel:
+                continue
+            standard = radio.wlan_standard
+            yield Row(
+                vars={
+                    "device_id": dev_id,
+                    "device_name": detail.name,
+                    "device_model": detail.model,
+                    "radio_channel": radio.channel,
+                    "radio_width_mhz": radio.channel_width_mhz,
+                    "radio_frequency_ghz": radio.frequency_ghz,
+                    "radio_standard": standard,
+                    # Normalised here so the "match exactly, never by prefix"
+                    # rule stays next to the reason for it.
+                    "radio_standard_normalized": (
+                        (standard or "").upper().replace("-", "").replace(" ", "")
+                    ),
+                },
+                subject_type="device",
+                subject_id=dev_id,
+                subject_name=detail.name,
+            )
+
+
 # --- device ports ----------------------------------------------------------
 
 _DEVICE_PORT_BINDINGS = {
