@@ -1,4 +1,5 @@
 import type {
+  RuleDeleteResult,
   RuleFilesResponse,
   RuleSaveResult,
   RulesResponse,
@@ -79,10 +80,9 @@ export const api = {
     }),
 
   deleteRuleFile: (name: string) =>
-    request<{ deleted: string; catalog: RulesResponse }>(
-      `/api/rules/files/${encodeURIComponent(name)}`,
-      { method: "DELETE" },
-    ),
+    request<RuleDeleteResult>(`/api/rules/files/${encodeURIComponent(name)}`, {
+      method: "DELETE",
+    }),
 
   setRuleOverride: (rule_id: string, disabled: boolean) =>
     request<{ rule_id: string; disabled: boolean; catalog: RulesResponse }>(

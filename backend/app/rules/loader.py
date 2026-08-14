@@ -405,6 +405,31 @@ def save_overrides(disabled: set[str]) -> Path:
     return path
 
 
+# Deleted rule files are moved here rather than destroyed. It is a directory,
+# so the *.yaml glob that finds rule files never looks inside it, and a file put
+# here stops being a rule the moment it moves.
+TRASH_DIR = ".trash"
+
+
+def trash_rule_file(path: Path) -> Path:
+    """Move a rule file aside instead of unlinking it.
+
+    Deleting a check the operator wrote is not obviously recoverable -- there is
+    no other copy, and the UI is the only place it existed. Keeping the file
+    means an accident costs a move, not the afternoon that produced it.
+    """
+    trash = path.parent / TRASH_DIR
+    trash.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+    target = trash / f"{stamp}-{path.name}"
+    suffix = 1
+    while target.exists():  # two deletes of the same name within a second
+        target = trash / f"{stamp}-{suffix}-{path.name}"
+        suffix += 1
+    path.rename(target)
+    return target
+
+
 class RuleFileError(Exception):
     """A rule filename is not one this process will touch."""
 
