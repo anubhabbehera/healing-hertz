@@ -142,23 +142,60 @@ operators, so it isn't negotiable.
 ### When your rule needs Python
 
 Graph walks, medians over history, group-by, and anything cross-row can't be
-expressed as a predicate over one row. Those keep a class and are named from the
-catalog:
+expressed as a predicate over one row. Those keep a class — but only their
+*logic*. The prose still lives in the catalog.
+
+The class returns `Binding`s instead of `Finding`s: it works out what is true and
+hands back the values it computed.
+
+```python
+# app/rules/wifi.py
+class MeshUplink:
+    id = "wifi.mesh_uplink"
+
+    def evaluate(self, snapshot, history) -> list[Binding]:
+        ...                                    # walk the uplink chain
+        return [Binding(
+            vars={"device_name": detail.name, "hops": hops, ...},
+            subject_type="device", subject_id=dev_id, subject_name=detail.name,
+        )]
+```
 
 ```yaml
 - id: wifi.mesh_uplink
   kind: python
   impl: app.rules.wifi:MeshUplink
   category: wifi
+  provides: [device_name, uplink_device_name, hops, hop_phrase]
+  emits:
+    - severity:
+        base: medium
+        escalate:
+          - {when: [hops, gte, 2], to: high}
+      title: "{device_name} is wirelessly meshed via {uplink_device_name}"
+      summary: >-
+        …
+      recommendation: >-
+        …
+      evidence:
+        wirelessHops: {raw: hops}
 ```
 
-`impl` may only name a class inside `app.rules`, and only in the built-in catalog.
-Write the class as before — an `id` and an `evaluate(snapshot, history)` returning
-`Finding`s — and add the entry. `wifi.mesh_uplink` and `device.reboot_loop` are the
-examples to copy.
+**`provides`** lists the bindings the class guarantees. Templates, evidence and
+escalations are checked against it at load time, so a rule and its wording can't
+drift apart without the catalog failing to load.
+
+**Multiple emit blocks** handle a rule that reports more than one kind of thing
+under one id — `wan.latency_loss` reports loss and latency separately. Give each
+block a `key` and return `Binding(key=...)` to match. They share a rule id, so
+they share a dismissal.
+
+Add a docstring saying *why* the rule can't be data. Every `kind: python` rule has
+one, so the boundary is documented where someone would question it.
 
 Don't force a rule into YAML that doesn't fit. A catalog with a healthy number of
-`kind: python` entries is still a complete catalog.
+`kind: python` entries is still a complete catalog — what matters is that no
+rule's wording is hidden in code.
 
 **What makes a good rule:**
 
