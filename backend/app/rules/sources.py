@@ -293,6 +293,41 @@ def _online_ap_radios(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
             )
 
 
+# --- radio telemetry -------------------------------------------------------
+
+_AP_RADIO_STATS_BINDINGS = {
+    "device_id", "device_name", "radio_frequency_ghz", "tx_retries_pct",
+}
+
+
+@register(
+    "ap_radio_stats",
+    _AP_RADIO_STATS_BINDINGS,
+    doc=(
+        "Per-radio counters for access points. Unlike online_ap_radios this "
+        "reads telemetry rather than configuration, and does not filter on "
+        "state -- a device reporting stats is reporting them."
+    ),
+)
+def _ap_radio_stats(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    for dev_id, stats in snapshot.device_stats.items():
+        detail = snapshot.device_details.get(dev_id)
+        if detail is None or not detail.is_access_point:
+            continue
+        for radio in stats.interfaces.radios:
+            yield Row(
+                vars={
+                    "device_id": dev_id,
+                    "device_name": detail.name,
+                    "radio_frequency_ghz": radio.frequency_ghz,
+                    "tx_retries_pct": radio.tx_retries_pct,
+                },
+                subject_type="device",
+                subject_id=dev_id,
+                subject_name=detail.name,
+            )
+
+
 # --- device ports ----------------------------------------------------------
 
 _DEVICE_PORT_BINDINGS = {

@@ -187,43 +187,6 @@ class MeshUplink:
         return findings
 
 
-class HighRetries:
-    id = "wifi.high_retries"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = []
-        for dev_id, stats in snapshot.device_stats.items():
-            dev = snapshot.device_details.get(dev_id)
-            if dev is None or not dev.is_access_point:
-                continue
-            for radio in stats.interfaces.radios:
-                pct = radio.tx_retries_pct
-                if pct is None or pct < 15:
-                    continue
-                findings.append(
-                    Finding(
-                        rule_id=self.id,
-                        severity=Severity.HIGH if pct >= 30 else Severity.MEDIUM,
-                        category=Category.WIFI,
-                        title=f"High TX retries on {dev.name} {radio.frequency_ghz} GHz ({pct:.0f}%)",
-                        summary=(
-                            f"{pct:.1f}% of transmissions on {dev.name}'s {radio.frequency_ghz} GHz radio "
-                            "are retries — a sign of interference, distant clients, or co-channel contention."
-                        ),
-                        evidence={"device": dev.name, "frequencyGHz": radio.frequency_ghz,
-                                  "txRetriesPct": pct},
-                        recommendation=(
-                            "Fix the channel plan first (overlap/width findings), then check for non-WiFi "
-                            "interferers near this AP and consider raising minimum data rates."
-                        ),
-                        subject_type="device",
-                        subject_id=dev_id,
-                        subject_name=dev.name,
-                    )
-                )
-        return findings
-
-
 class RetriesWorsening:
     id = "wifi.retries_worsening"
 
