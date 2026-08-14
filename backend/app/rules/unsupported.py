@@ -137,6 +137,15 @@ _CHECKS: list[tuple[UnsupportedCheck, str | None]] = [
 ]
 
 
+def check_enrichments() -> list[tuple[UnsupportedCheck, str | None]]:
+    """Each check paired with the Snapshot attribute that would unlock it.
+
+    The attribute name is what lets a caller say "configure X and this becomes
+    checkable"; None means no integration can ever cover it.
+    """
+    return list(_CHECKS)
+
+
 def unsupported_checks(snapshot: Snapshot | None = None) -> list[UnsupportedCheck]:
     """Checks still uncovered given this snapshot's enrichments (all, if None)."""
     if snapshot is None:

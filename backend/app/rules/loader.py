@@ -23,6 +23,7 @@ from __future__ import annotations
 import importlib
 import logging
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -155,6 +156,19 @@ class CatalogRule:
         )
 
 
+@dataclass(frozen=True)
+class DisabledRule:
+    """A catalog entry with ``enabled: false``.
+
+    Parsed and validated, never compiled. Kept so the catalog can show a check
+    that exists but isn't running -- retiring a rule this way is what keeps its
+    id reserved and its dismissals from being orphaned.
+    """
+
+    provenance: Provenance
+    entry: object  # a validated PythonEntry | DeclarativeEntry, uncompiled
+
+
 def _resolve_impl(entry: PythonEntry, provenance: Provenance) -> object:
     """Import and instantiate the class an entry names.
 
@@ -232,11 +246,16 @@ def compile_entries(
     *,
     trusted: bool = True,
     seen: dict[str, Provenance] | None = None,
+    disabled: list[DisabledRule] | None = None,
 ) -> list[object]:
     """Compile parsed entries into runnable rules, rejecting duplicate ids.
 
     ``trusted`` is False for operator-supplied catalogs, which may not name a
     Python implementation and must stay inside the ``custom.`` namespace.
+
+    ``disabled`` collects entries switched off with ``enabled: false``. They are
+    parsed and keep their id reserved, but are never compiled -- so they have no
+    ``evaluate`` and cannot run however this list is used later.
     """
     seen = {} if seen is None else seen
     rules: list[object] = []
@@ -262,6 +281,8 @@ def compile_entries(
             )
         seen[entry.id] = provenance
         if not entry.enabled:
+            if disabled is not None:
+                disabled.append(DisabledRule(provenance=provenance, entry=entry))
             continue
 
         if isinstance(entry, DeclarativeEntry):
@@ -294,7 +315,10 @@ def _rule_files(directory: Path) -> list[Path]:
 
 
 def _load_user_rules(
-    directory: Path, constants: dict[str, object], seen: dict[str, Provenance]
+    directory: Path,
+    constants: dict[str, object],
+    seen: dict[str, Provenance],
+    disabled: list[DisabledRule],
 ) -> tuple[list[object], list[UnsupportedCheck]]:
     """Compile an operator's catalog, reporting rather than raising on failure."""
     rules: list[object] = []
@@ -302,7 +326,9 @@ def _load_user_rules(
     for path in _rule_files(directory):
         try:
             entries = [(path, entry) for entry in _read_file(path, constants)]
-            rules.extend(compile_entries(entries, trusted=False, seen=seen))
+            rules.extend(
+                compile_entries(entries, trusted=False, seen=seen, disabled=disabled)
+            )
         except CatalogError as exc:
             logger.warning("skipping user rule file %s: %s", path.name, exc)
             problems.append(UnsupportedCheck(
@@ -313,11 +339,24 @@ def _load_user_rules(
     return rules, problems
 
 
+def user_rules_dir() -> Path | None:
+    """The configured directory of operator rule files, if any.
+
+    Shared so nothing else has to re-derive the expanduser() behaviour and drift
+    from what the loader actually reads.
+    """
+    rules_dir = get_settings().rules_dir
+    return Path(rules_dir).expanduser() if rules_dir else None
+
+
 @dataclass(frozen=True)
 class Catalog:
     rules: list[object]
     # Files that failed to load, surfaced to the operator as "not checkable".
     problems: list[UnsupportedCheck]
+    # Entries switched off with `enabled: false`. Never compiled, never run.
+    disabled: list[DisabledRule] = field(default_factory=list)
+    loaded_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @lru_cache(maxsize=1)
@@ -334,18 +373,18 @@ def load_catalog() -> Catalog:
     constants = _load_constants()
 
     seen: dict[str, Provenance] = {}
+    disabled: list[DisabledRule] = []
     entries = [(path, entry) for path in paths for entry in _read_file(path, constants)]
-    rules = compile_entries(entries, trusted=True, seen=seen)
+    rules = compile_entries(entries, trusted=True, seen=seen, disabled=disabled)
 
     problems: list[UnsupportedCheck] = []
-    rules_dir = get_settings().rules_dir
-    if rules_dir:
-        directory = Path(rules_dir).expanduser()
+    directory = user_rules_dir()
+    if directory is not None:
         if directory.is_dir():
             # Appended after the built-ins so their evaluation order is unchanged.
-            user_rules, problems = _load_user_rules(directory, constants, seen)
+            user_rules, problems = _load_user_rules(directory, constants, seen, disabled)
             rules.extend(user_rules)
         else:
             logger.warning("RULES_DIR %s is not a directory; no user rules loaded", directory)
 
-    return Catalog(rules=rules, problems=problems)
+    return Catalog(rules=rules, problems=problems, disabled=disabled)

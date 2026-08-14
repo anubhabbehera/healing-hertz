@@ -157,3 +157,96 @@ export interface ScanProgressEvent {
   detail: string;
   pct: number | null;
 }
+
+// --- rule catalog ---
+
+export type RuleKind = "declarative" | "python" | "none";
+export type RuleStatus = "active" | "disabled" | "not_checkable" | "unloadable";
+
+/** A predicate node, in the same shape the YAML uses. */
+export interface PredicateNode {
+  all?: PredicateNode[];
+  any?: PredicateNode[];
+  not?: PredicateNode;
+  binding?: string;
+  op?: string;
+  value?: unknown;
+}
+
+export interface SeveritySpec {
+  base: Severity;
+  escalate: { when: PredicateNode; to: Severity }[];
+}
+
+export interface RuleEmit {
+  index: number;
+  key: string | null;
+  severity: SeveritySpec;
+  title: string;
+  summary: string;
+  recommendation: string;
+  evidence: Record<string, { raw?: string; op?: string }>;
+  source?: string;
+  subject?: string;
+  where?: PredicateNode | null;
+  compute?: Record<string, Record<string, unknown>>;
+  aggregate?: Record<string, unknown> | null;
+}
+
+export interface RuleFile {
+  name: string;
+  path: string | null;
+  repo_path: string | null;
+  github_url: string | null;
+}
+
+export interface RuleSummary {
+  id: string;
+  kind: RuleKind;
+  status: RuleStatus;
+  validated: boolean;
+  category: string | null;
+  origin: "builtin" | "user";
+  source_file: RuleFile;
+  emits: RuleEmit[];
+  /** not_checkable / unloadable only */
+  title?: string;
+  reason?: string;
+  enrichment?: string | null;
+  enrichment_configured?: boolean;
+  /** python only */
+  impl?: { ref: string; doc: string; path: string | null; line: number | null;
+           repo_path: string; github_url: string };
+  provides?: string[];
+}
+
+export interface SourceInfo {
+  name: string;
+  doc: string;
+  bindings: string[];
+}
+
+export interface RulesResponse {
+  loaded_at: string;
+  path_scope: "host" | "container";
+  repo_ref: string;
+  rules_dir: { configured: boolean; path: string | null; exists: boolean };
+  counts: Partial<Record<RuleStatus, number>>;
+  categories: string[];
+  constants: Record<string, unknown>;
+  sources: SourceInfo[];
+  rules: RuleSummary[];
+}
+
+export interface RuleValidation {
+  ok: boolean;
+  errors: { stage: string; rule_id: string | null; message: string }[];
+  warnings: { message: string }[];
+  rules: RuleSummary[];
+  preview: {
+    basis: string;
+    matched: number;
+    findings: { severity: Severity; title: string; summary: string;
+                subject_name: string | null }[];
+  } | null;
+}

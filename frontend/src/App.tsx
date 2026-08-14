@@ -5,6 +5,7 @@ import BrandMark from "./components/BrandMark";
 import ScanButton from "./components/ScanButton";
 import Dashboard from "./pages/Dashboard";
 import Findings from "./pages/Findings";
+import Rules from "./pages/Rules";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Trends from "./pages/Trends";
@@ -33,6 +34,7 @@ export default function App() {
           <NavLink to="/findings">Findings</NavLink>
           <NavLink to="/trends">Trends</NavLink>
           <NavLink to="/history">History</NavLink>
+          <NavLink to="/rules">Rules</NavLink>
           <NavLink to="/settings">Settings</NavLink>
         </nav>
         <div className="topbar-right">
@@ -60,6 +62,7 @@ export default function App() {
           <Route path="/findings" element={<Findings />} />
           <Route path="/trends" element={<Trends />} />
           <Route path="/history" element={<History />} />
+          <Route path="/rules" element={<Rules />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

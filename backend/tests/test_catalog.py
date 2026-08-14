@@ -201,3 +201,89 @@ def test_disabled_entry_is_not_loaded():
     """Disabling beats deleting: the id stays declared, so dismissals survive."""
     assert _compile(_entry(enabled=False)) == []
     assert len(_compile(_entry())) == 1
+
+
+# --- disabled rules --------------------------------------------------------
+
+
+def _disabled_entry(**over):
+    return _entry(enabled=False, **over)
+
+
+def test_disabled_entries_are_retained_but_not_compiled():
+    """Retiring a check keeps its id reserved without running it."""
+    from pathlib import Path
+
+    from app.rules.loader import compile_entries
+    from app.rules.schema import CatalogEntryAdapter
+
+    disabled = []
+    rules = compile_entries(
+        [(Path("test.yaml"), CatalogEntryAdapter.validate_python(_disabled_entry()))],
+        disabled=disabled,
+    )
+    assert rules == []
+    assert [d.entry.id for d in disabled] == ["wifi.dfs_channel"]
+    # Never compiled, so it structurally cannot run.
+    assert not hasattr(disabled[0].entry, "evaluate")
+
+
+def test_a_disabled_entry_still_reserves_its_id():
+    """Otherwise retiring a rule would silently allow a duplicate."""
+    from pathlib import Path
+
+    from app.rules.loader import CatalogError, compile_entries
+    from app.rules.schema import CatalogEntryAdapter
+
+    entries = [
+        (Path("a.yaml"), CatalogEntryAdapter.validate_python(_disabled_entry())),
+        (Path("b.yaml"), CatalogEntryAdapter.validate_python(_entry())),
+    ]
+    with pytest.raises(CatalogError, match="duplicate rule id"):
+        compile_entries(entries, disabled=[])
+
+
+async def test_a_disabled_user_rule_produces_no_findings(tmp_path, monkeypatch, snapshot):
+    """The end-to-end guarantee: disabled means it does not run."""
+    from app.config import get_settings
+    from app.rules import run_rules
+    from app.rules.loader import load_catalog
+
+    directory = tmp_path / "rules.d"
+    directory.mkdir()
+    (directory / "off.yaml").write_text("""
+rules:
+  - id: custom.switched_off
+    kind: declarative
+    category: wired
+    enabled: false
+    emits:
+      - source: device_ports
+        severity: info
+        title: "{device_name} port {port_idx}"
+        summary: "s"
+        recommendation: "r"
+""")
+    monkeypatch.setenv("RULES_DIR", str(directory))
+    get_settings.cache_clear()
+    load_catalog.cache_clear()
+    try:
+        catalog = load_catalog()
+        assert "custom.switched_off" in {d.entry.id for d in catalog.disabled}
+        assert "custom.switched_off" not in {r.id for r in catalog.rules}
+
+        findings, _ = run_rules(snapshot)
+        assert "custom.switched_off" not in {f.rule_id for f in findings}
+    finally:
+        get_settings.cache_clear()
+        load_catalog.cache_clear()
+
+
+def test_every_loaded_rule_resolves_to_a_file_that_exists():
+    """Catches path-derivation drift the moment a directory moves."""
+    from app.rules.loader import CATALOG_DIR, load_catalog
+
+    for rule in load_catalog().rules:
+        if rule.id.startswith("custom."):
+            continue
+        assert (CATALOG_DIR / rule.provenance.file).is_file(), rule.id

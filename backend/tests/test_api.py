@@ -67,3 +67,132 @@ async def test_settings_masked(api):
     assert settings["demo_mode"] is True
     assert settings["anthropic_api_key_set"] is False
     assert "unifi_api_key" not in settings
+
+
+# --- rules catalog ---------------------------------------------------------
+
+# The same example the loader tests use, so endpoint and loader stay pinned to
+# one definition of "a valid user rule".
+from tests.test_user_rules import GOOD_RULE
+
+
+async def test_list_rules(api):
+    body = (await api.get("/api/rules")).json()
+
+    ids = {r["id"] for r in body["rules"]}
+    assert "wifi.dfs_channel" in ids
+    assert "wifi.weak_rssi_clients" in ids            # a not-checkable entry
+    assert body["counts"]["active"] == 35
+    assert body["counts"]["not_checkable"] == 10
+    assert len(body["sources"]) == 8
+    assert body["categories"]
+
+
+async def test_rules_payload_carries_no_internals(api):
+    """A Source holds a callable and a frozenset; neither may reach the wire."""
+    import json
+
+    body = (await api.get("/api/rules")).json()
+    blob = json.dumps(body)
+    assert "iterate" not in blob
+    assert "<function" not in blob
+    for source in body["sources"]:
+        assert source["bindings"] == sorted(source["bindings"])
+
+
+async def test_predicate_uses_the_yaml_field_names(api):
+    """`not` is aliased from `negate`; the API must speak the YAML's language."""
+    import json
+
+    blob = json.dumps((await api.get("/api/rules")).json())
+    assert '"negate"' not in blob
+
+
+async def test_validate_accepts_a_good_draft(api):
+    body = (await api.post("/api/rules/validate", json={"yaml": GOOD_RULE})).json()
+    assert body["ok"] is True
+    assert body["errors"] == []
+    assert [r["id"] for r in body["rules"]] == ["custom.spare_port"]
+    # Ran against the bundled fixtures, not the operator's network.
+    assert body["preview"]["basis"] == "demo_fixtures"
+
+
+async def test_validate_rejects_a_user_rule_naming_python(api):
+    draft = """
+rules:
+  - id: custom.sneaky
+    kind: python
+    impl: app.rules.wifi:MeshUplink
+    category: wifi
+    provides: [device_name]
+    emits:
+      - severity: low
+        title: "{device_name}"
+        summary: s
+        recommendation: r
+"""
+    body = (await api.post("/api/rules/validate", json={"yaml": draft})).json()
+    assert body["ok"] is False
+    assert "only allowed in the built-in catalog" in body["errors"][0]["message"]
+
+
+async def test_validate_rejects_an_unnamespaced_id(api):
+    draft = GOOD_RULE.replace("custom.spare_port", "wifi.spare_port")
+    body = (await api.post("/api/rules/validate", json={"yaml": draft})).json()
+    assert body["ok"] is False
+    assert "must start with 'custom.'" in body["errors"][0]["message"]
+
+
+async def test_validate_rejects_an_unknown_binding(api):
+    draft = GOOD_RULE.replace("port_state", "prot_state")
+    body = (await api.post("/api/rules/validate", json={"yaml": draft})).json()
+    assert body["ok"] is False
+    assert body["errors"][0]["stage"] == "compile"
+    assert "prot_state" in body["errors"][0]["message"]
+
+
+async def test_validate_reports_malformed_yaml(api):
+    body = (await api.post("/api/rules/validate", json={"yaml": "rules: [ broken"})).json()
+    assert body["ok"] is False
+    assert body["errors"][0]["stage"] == "yaml"
+
+
+async def test_validate_rejects_an_alias_bomb(api):
+    """A length limit does not contain an alias bomb; the parser must refuse it."""
+    body = (await api.post("/api/rules/validate", json={"yaml": "rules: &a [*a]"})).json()
+    assert body["ok"] is False
+    assert "aliases are not supported" in body["errors"][0]["message"]
+
+
+async def test_validate_rejects_an_oversized_draft(api):
+    resp = await api.post("/api/rules/validate", json={"yaml": "x" * 70_000})
+    assert resp.status_code == 422
+
+
+async def test_validate_returns_200_even_when_the_draft_is_bad(api):
+    """The request is well-formed; the content is what's being reported on."""
+    resp = await api.post("/api/rules/validate", json={"yaml": "rules: [ broken"})
+    assert resp.status_code == 200
+
+
+async def test_reload_picks_up_a_file_written_after_startup(api, tmp_path, monkeypatch):
+    """The whole reason the endpoint exists: the catalog is cached."""
+    from app.config import get_settings
+    from app.rules.loader import load_catalog
+
+    directory = tmp_path / "rules.d"
+    directory.mkdir()
+    monkeypatch.setenv("RULES_DIR", str(directory))
+    get_settings.cache_clear()
+    load_catalog.cache_clear()
+    try:
+        before = (await api.get("/api/rules")).json()
+        assert "custom.spare_port" not in {r["id"] for r in before["rules"]}
+
+        (directory / "mine.yaml").write_text(GOOD_RULE)
+        # Deliberately no cache_clear() here — the endpoint must do it.
+        after = (await api.post("/api/rules/reload")).json()
+        assert "custom.spare_port" in {r["id"] for r in after["rules"]}
+    finally:
+        get_settings.cache_clear()
+        load_catalog.cache_clear()
