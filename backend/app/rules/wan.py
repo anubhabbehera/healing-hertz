@@ -4,58 +4,45 @@ from statistics import median
 
 from app.collectors.snapshot import Snapshot
 
-from .base import Category, Finding, RunHistory, Severity
+from .base import Binding, RunHistory
 
 
 class WanLatencyLoss:
+    """Probe loss and probe latency, reported independently under one id.
+
+    Not declarative: the two conditions are unrelated, and the latency arm is
+    suppressed when every probe failed, since latency over zero successful
+    connections is not a measurement.
+    """
+
     id = "wan.latency_loss"
 
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Binding]:
         wan = snapshot.wan
         if wan is None:
             return []
-        findings = []
+        bindings = []
         if wan.loss_pct >= 2:
-            findings.append(Finding(
-                rule_id=self.id,
-                severity=Severity.HIGH if wan.loss_pct >= 10 else Severity.MEDIUM,
-                category=Category.CAPACITY,
-                title=f"WAN probe failures: {wan.loss_pct:.0f}% of connections",
-                summary=(
-                    f"{wan.loss_pct:.1f}% of {wan.samples} TCP probes to public anchors "
-                    "failed — indicates packet loss or an unstable WAN path."
-                ),
-                evidence={"lossPct": wan.loss_pct, "samples": wan.samples,
-                          "perTarget": wan.per_target},
-                recommendation=(
-                    "Check the WAN link (modem/ONT stats, cabling) and re-run at a quiet "
-                    "hour; sustained loss is worth an ISP ticket with these numbers."
-                ),
-            ))
+            bindings.append(Binding(key="loss", vars={
+                "loss_pct": wan.loss_pct,
+                "samples": wan.samples,
+                "per_target": wan.per_target,
+            }))
         if wan.latency_ms >= 80 and wan.loss_pct < 100:
-            findings.append(Finding(
-                rule_id=self.id,
-                severity=Severity.HIGH if wan.latency_ms >= 150 else Severity.MEDIUM,
-                category=Category.CAPACITY,
-                title=f"High WAN latency ({wan.latency_ms:.0f} ms)",
-                summary=(
-                    f"Average TCP-connect latency to public anchors is {wan.latency_ms:.0f} ms "
-                    f"(jitter {wan.jitter_ms:.0f} ms) — typical wired links measure 5–30 ms."
-                ),
-                evidence={"latencyMs": wan.latency_ms, "jitterMs": wan.jitter_ms,
-                          "perTarget": wan.per_target},
-                recommendation=(
-                    "If sustained, check for bufferbloat (enable Smart Queues sized to your "
-                    "plan), a saturated uplink, or ISP path issues."
-                ),
-            ))
-        return findings
+            bindings.append(Binding(key="latency", vars={
+                "latency_ms": wan.latency_ms,
+                "jitter_ms": wan.jitter_ms,
+                "per_target": wan.per_target,
+            }))
+        return bindings
 
 
 class WanLatencyWorsening:
+    """Latency against a median of the last three runs."""
+
     id = "wan.latency_worsening"
 
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
+    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Binding]:
         wan = snapshot.wan
         if wan is None or not history.runs:
             return []
@@ -66,21 +53,8 @@ class WanLatencyWorsening:
         baseline = median(prior)
         if baseline <= 0 or wan.latency_ms < max(baseline * 1.5, baseline + 20):
             return []
-        return [Finding(
-            rule_id=self.id,
-            severity=Severity.MEDIUM,
-            category=Category.CAPACITY,
-            title=f"WAN latency worsening ({baseline:.0f} → {wan.latency_ms:.0f} ms)",
-            summary=(
-                f"Probe latency rose to {wan.latency_ms:.0f} ms from a recent baseline of "
-                f"{baseline:.0f} ms across the last scans."
-            ),
-            evidence={"latencyMs": wan.latency_ms, "baselineMs": round(baseline, 1)},
-            recommendation=(
-                "Something changed on the WAN path — check for new heavy uploads/downloads, "
-                "QoS misconfiguration, or ISP degradation."
-            ),
-        )]
-
-
-RULES = [WanLatencyLoss(), WanLatencyWorsening()]
+        return [Binding(vars={
+            "latency_ms": wan.latency_ms,
+            "baseline_ms": baseline,
+            "baseline_ms_rounded": round(baseline, 1),
+        })]

@@ -55,7 +55,7 @@ backend/app/
   unifi/          Integration API client + Pydantic models
   integrations/   Optional extras: legacy UniFi API, NextDNS, WAN probe
   collectors/     Snapshot assembly and enrichment
-  rules/          Diagnostic checks, grouped by area
+  rules/          Diagnostic checks; catalog/ declares them, sources.py feeds them
   advisor/        LLM prompt building, schema and call
   scan/           Orchestrator and progress streaming
   db/             SQLAlchemy models, migrations-by-hand, repository
@@ -70,45 +70,132 @@ frontend/src/
 
 ## Adding a diagnostic check
 
-This is the most valuable contribution, and it's about 20 lines. There are currently 26
-rules across `device_health.py`, `wifi.py`, `wired.py`, `clients.py`, `wan.py` and
-`dns.py`.
+This is the most valuable contribution, and most checks are pure YAML.
 
-A rule is any object with an `id` and an `evaluate()` method. It receives the snapshot
-and the run history, and returns zero or more `Finding`s.
+Every rule is declared in the catalog at `app/rules/catalog/`, one file per area.
+The catalog is the registry: it owns each check's id, category, severity,
+thresholds and prose. Most rules express their logic there too; a few whose
+algorithm isn't expressible as data keep a Python class and point at it.
 
-```python
-# app/rules/wired.py
-
-class PoeLimited:
-    id = "wired.poe_limited"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        findings = []
-        for dev_id, detail in snapshot.device_details.items():
-            for port in detail.interfaces.ports:
-                if port.poe is None or port.poe.state != "LIMITED":
-                    continue
-                findings.append(Finding(
-                    rule_id=self.id,
-                    severity=Severity.MEDIUM,
-                    category=Category.WIRED,
-                    title=f"PoE limited on {detail.name} port {port.idx}",
-                    summary="…what this means, in one or two sentences…",
-                    evidence={"device": detail.name, "port": port.idx,
-                              "poeState": port.poe.state},
-                    recommendation="…what the operator should actually do…",
-                    subject_type="device",
-                    subject_id=dev_id,
-                    subject_name=detail.name,
-                ))
-        return findings
-
-
-RULES = [UplinkNegotiation(), PoeLimited(), GatewaySaturation()]
+```yaml
+# app/rules/catalog/03-wired.yaml
+- id: wired.poe_limited
+  kind: declarative
+  category: wired
+  emits:
+    - source: device_ports
+      where: [poe_state, eq, LIMITED]
+      severity: medium
+      title: "PoE limited on {device_name} port {port_idx}"
+      summary: >-
+        …what this means, in one or two sentences…
+      recommendation: >-
+        …what the operator should actually do…
+      evidence:
+        device: {raw: device_name}
+        port: {raw: port_idx}
+        poeState: {raw: poe_state}
 ```
 
-Then add it to that module's `RULES` list — `app/rules/__init__.py` aggregates them.
+That's the whole rule. Add the entry, run the tests, done.
+
+**`source`** names an iterable over the snapshot — `devices`, `device_stats`,
+`device_ports`, `online_ap_radios`, `pending_devices`. A source does the joins and
+None-guards in Python and yields a flat row of plain values, so YAML only ever
+names a binding. `app/rules/sources.py` lists what each one provides; adding a
+binding there is cheap.
+
+**`where`** is a predicate over those bindings. `[binding, op, value]` is the
+compact form; `{all: [...]}`, `{any: [...]}` and `{not: ...}` nest. Operators are
+`eq ne lt lte gt gte in not_in contains is_null is_not_null`. A comparison against
+a missing reading is false rather than an error, so you rarely need an explicit
+null guard.
+
+**`severity`** is a name, or a base plus escalations when it depends on the value
+that matched:
+
+```yaml
+      severity:
+        base: medium
+        escalate:
+          - {when: [cpu_pct, gte, 90], to: high}
+```
+
+**`compute`** derives named values before `where` runs, because templates do no
+arithmetic:
+
+```yaml
+      compute:
+        uptime_days: {op: floordiv, of: uptime_sec, by: 86400}
+```
+
+Ops are `floordiv`, `ratio`, `scale` and `round`. That list is deliberately
+closed — a rule that needs a fifth op is a rule whose logic isn't data, and
+belongs in Python. Values shared by more than one rule go in `_constants.yaml`
+and are referenced as `$NAME`.
+
+**Templates** are `str.format` over the bindings, so `{cpu_pct:.0f}` works as you'd
+expect. A replacement field must be a bare name — no attribute access, no
+indexing. That restriction is what makes rule files safe to accept from
+operators, so it isn't negotiable.
+
+### When your rule needs Python
+
+Graph walks, medians over history, group-by, and anything cross-row can't be
+expressed as a predicate over one row. Those keep a class — but only their
+*logic*. The prose still lives in the catalog.
+
+The class returns `Binding`s instead of `Finding`s: it works out what is true and
+hands back the values it computed.
+
+```python
+# app/rules/wifi.py
+class MeshUplink:
+    id = "wifi.mesh_uplink"
+
+    def evaluate(self, snapshot, history) -> list[Binding]:
+        ...                                    # walk the uplink chain
+        return [Binding(
+            vars={"device_name": detail.name, "hops": hops, ...},
+            subject_type="device", subject_id=dev_id, subject_name=detail.name,
+        )]
+```
+
+```yaml
+- id: wifi.mesh_uplink
+  kind: python
+  impl: app.rules.wifi:MeshUplink
+  category: wifi
+  provides: [device_name, uplink_device_name, hops, hop_phrase]
+  emits:
+    - severity:
+        base: medium
+        escalate:
+          - {when: [hops, gte, 2], to: high}
+      title: "{device_name} is wirelessly meshed via {uplink_device_name}"
+      summary: >-
+        …
+      recommendation: >-
+        …
+      evidence:
+        wirelessHops: {raw: hops}
+```
+
+**`provides`** lists the bindings the class guarantees. Templates, evidence and
+escalations are checked against it at load time, so a rule and its wording can't
+drift apart without the catalog failing to load.
+
+**Multiple emit blocks** handle a rule that reports more than one kind of thing
+under one id — `wan.latency_loss` reports loss and latency separately. Give each
+block a `key` and return `Binding(key=...)` to match. They share a rule id, so
+they share a dismissal.
+
+Add a docstring saying *why* the rule can't be data. Every `kind: python` rule has
+one, so the boundary is documented where someone would question it.
+
+Don't force a rule into YAML that doesn't fit. A catalog with a healthy number of
+`kind: python` entries is still a complete catalog — what matters is that no
+rule's wording is hidden in code.
 
 **What makes a good rule:**
 
@@ -123,9 +210,15 @@ Then add it to that module's `RULES` list — `app/rules/__init__.py` aggregates
   used for dismissals and for the new/resolved/persisting diff between runs.
 - **Stay quiet when things are fine.** Rules that always fire train people to ignore them.
 
+- **Never change a rule id.** It's the key for dismissals, for the
+  new/resolved/persisting diff between runs, and for linking LLM suggestions back to
+  findings. Renaming one orphans every dismissal against it, makes the finding
+  reappear, and drops the score on every historical run. Use `enabled: false` to
+  retire a check instead of deleting it.
+
 **Cross-run rules** get `history` — the last few runs' device uptimes, radio retry
-percentages and site metrics. `device.reboot_loop` and `wifi.retries_worsening` are the
-examples to copy.
+percentages and site metrics. They're `kind: python`; `device.reboot_loop` and
+`wifi.retries_worsening` are the examples to copy.
 
 **Rules that need data we don't have** belong in `app/rules/unsupported.py`, which
 declares the check and the reason it can't run. This is deliberate: the UI shows these
@@ -147,6 +240,35 @@ async def test_my_rule_fires(snapshot):
 
 If your rule needs telemetry the fixtures don't have, extend the JSON in
 `backend/app/demo/fixtures/` — that improves demo mode at the same time.
+
+Also add a scenario to `backend/tests/rule_scenarios.py` and regenerate the golden
+fixture:
+
+```
+uv run python -m tests.golden.generate
+```
+
+`tests/golden/findings.json` pins every field of every finding across all
+scenarios. It's what proves a change to the engine — or a rule moving from Python
+to YAML — didn't quietly reword a finding or stop a rule firing, so the diff is
+worth reading line by line before committing it. A rule with no scenario isn't
+covered by any of that.
+
+`uv run python -m app.rules.validate` checks the catalog loads without running a
+scan.
+
+## Your own checks, without touching the repo
+
+Set `RULES_DIR` to a directory of `.yaml` files and they load alongside the
+built-ins. The schema is the same, with two restrictions:
+
+- Every id must start with `custom.`. Rule ids key dismissals and run diffs, so
+  namespacing keeps yours from ever colliding with a built-in one.
+- `kind: python` is rejected. A rule file is data; it can't name code to import.
+
+A file that fails to load is skipped and reported in the UI's "not checkable" list
+with the parse error, rather than failing the scan. Check them up front with
+`python -m app.rules.validate`.
 
 ## Adding an integration
 

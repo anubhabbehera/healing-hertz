@@ -11,8 +11,9 @@ DEMO_DB     := $(BACKEND)/healing_hertz.demo.db
 export VERSION REVISION BUILD_DATE
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev demo stop restart test lint fmt build audit check \
-        docker-build docker-up docker-down docker-logs clean clean-demo
+.PHONY: help setup dev demo stop restart test coverage lint validate-rules fmt \
+        build audit check docker-build docker-up docker-down docker-logs \
+        clean clean-demo
 
 ## help: show this list
 help:
@@ -56,6 +57,10 @@ lint:
 	cd $(BACKEND) && uv run ruff check app tests
 	cd $(FRONTEND) && npx tsc -b --noEmit
 
+## validate-rules: check the rule catalog loads (no scan, no network)
+validate-rules:
+	cd $(BACKEND) && uv run python -m app.rules.validate
+
 ## fmt: auto-fix lint findings and format the backend
 fmt:
 	cd $(BACKEND) && uv run ruff check --fix app tests && uv run ruff format app tests
@@ -65,8 +70,8 @@ audit:
 	cd $(BACKEND) && uv run pip-audit
 	cd $(FRONTEND) && npm audit
 
-## check: lint, test and audit — everything CI would run
-check: lint test audit
+## check: lint, validate, test and audit — everything CI would run
+check: lint validate-rules test audit
 
 ## build: production build of the frontend bundle
 build:

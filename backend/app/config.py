@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     db_path: str = "./healing_hertz.db"
     demo_mode: bool = False
 
+    # Directory of operator-supplied rule files. Empty disables user rules
+    # entirely, so the default deployment gains no new surface.
+    rules_dir: str = ""
+
     @property
     def unifi_base_url(self) -> str:
         return f"https://{self.unifi_host}:{self.unifi_port}{self.unifi_api_prefix}"

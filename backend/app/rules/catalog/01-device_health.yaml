@@ -1,0 +1,260 @@
+# Device reachability, state, resource pressure and firmware.
+#
+# `kind: declarative` rules express their predicate and prose here. `kind: python`
+# means the algorithm is too involved to be data and stays in
+# app/rules/device_health.py; the catalog still owns the rule's identity and
+# metadata.
+#
+# Entry order here is evaluation order, which is user-visible: findings are sorted
+# by severity with a stable sort, so within a severity band they appear in the
+# order their rules ran.
+
+rules:
+  - id: device.offline
+    kind: declarative
+    category: device_health
+    emits:
+      - source: devices
+        where: [device_state, eq, OFFLINE]
+        severity: critical
+        title: "{name_or_model} is offline"
+        summary: "Device {name_or_mac} ({device_model}) is not reachable by the controller."
+        recommendation: >-
+          Check power and PoE on the device's switch port, verify the uplink cable,
+          and power-cycle the device. If it stays offline, factory-reset and re-adopt.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          mac: {raw: device_mac}
+          state: {raw: device_state}
+
+  - id: device.degraded_state
+    kind: declarative
+    category: device_health
+    emits:
+      - source: devices
+        where:
+          - device_state
+          - in
+          - [CONNECTION_INTERRUPTED, ISOLATED, U5G_INCORRECT_TOPOLOGY]
+        severity: high
+        title: "{name_or_model} is in state {device_state}"
+        summary: "Device {name_or_mac} reports a degraded connection state ({device_state})."
+        recommendation: >-
+          Inspect the device's uplink path (cable, switch port, mesh signal). ISOLATED APs
+          have lost their wired uplink; CONNECTION_INTERRUPTED often indicates flapping links.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          state: {raw: device_state}
+
+  # Two ways to be un-adopted: never adopted (visible but not claimed), or
+  # adopted and fallen back. Same rule id, so they share a dismissal.
+  - id: device.pending_adoption
+    kind: declarative
+    category: device_health
+    emits:
+      - source: pending_devices
+        severity: medium
+        title: "{name_or_model_or_mac} awaiting adoption"
+        summary: "A UniFi device is visible on the network but not adopted into this site."
+        recommendation: >-
+          Adopt the device in the UniFi console, or remove it from the network if unexpected.
+        evidence:
+          device: {raw: pending_name}
+          model: {raw: pending_model}
+          mac: {raw: pending_mac}
+
+      - source: devices
+        where: [device_state, eq, PENDING_ADOPTION]
+        severity: medium
+        title: "{name_or_model} stuck in PENDING_ADOPTION"
+        summary: "An adopted device has fallen back to pending-adoption state."
+        recommendation: >-
+          Re-adopt the device; if it loops, verify the inform URL and controller reachability.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          state: {raw: device_state}
+
+  - id: device.unsupported
+    kind: declarative
+    category: device_health
+    emits:
+      - source: devices
+        where: [device_supported, eq, false]
+        severity: low
+        title: "{name_or_model} is no longer supported"
+        summary: >-
+          This device model is not fully supported by the current Network application.
+        recommendation: >-
+          Plan a hardware refresh; unsupported devices stop receiving security fixes.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          firmware: {raw: device_firmware_version}
+
+  - id: device.high_cpu
+    kind: declarative
+    category: device_health
+    emits:
+      - source: device_stats
+        where: [cpu_pct, gte, 75]
+        severity:
+          base: medium
+          escalate:
+            - {when: [cpu_pct, gte, 90], to: high}
+        title: "High CPU on {device_name} ({cpu_pct:.0f}%)"
+        summary: >-
+          {device_name} is running at {cpu_pct:.1f}% CPU, which can cause latency and
+          dropped features.
+        recommendation: >-
+          Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them;
+          check for runaway processes after a firmware update, or upgrade the gateway if
+          sustained at high WAN throughput.
+        evidence:
+          device: {raw: device_name}
+          cpuUtilizationPct: {raw: cpu_pct}
+          loadAverage5Min: {raw: load_5_min}
+
+  - id: device.high_memory
+    kind: declarative
+    category: device_health
+    emits:
+      - source: device_stats
+        where: [memory_pct, gte, 80]
+        severity:
+          base: medium
+          escalate:
+            - {when: [memory_pct, gte, 90], to: high}
+        title: "High memory on {device_name} ({memory_pct:.0f}%)"
+        summary: "{device_name} is using {memory_pct:.1f}% of memory; exhaustion leads to reboots."
+        recommendation: >-
+          Reduce enabled services on the device, check for memory-leak advisories on its
+          firmware version, and schedule a reboot as a stopgap.
+        evidence:
+          device: {raw: device_name}
+          memoryUtilizationPct: {raw: memory_pct}
+
+  - id: device.high_load
+    kind: declarative
+    category: device_health
+    emits:
+      # A spike means the 5-minute load is both high in absolute terms and well
+      # above its own 15-minute baseline. The ratio is null when the baseline is
+      # non-positive, which is the guard the comparison used to carry.
+      - source: device_stats
+        compute:
+          load_trend: {op: ratio, of: load_5_min, per: load_15_min}
+        where:
+          all:
+            - [load_5_min, gte, 2.0]
+            - [load_trend, gt, 1.5]
+        severity: medium
+        title: "Load spike on {device_name}"
+        summary: >-
+          5-minute load ({load_5_min:.1f}) is well above the 15-minute baseline
+          ({load_15_min:.1f}).
+        recommendation: "Re-scan shortly; if the spike persists, treat as sustained high CPU."
+        evidence:
+          device: {raw: device_name}
+          loadAverage5Min: {raw: load_5_min}
+          loadAverage15Min: {raw: load_15_min}
+
+  - id: device.recent_reboot
+    kind: declarative
+    category: device_health
+    emits:
+      - source: device_stats
+        compute:
+          uptime_min: {op: floordiv, of: uptime_sec, by: 60}
+        where: [uptime_sec, lt, 3600]
+        severity: info
+        title: "{device_name} rebooted recently"
+        summary: "{device_name} has been up for only {uptime_min} minutes."
+        recommendation: "No action needed if this was a planned restart; watch for repeats."
+        evidence:
+          device: {raw: device_name}
+          uptimeSec: {raw: uptime_sec}
+
+  # One low uptime is a reboot; the pattern across runs spanning a day is the
+  # finding, which needs history filtered per device and a span measured.
+  - id: device.reboot_loop
+    kind: python
+    impl: app.rules.device_health:RebootLoop
+    category: device_health
+    provides: [device_name, uptime_sec, low_uptime_runs]
+    emits:
+      - severity: high
+        title: "{device_name} appears to be reboot-looping"
+        summary: >-
+          {device_name} has shown under 24h uptime across {low_uptime_runs} scans spanning
+          more than a day — it is likely restarting repeatedly.
+        recommendation: >-
+          Check PoE budget on its switch port, inspect for overheating, and review
+          firmware release notes; downgrade if a recent update introduced instability.
+        evidence:
+          device: {raw: device_name}
+          uptimeSec: {raw: uptime_sec}
+          lowUptimeRuns: {raw: low_uptime_runs}
+
+  # Uptime this long means the device has skipped every firmware window.
+  - id: device.stale_uptime
+    kind: declarative
+    category: device_health
+    emits:
+      - source: device_stats
+        compute:
+          uptime_days: {op: floordiv, of: uptime_sec, by: 86400}
+        where: [uptime_sec, gte, 15552000]   # 180 days
+        severity: low
+        title: "{device_name} has been up for {uptime_days} days"
+        summary: >-
+          {device_name} has not restarted in {uptime_days} days. Long uptime is not a
+          problem in itself, but it means no firmware update has been applied in
+          that window and any slow memory leak has had the whole time to grow.
+        recommendation: >-
+          Check for a pending firmware update and reboot during a maintenance
+          window; a device that reboots cleanly on your schedule beats one that
+          reboots on its own.
+        evidence:
+          device: {raw: device_name}
+          uptimeSec: {raw: uptime_sec}
+
+  - id: firmware.update_available
+    kind: declarative
+    category: firmware
+    emits:
+      - source: devices
+        where: [device_firmware_updatable, eq, true]
+        severity: medium
+        title: "Firmware update available for {name_or_model}"
+        summary: "{name_or_mac} is on {device_firmware_version} with an update available."
+        recommendation: >-
+          Review the release notes and update during a maintenance window. Keep all APs on
+          the same firmware to avoid roaming quirks.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          currentFirmware: {raw: device_firmware_version}
+
+  # Groups online APs by version and reports across the groups, so the
+  # recommendation can name the newest version present.
+  - id: firmware.version_drift
+    kind: python
+    impl: app.rules.device_health:MixedApFirmware
+    category: firmware
+    provides: [version_count, by_version, newest]
+    emits:
+      - severity: low
+        title: "Access points run {version_count} different firmware versions"
+        summary: >-
+          Roaming, band steering and fast-transition behaviour are negotiated between
+          APs. When they run different firmware those features can behave
+          inconsistently, producing dropouts that look like RF problems.
+        recommendation: >-
+          Bring every AP to the same version (currently {newest}) in one maintenance
+          window rather than updating them piecemeal.
+        evidence:
+          versions: {raw: by_version}
+          newest: {raw: newest}

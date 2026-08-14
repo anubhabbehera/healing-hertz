@@ -1,0 +1,23 @@
+# Named constants the rule files reference as `$NAME`.
+#
+# These are the sets and thresholds more than one rule reads, or that carry
+# enough domain meaning to deserve a name rather than an inline literal.
+
+# Non-overlapping 2.4 GHz channels. Everything else interferes with two channel
+# groups at once.
+GOOD_24_CHANNELS: [1, 6, 11]
+
+# 5 GHz channels that require radar detection. A radar hit forces the radio off
+# the channel for 30 minutes, which clients experience as a dropout.
+DFS_CHANNELS: [
+  52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
+  100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
+  113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+  126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+  139, 140, 141, 142, 143, 144
+]
+
+# Pre-802.11n modes. Matched exactly, never by prefix — "802.11AC" and
+# "802.11AX" both start with "802.11A". Compared against the normalised form
+# the radio source provides (upper-cased, hyphens and spaces removed).
+PRE_N_STANDARDS: ["802.11A", "802.11B", "802.11G", "802.11BG", "802.11B/G"]

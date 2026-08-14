@@ -1,0 +1,179 @@
+# Connected-client population, authorisation and airtime behaviour.
+#
+# `kind: declarative` rules express their predicate and prose here. `kind: python`
+# means the algorithm is too involved to be data and stays in app/rules/clients.py;
+# the catalog still owns the rule's identity and metadata.
+#
+# Several of these report a population rather than a device -- "4 clients on legacy
+# rates" -- so they use an `aggregate` block to fold every match into one
+# site-scoped finding. Naming each client separately would be noise.
+
+rules:
+  # Asserts the absence of matches in one collection given the presence of
+  # matches in another, which no per-row predicate can express.
+  - id: clients.none_on_ap
+    kind: python
+    impl: app.rules.clients:NoWirelessClients
+    category: clients
+    provides: [ap_count, ap_names, wireless_count]
+    emits:
+      - severity: info
+        title: "No wireless clients despite online APs"
+        summary: >-
+          {ap_count} access point(s) are online but no wireless clients are
+          connected — SSIDs may be disabled or misconfigured.
+        recommendation: "Verify SSIDs are enabled and broadcasting on the expected bands."
+        evidence:
+          onlineAps: {raw: ap_names}
+          wirelessClients: {raw: wireless_count}
+
+  - id: clients.unauthorized_guests
+    kind: declarative
+    category: clients
+    emits:
+      - source: clients
+        where:
+          all:
+            - [access_type, eq, GUEST]
+            - [access_authorized, eq, false]
+        aggregate:
+          into: site
+          compute:
+            count: {op: count}
+        severity: low
+        title: "{count} guest client(s) stuck unauthorized"
+        summary: >-
+          Guest clients are connected but not authorized through the portal — they hold
+          an association without network access.
+        recommendation: >-
+          Check the guest portal flow (captive portal reachability, voucher validity);
+          authorize or disconnect these clients.
+        evidence:
+          # No sort or limit: the list is short and its order is the order the
+          # controller reported the clients in.
+          clients:
+            op: top
+            project: {name: client_name, mac: client_mac, ip: client_ip}
+
+  # Evidence is a name→count mapping rather than projected rows, and the roam
+  # counts arrive already aggregated per client.
+  - id: clients.excessive_roaming
+    kind: python
+    impl: app.rules.clients:ExcessiveRoaming
+    category: wifi
+    provides: [client_count, roams]
+    emits:
+      - severity: medium
+        title: "{client_count} client(s) roaming excessively"
+        summary: >-
+          Clients bouncing between APs many times a day usually sit in an overlap
+          zone with near-equal signal, causing stalls on every hop.
+        recommendation: >-
+          Lower transmit power on the overlapping APs (or reposition them) so each
+          area has one clearly-best AP; check band-steering settings.
+        evidence:
+          roamsLast24h: {raw: roams}
+
+  # One slow client can hold an entire cell hostage. A client negotiating legacy
+  # rates occupies the radio far longer per byte than a modern one, so without
+  # airtime fairness it drags every other client on that AP down with it.
+  - id: clients.slow_phy_rate
+    kind: declarative
+    category: wifi
+    emits:
+      - source: rf_clients
+        # 54 Mbps is the ceiling of 802.11a/g. A rate of 0 means "not reported".
+        where:
+          all:
+            - [tx_rate_kbps, gt, 0]
+            - [tx_rate_kbps, lte, 54000]
+        aggregate:
+          into: site
+          compute:
+            count: {op: count}
+        severity:
+          base: low
+          escalate:
+            - {when: [count, gt, 1], to: medium}
+        title: "{count} client(s) connected at legacy data rates"
+        summary: >-
+          These clients negotiated 54 Mbps or less. Every frame they send occupies
+          the radio for many times longer than a modern client's, so they eat the
+          airtime of everyone else on the same AP.
+        recommendation: >-
+          Enable Airtime Fairness on the APs so a slow client can't monopolise the
+          cell, and raise the minimum data rate to drop legacy 802.11b rates. If a
+          client is slow because it is distant, fix coverage instead.
+        evidence:
+          clients:
+            op: top
+            sort_by: tx_rate_kbps
+            order: asc
+            limit: 10
+            project:
+              name: client_name
+              txRateKbps: tx_rate_kbps
+              signalDbm: signal_dbm
+              ssid: client_ssid
+
+  # Groups clients by AP MAC, then joins back to the device list through a
+  # case-normalised MAC map to get a display name.
+  - id: capacity.ap_client_load
+    kind: python
+    impl: app.rules.clients:ApClientLoad
+    category: capacity
+    provides: [ap_name, client_count, threshold]
+    emits:
+      - severity: medium
+        title: "{ap_name} is carrying {client_count} wireless clients"
+        summary: >-
+          {client_count} clients share {ap_name}'s radios. Past roughly {threshold}
+          associations the cell spends more time arbitrating airtime than moving
+          data, and latency becomes erratic even at strong signal.
+        recommendation: >-
+          Add an AP to split the coverage area, or move stationary devices
+          (TVs, consoles, desktops) to Ethernet to free airtime.
+        evidence:
+          # key "ap", not "name" — the advisor payload sanitizer pseudonymizes
+          # "name"/"hostname" as client identity.
+          ap: {raw: ap_name}
+          clients: {raw: client_count}
+
+  - id: wifi.band_steering_ineffective
+    kind: declarative
+    category: wifi
+    emits:
+      # -65 dBm is comfortably within 5 GHz range of the client's AP, so a client
+      # this strong has no reason to be on 2.4 GHz. Below three of them it is
+      # more likely a few 2.4-only devices than a steering problem.
+      - source: rf_clients
+        where:
+          all:
+            - [band_ghz, eq, 2.4]
+            - [signal_dbm, gte, -65]
+        aggregate:
+          into: site
+          min_matches: 3
+          compute:
+            count: {op: count}
+        severity: medium
+        title: "{count} strong-signal client(s) stuck on 2.4 GHz"
+        summary: >-
+          These clients sit close enough to their AP for 5 GHz yet remain on the
+          slower, more congested 2.4 GHz band — the signature of band steering
+          being off, or of separate 2.4 and 5 GHz SSIDs.
+        recommendation: >-
+          Combine the 2.4 and 5 GHz SSIDs into one name and set Band Steering to
+          'Prefer 5G'. Clients that genuinely lack 5 GHz radios (many IoT devices)
+          will stay on 2.4 GHz on their own.
+        evidence:
+          clients:
+            op: top
+            sort_by: signal_dbm
+            order: desc
+            limit: 10
+            project:
+              name: client_name
+              signalDbm: signal_dbm
+              channel: channel
+              ssid: client_ssid

@@ -1,0 +1,261 @@
+# Radio configuration, channel planning, mesh topology and RF quality.
+#
+# `kind: declarative` rules express their predicate and prose here. `kind: python`
+# means the algorithm is too involved to be data and stays in app/rules/wifi.py;
+# the catalog still owns the rule's identity and metadata.
+#
+# Entry order here is evaluation order, which is user-visible: findings are sorted
+# by severity with a stable sort, so within a severity band they appear in the
+# order their rules ran.
+
+rules:
+  - id: wifi.bad_24_channel
+    kind: declarative
+    category: wifi
+    emits:
+      - source: online_ap_radios
+        where:
+          all:
+            - [radio_frequency_ghz, eq, 2.4]
+            - [radio_channel, not_in, $GOOD_24_CHANNELS]
+        severity: medium
+        title: "{device_name} 2.4 GHz on channel {radio_channel}"
+        summary: >-
+          {device_name} uses 2.4 GHz channel {radio_channel}; only channels 1, 6 and 11
+          are non-overlapping, so this channel interferes with two channel groups at once.
+        recommendation: >-
+          Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).
+        evidence:
+          device: {raw: device_name}
+          channel: {raw: radio_channel}
+          widthMHz: {raw: radio_width_mhz}
+
+  # Groups radios by channel and reports per group. The two bands group
+  # differently: on 2.4 GHz any two APs sharing is a problem, on 5 GHz only
+  # wide channels overlapping is.
+  - id: wifi.channel_overlap
+    kind: python
+    impl: app.rules.wifi:ChannelOverlap
+    category: wifi
+    provides: [channel, ap_count, ap_names, ap_list, aps]
+    emits:
+      - key: band_24
+        severity: medium
+        title: "{ap_count} APs share 2.4 GHz channel {channel}"
+        summary: >-
+          APs {ap_list} all broadcast on 2.4 GHz channel {channel};
+          co-channel contention reduces airtime for every client.
+        recommendation: "Spread these APs across channels 1, 6 and 11."
+        evidence:
+          channel: {raw: channel}
+          aps: {raw: ap_names}
+
+      - key: band_5_wide
+        severity: medium
+        title: "{ap_count} APs share 5 GHz channel {channel} at wide width"
+        summary: >-
+          APs {ap_list} share 5 GHz channel {channel} with 80 MHz+ width;
+          wide overlapping channels amplify co-channel interference.
+        recommendation: >-
+          Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel
+          width to 40 MHz in dense deployments.
+        evidence:
+          channel: {raw: channel}
+          aps: {raw: aps}
+
+  - id: wifi.wide_24_width
+    kind: declarative
+    category: wifi
+    emits:
+      - source: online_ap_radios
+        where:
+          all:
+            - [radio_frequency_ghz, eq, 2.4]
+            - [radio_width_mhz, gt, 20]
+        severity: low
+        title: "{device_name} 2.4 GHz width is {radio_width_mhz} MHz"
+        summary: >-
+          40 MHz on 2.4 GHz consumes most of the band and almost always increases
+          interference more than it adds throughput.
+        recommendation: "Set 2.4 GHz channel width to 20 MHz."
+        evidence:
+          device: {raw: device_name}
+          widthMHz: {raw: radio_width_mhz}
+          channel: {raw: radio_channel}
+
+  # DFS channels are quiet until a radar hit clears the radio for 30 minutes.
+  # UniFi's auto channel management (WiFi AI) picks them readily, which is the
+  # single most-reported cause of "the WiFi drops for half an hour" in homes.
+  - id: wifi.dfs_channel
+    kind: declarative
+    category: wifi
+    emits:
+      - source: online_ap_radios
+        where:
+          all:
+            - [radio_frequency_ghz, eq, 5]
+            - [radio_channel, in, $DFS_CHANNELS]
+        severity: medium
+        title: "{device_name} 5 GHz on DFS channel {radio_channel}"
+        summary: >-
+          {device_name} broadcasts on channel {radio_channel}, which requires radar
+          detection. A radar event silences the radio for 30 minutes and every
+          client on it is disconnected.
+        recommendation: >-
+          Move to a non-DFS channel (36-48 or 149-165) unless the band is too
+          congested to avoid DFS. If channels are auto-assigned, pin this radio
+          manually — automatic selection keeps returning to DFS.
+        evidence:
+          device: {raw: device_name}
+          channel: {raw: radio_channel}
+          widthMHz: {raw: radio_width_mhz}
+
+  # 80 MHz is the sweet spot on 5 GHz, but only when channels are scarce --
+  # so both the predicate and the summary read how many radios share the band.
+  - id: wifi.narrow_5_width
+    kind: python
+    impl: app.rules.wifi:Narrow5Width
+    category: wifi
+    provides: [device_name, width_mhz, channel, radios_on_5ghz]
+    emits:
+      - severity: low
+        title: "{device_name} 5 GHz width is {width_mhz} MHz"
+        summary: >-
+          {device_name} runs a {width_mhz} MHz channel on 5 GHz. With only
+          {radios_on_5ghz} radio(s) on the band there is room for 80 MHz, which roughly
+          doubles throughput for modern clients.
+        recommendation: >-
+          Set the 5 GHz channel width to 80 MHz (VHT80/HE80). Keep it at 40 MHz only
+          if you later add APs and channels start overlapping.
+        evidence:
+          device: {raw: device_name}
+          widthMHz: {raw: width_mhz}
+          channel: {raw: channel}
+          radiosOn5GHz: {raw: radios_on_5ghz}
+
+  - id: wifi.legacy_radio_standard
+    kind: declarative
+    category: wifi
+    emits:
+      # Matched against the normalised standard the source provides, so the
+      # exact-match requirement can't be undone by a hyphen or a space.
+      - source: online_ap_radios
+        where: [radio_standard_normalized, in, $PRE_N_STANDARDS]
+        severity: low
+        title: "{device_name} {radio_frequency_ghz} GHz runs {radio_standard}"
+        summary: >-
+          {device_name}'s {radio_frequency_ghz} GHz radio operates at
+          {radio_standard}, a pre-802.11n standard. Legacy rates are slow and
+          every frame sent at them consumes airtime the whole cell could be using.
+        recommendation: >-
+          Move the radio to 802.11n or later and disable legacy 802.11b data rates,
+          unless a device on this network genuinely needs them.
+        evidence:
+          device: {raw: device_name}
+          wlanStandard: {raw: radio_standard}
+          frequencyGHz: {raw: radio_frequency_ghz}
+
+  # Counting hops means walking the uplink chain, with a guard against a
+  # controller reporting a cycle.
+  - id: wifi.mesh_uplink
+    kind: python
+    impl: app.rules.wifi:MeshUplink
+    category: wifi
+    provides: [device_name, uplink_device_name, hops, hop_phrase]
+    emits:
+      - severity:
+          base: medium
+          escalate:
+            - {when: [hops, gte, 2], to: high}
+        title: "{device_name} is wirelessly meshed via {uplink_device_name}"
+        summary: >-
+          {device_name} uplinks through {uplink_device_name} over the air{hop_phrase}. A
+          meshed AP splits its radio time between serving clients and relaying, roughly
+          halving throughput per hop.
+        recommendation: >-
+          Run Ethernet to this AP if at all possible. If it must stay meshed, keep
+          it within one hop of a wired AP and make sure both radios see each other
+          well above -65 dBm.
+        evidence:
+          device: {raw: device_name}
+          uplinkDevice: {raw: uplink_device_name}
+          wirelessHops: {raw: hops}
+
+  - id: wifi.high_retries
+    kind: declarative
+    category: wifi
+    emits:
+      - source: ap_radio_stats
+        where: [tx_retries_pct, gte, 15]
+        severity:
+          base: medium
+          escalate:
+            - {when: [tx_retries_pct, gte, 30], to: high}
+        title: "High TX retries on {device_name} {radio_frequency_ghz} GHz ({tx_retries_pct:.0f}%)"
+        summary: >-
+          {tx_retries_pct:.1f}% of transmissions on {device_name}'s {radio_frequency_ghz} GHz radio
+          are retries — a sign of interference, distant clients, or co-channel contention.
+        recommendation: >-
+          Fix the channel plan first (overlap/width findings), then check for non-WiFi
+          interferers near this AP and consider raising minimum data rates.
+        evidence:
+          device: {raw: device_name}
+          frequencyGHz: {raw: radio_frequency_ghz}
+          txRetriesPct: {raw: tx_retries_pct}
+
+  # The baseline is keyed by device and frequency together, so the history
+  # lookup key has to be synthesised before it can be consulted.
+  - id: wifi.retries_worsening
+    kind: python
+    impl: app.rules.wifi:RetriesWorsening
+    category: wifi
+    provides:
+      [device_name, radio_frequency_ghz, tx_retries_pct, baseline_pct,
+       baseline_pct_rounded]
+    emits:
+      - severity: medium
+        title: "Retries worsening on {device_name} {radio_frequency_ghz} GHz"
+        summary: >-
+          TX retries rose to {tx_retries_pct:.1f}% from a recent baseline of
+          {baseline_pct:.1f}% — something changed in the RF environment.
+        recommendation: >-
+          Look for new interference sources (neighbor APs, cameras, microwaves) and
+          re-run the channel plan.
+        evidence:
+          device: {raw: device_name}
+          frequencyGHz: {raw: radio_frequency_ghz}
+          txRetriesPct: {raw: tx_retries_pct}
+          baselinePct: {raw: baseline_pct_rounded}
+
+  - id: wifi.weak_rssi_clients
+    kind: declarative
+    category: wifi
+    emits:
+      - source: rf_clients
+        where:
+          all:
+            - [signal_dbm, is_not_null]
+            - [signal_dbm, lte, -75]
+        aggregate:
+          into: site
+          compute:
+            count: {op: count}
+            worst: {op: min_of, of: signal_dbm}
+        severity:
+          base: medium
+          escalate:
+            - {when: [worst, lte, -85], to: high}
+        title: "{count} client(s) with weak WiFi signal"
+        summary: >-
+          Clients connected below -75 dBm get slow, retry-heavy links and drag
+          down airtime for everyone on the same AP.
+        recommendation: >-
+          Relocate the AP or the device, add an AP to cover the dead zone, or
+          raise minimum RSSI on the AP so distant clients roam instead of clinging.
+        evidence:
+          clients:
+            op: top
+            sort_by: signal_dbm
+            order: asc
+            limit: 10
+            project: {name: client_name, signalDbm: signal_dbm, ssid: client_ssid}

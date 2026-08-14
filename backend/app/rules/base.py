@@ -47,6 +47,26 @@ class Finding:
 
 
 @dataclass
+class Binding:
+    """What a ``kind: python`` rule returns instead of a Finding.
+
+    The class works out *what is true* -- walking a mesh, taking a median over
+    history, grouping by channel -- and hands back the values it computed. The
+    catalog says what to write about them. That keeps a rule's prose in one
+    place whether or not its logic could be expressed as data.
+
+    ``key`` selects which emit block renders it, for the rules that report more
+    than one kind of thing under a single id.
+    """
+
+    vars: dict
+    key: str = "default"
+    subject_type: str = "site"
+    subject_id: str | None = None
+    subject_name: str | None = None
+
+
+@dataclass
 class UnsupportedCheck:
     rule_id: str
     title: str
