@@ -161,6 +161,49 @@ def _rf_slow_band_load(s: Snapshot) -> None:
     )
 
 
+def _graded_upper_band(s: Snapshot) -> None:
+    """Every graded rule pushed above its escalation threshold.
+
+    Paired with _graded_lower_band. Severity grading is per-rule inline logic
+    today and becomes an `escalate` block in the catalog; without both bands
+    pinned, a broken escalation rule would still match the golden.
+    """
+    stats = s.device_stats["gw1"]
+    stats.cpu_utilization_pct = 95.0          # >= 90 -> high
+    stats.memory_utilization_pct = 95.0       # >= 90 -> high
+    for radio in s.device_stats["ap1"].interfaces.radios:
+        radio.tx_retries_pct = 35.0           # >= 30 -> high
+    s.rf = RfSnapshot(
+        clients=[
+            ClientRF(mac="aa:1", name="far-cam", ap_mac=None, essid="Home",
+                     signal_dbm=-90, tx_rate_kbps=12_000, rx_rate_kbps=12_000),
+            ClientRF(mac="aa:2", name="old-tv", ap_mac=None, essid="Home",
+                     signal_dbm=-86, tx_rate_kbps=24_000, rx_rate_kbps=24_000),
+        ],
+        roam_counts={}, roam_data_available=True,
+    )
+    s.wan = WanProbeResult(latency_ms=200.0, jitter_ms=50.0, loss_pct=15.0,
+                           samples=15, per_target={})
+
+
+def _graded_lower_band(s: Snapshot) -> None:
+    """The same rules held just below their escalation thresholds."""
+    stats = s.device_stats["gw1"]
+    stats.cpu_utilization_pct = 80.0          # >= 75 but < 90 -> medium
+    stats.memory_utilization_pct = 85.0       # >= 80 but < 90 -> medium
+    for radio in s.device_stats["ap1"].interfaces.radios:
+        radio.tx_retries_pct = 20.0           # >= 15 but < 30 -> medium
+    s.rf = RfSnapshot(
+        clients=[
+            ClientRF(mac="aa:1", name="hall-cam", ap_mac=None, essid="Home",
+                     signal_dbm=-80, tx_rate_kbps=48_000, rx_rate_kbps=48_000),
+        ],
+        roam_counts={}, roam_data_available=True,
+    )
+    s.wan = WanProbeResult(latency_ms=100.0, jitter_ms=10.0, loss_pct=3.0,
+                           samples=15, per_target={})
+
+
 def _wan_bad(s: Snapshot) -> None:
     s.wan = WanProbeResult(latency_ms=170.0, jitter_ms=40.0, loss_pct=12.0,
                            samples=15, per_target={})
@@ -228,6 +271,8 @@ SCENARIOS: list[Scenario] = [
     Scenario("no_wireless_clients", _no_wireless_clients),
     Scenario("rf_weak_and_roaming", _rf_weak_and_roaming),
     Scenario("rf_slow_band_load", _rf_slow_band_load),
+    Scenario("graded_upper_band", _graded_upper_band),
+    Scenario("graded_lower_band", _graded_lower_band),
     Scenario("wan_degraded", _wan_bad, _WAN_HISTORY),
     Scenario("wan_healthy_stays_quiet", _wan_healthy),
     Scenario("dns_spike", _dns_bad, _DNS_HISTORY),

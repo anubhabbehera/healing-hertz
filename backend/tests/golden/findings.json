@@ -5962,6 +5962,821 @@
       "wifi.radio_config_audit"
     ]
   },
+  "graded_upper_band": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "device.high_memory",
+      "wifi.high_retries",
+      "wifi.high_retries",
+      "wifi.weak_rssi_clients",
+      "wired.uplink_negotiation",
+      "wan.latency_loss",
+      "wan.latency_loss",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wired.poe_limited",
+      "clients.slow_phy_rate",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.slow_phy_rate",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 client(s) connected at legacy data rates",
+        "summary": "These clients negotiated 54 Mbps or less. Every frame they send occupies the radio for many times longer than a modern client's, so they eat the airtime of everyone else on the same AP.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "far-cam",
+              "txRateKbps": 12000,
+              "signalDbm": -90,
+              "ssid": "Home"
+            },
+            {
+              "name": "old-tv",
+              "txRateKbps": 24000,
+              "signalDbm": -86,
+              "ssid": "Home"
+            }
+          ]
+        },
+        "recommendation": "Enable Airtime Fairness on the APs so a slow client can't monopolise the cell, and raise the minimum data rate to drop legacy 802.11b rates. If a client is slow because it is distant, fix coverage instead.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (95%)",
+        "summary": "Dream Machine Pro is running at 95.0% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 95.0,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.high_memory",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High memory on Dream Machine Pro (95%)",
+        "summary": "Dream Machine Pro is using 95.0% of memory; exhaustion leads to reboots.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "memoryUtilizationPct": 95.0
+        },
+        "recommendation": "Reduce enabled services on the device, check for memory-leak advisories on its firmware version, and schedule a reboot as a stopgap.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wan.latency_loss",
+        "severity": "high",
+        "category": "capacity",
+        "title": "High WAN latency (200 ms)",
+        "summary": "Average TCP-connect latency to public anchors is 200 ms (jitter 50 ms) \u2014 typical wired links measure 5\u201330 ms.",
+        "evidence": {
+          "latencyMs": 200.0,
+          "jitterMs": 50.0,
+          "perTarget": {}
+        },
+        "recommendation": "If sustained, check for bufferbloat (enable Smart Queues sized to your plan), a saturated uplink, or ISP path issues.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wan.latency_loss",
+        "severity": "high",
+        "category": "capacity",
+        "title": "WAN probe failures: 15% of connections",
+        "summary": "15.0% of 15 TCP probes to public anchors failed \u2014 indicates packet loss or an unstable WAN path.",
+        "evidence": {
+          "lossPct": 15.0,
+          "samples": 15,
+          "perTarget": {}
+        },
+        "recommendation": "Check the WAN link (modem/ONT stats, cabling) and re-run at a quiet hour; sustained loss is worth an ISP ticket with these numbers.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "high",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (35%)",
+        "summary": "35.0% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 35.0
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "high",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 5.0 GHz (35%)",
+        "summary": "35.0% of transmissions on Office AP's 5.0 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 5.0,
+          "txRetriesPct": 35.0
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.weak_rssi_clients",
+        "severity": "high",
+        "category": "wifi",
+        "title": "2 client(s) with weak WiFi signal",
+        "summary": "Clients connected below -75 dBm get slow, retry-heavy links and drag down airtime for everyone on the same AP.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "far-cam",
+              "signalDbm": -90,
+              "ssid": "Home"
+            },
+            {
+              "name": "old-tv",
+              "signalDbm": -86,
+              "ssid": "Home"
+            }
+          ]
+        },
+        "recommendation": "Relocate the AP or the device, add an AP to cover the dead zone, or raise minimum RSSI on the AP so distant clients roam instead of clinging.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "dns.anomalies",
+      "security.policy_audit",
+      "wifi.auto_optimize",
+      "wifi.radio_config_audit"
+    ]
+  },
+  "graded_lower_band": {
+    "order": [
+      "device.offline",
+      "wired.uplink_negotiation",
+      "device.high_cpu",
+      "device.high_memory",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wifi.high_retries",
+      "wifi.weak_rssi_clients",
+      "wired.poe_limited",
+      "wan.latency_loss",
+      "wan.latency_loss",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "clients.slow_phy_rate"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.slow_phy_rate",
+        "severity": "low",
+        "category": "wifi",
+        "title": "1 client(s) connected at legacy data rates",
+        "summary": "These clients negotiated 54 Mbps or less. Every frame they send occupies the radio for many times longer than a modern client's, so they eat the airtime of everyone else on the same AP.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "hall-cam",
+              "txRateKbps": 48000,
+              "signalDbm": -80,
+              "ssid": "Home"
+            }
+          ]
+        },
+        "recommendation": "Enable Airtime Fairness on the APs so a slow client can't monopolise the cell, and raise the minimum data rate to drop legacy 802.11b rates. If a client is slow because it is distant, fix coverage instead.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "medium",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (80%)",
+        "summary": "Dream Machine Pro is running at 80.0% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 80.0,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.high_memory",
+        "severity": "medium",
+        "category": "device_health",
+        "title": "High memory on Dream Machine Pro (85%)",
+        "summary": "Dream Machine Pro is using 85.0% of memory; exhaustion leads to reboots.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "memoryUtilizationPct": 85.0
+        },
+        "recommendation": "Reduce enabled services on the device, check for memory-leak advisories on its firmware version, and schedule a reboot as a stopgap.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wan.latency_loss",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "High WAN latency (100 ms)",
+        "summary": "Average TCP-connect latency to public anchors is 100 ms (jitter 10 ms) \u2014 typical wired links measure 5\u201330 ms.",
+        "evidence": {
+          "latencyMs": 100.0,
+          "jitterMs": 10.0,
+          "perTarget": {}
+        },
+        "recommendation": "If sustained, check for bufferbloat (enable Smart Queues sized to your plan), a saturated uplink, or ISP path issues.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wan.latency_loss",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "WAN probe failures: 3% of connections",
+        "summary": "3.0% of 15 TCP probes to public anchors failed \u2014 indicates packet loss or an unstable WAN path.",
+        "evidence": {
+          "lossPct": 3.0,
+          "samples": 15,
+          "perTarget": {}
+        },
+        "recommendation": "Check the WAN link (modem/ONT stats, cabling) and re-run at a quiet hour; sustained loss is worth an ISP ticket with these numbers.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (20%)",
+        "summary": "20.0% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 20.0
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 5.0 GHz (20%)",
+        "summary": "20.0% of transmissions on Office AP's 5.0 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 5.0,
+          "txRetriesPct": 20.0
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.weak_rssi_clients",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "1 client(s) with weak WiFi signal",
+        "summary": "Clients connected below -75 dBm get slow, retry-heavy links and drag down airtime for everyone on the same AP.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "hall-cam",
+              "signalDbm": -80,
+              "ssid": "Home"
+            }
+          ]
+        },
+        "recommendation": "Relocate the AP or the device, add an AP to cover the dead zone, or raise minimum RSSI on the AP so distant clients roam instead of clinging.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "dns.anomalies",
+      "security.policy_audit",
+      "wifi.auto_optimize",
+      "wifi.radio_config_audit"
+    ]
+  },
   "wan_degraded": {
     "order": [
       "device.offline",
