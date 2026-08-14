@@ -238,7 +238,7 @@ def test_the_converted_wired_rules_are_declarative():
     from app.rules.declarative import DeclarativeRule
     from app.rules.loader import load_catalog
 
-    by_id = {r.id: r for r in load_catalog()}
+    by_id = {r.id: r for r in load_catalog().rules}
     assert isinstance(by_id["wired.poe_limited"], DeclarativeRule)
     assert isinstance(by_id["wired.uplink_negotiation"], DeclarativeRule)
 

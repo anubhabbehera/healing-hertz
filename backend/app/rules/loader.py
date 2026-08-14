@@ -4,14 +4,24 @@ Catalog files are numbered so glob order is evaluation order. That order is
 user-visible: ``run_rules`` sorts findings by severity with a stable sort, so
 within a severity band findings appear in the order their rules ran.
 
-Built-in catalog failures are fatal — a malformed catalog that ships is a bug,
-and running with a silently-reduced rule set would misreport a network as
-healthy. (User-supplied catalogs, added later, fail soft instead.)
+Built-in and user catalogs fail differently, on purpose.
+
+A malformed built-in catalog is a bug that shipped, and running with a
+silently-reduced rule set would misreport a network as healthy -- so it raises.
+A malformed *user* catalog is an operator's half-finished edit, and taking down
+their scan over it would be hostile -- so the file is skipped and reported
+through the same "not checkable" channel a failing rule uses, which means the
+parse error is visible in the UI rather than only in a log.
+
+User catalogs are also the reason for the two hard restrictions enforced here:
+ids must be under the ``custom.`` prefix, and ``kind: python`` is rejected
+outside the built-in directory.
 """
 
 from __future__ import annotations
 
 import importlib
+import logging
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -20,13 +30,23 @@ import yaml
 from pydantic import ValidationError
 
 from app.collectors.snapshot import Snapshot
+from app.config import get_settings
 
-from .base import Category, Finding, RunHistory
+from .base import Category, Finding, RunHistory, UnsupportedCheck
 from .declarative import RuleCompileError, compile_declarative
+from .render import TemplateError
 from .schema import CatalogEntry, CatalogFile, DeclarativeEntry, PythonEntry
+
+logger = logging.getLogger(__name__)
 
 CATALOG_DIR = Path(__file__).parent / "catalog"
 CONSTANTS_FILE = CATALOG_DIR / "_constants.yaml"
+
+# Every operator-supplied rule id lives under this prefix. That makes a
+# collision with a built-in id structurally impossible, so a user rule can
+# never hijack an existing dismissal row or poison a run diff, and an id in the
+# database says where it came from.
+USER_RULE_PREFIX = "custom"
 
 
 class CatalogError(Exception):
@@ -135,12 +155,35 @@ def _read_file(path: Path, constants: dict[str, object]) -> list[CatalogEntry]:
         raise CatalogError(f"{path.name}: {exc}") from exc
 
 
-def compile_entries(entries: list[tuple[Path, object]]) -> list[object]:
-    """Compile parsed entries into runnable rules, rejecting duplicate ids."""
-    seen: dict[str, Provenance] = {}
+def compile_entries(
+    entries: list[tuple[Path, object]],
+    *,
+    trusted: bool = True,
+    seen: dict[str, Provenance] | None = None,
+) -> list[object]:
+    """Compile parsed entries into runnable rules, rejecting duplicate ids.
+
+    ``trusted`` is False for operator-supplied catalogs, which may not name a
+    Python implementation and must stay inside the ``custom.`` namespace.
+    """
+    seen = {} if seen is None else seen
     rules: list[object] = []
     for path, entry in entries:
         provenance = Provenance(path.name, entry.id)
+
+        if not trusted:
+            if not entry.id.startswith(f"{USER_RULE_PREFIX}."):
+                raise CatalogError(
+                    f"{provenance}: a user rule id must start with "
+                    f"'{USER_RULE_PREFIX}.' so it can never collide with a built-in "
+                    "one and orphan its dismissals"
+                )
+            if isinstance(entry, PythonEntry):
+                raise CatalogError(
+                    f"{provenance}: kind 'python' is only allowed in the built-in "
+                    "catalog -- a user rule may not name code to import"
+                )
+
         if entry.id in seen:
             raise CatalogError(
                 f"{provenance}: duplicate rule id, already declared in {seen[entry.id]}"
@@ -152,7 +195,10 @@ def compile_entries(entries: list[tuple[Path, object]]) -> list[object]:
         if isinstance(entry, DeclarativeEntry):
             try:
                 rules.append(compile_declarative(entry, provenance))
-            except RuleCompileError as exc:
+            except (RuleCompileError, TemplateError) as exc:
+                # Both mean the same thing to a caller -- this entry does not
+                # compile -- and a user catalog needs a single type to catch if
+                # it is to fail soft.
                 raise CatalogError(str(exc)) from exc
         else:
             rules.append(
@@ -166,19 +212,67 @@ def compile_entries(entries: list[tuple[Path, object]]) -> list[object]:
     return rules
 
 
+def _rule_files(directory: Path) -> list[Path]:
+    # Leading underscore means "not a rule file" -- _constants.yaml is data the
+    # rule files reference, not a source of entries.
+    return sorted(
+        p for p in directory.glob("*.yaml") if not p.name.startswith("_")
+    )
+
+
+def _load_user_rules(
+    directory: Path, constants: dict[str, object], seen: dict[str, Provenance]
+) -> tuple[list[object], list[UnsupportedCheck]]:
+    """Compile an operator's catalog, reporting rather than raising on failure."""
+    rules: list[object] = []
+    problems: list[UnsupportedCheck] = []
+    for path in _rule_files(directory):
+        try:
+            entries = [(path, entry) for entry in _read_file(path, constants)]
+            rules.extend(compile_entries(entries, trusted=False, seen=seen))
+        except CatalogError as exc:
+            logger.warning("skipping user rule file %s: %s", path.name, exc)
+            problems.append(UnsupportedCheck(
+                rule_id=f"{USER_RULE_PREFIX}.{path.stem}",
+                title=f"Custom rules in {path.name}",
+                reason=f"This file could not be loaded, so its checks did not run: {exc}",
+            ))
+    return rules, problems
+
+
+@dataclass(frozen=True)
+class Catalog:
+    rules: list[object]
+    # Files that failed to load, surfaced to the operator as "not checkable".
+    problems: list[UnsupportedCheck]
+
+
 @lru_cache(maxsize=1)
-def load_catalog() -> list[CatalogRule]:
-    """Every built-in rule, in catalog order.
+def load_catalog() -> Catalog:
+    """Every rule, built-in first then user-supplied, in catalog order.
 
     Cached rather than built at import so a malformed catalog surfaces as a
     CatalogError from the first scan, not as an ImportError that breaks
     unrelated tests confusingly.
     """
-    # Leading underscore means "not a rule file" -- _constants.yaml is data the
-    # rule files reference, not a source of entries.
-    paths = sorted(p for p in CATALOG_DIR.glob("*.yaml") if not p.name.startswith("_"))
+    paths = _rule_files(CATALOG_DIR)
     if not paths:
         raise CatalogError(f"no catalog files found in {CATALOG_DIR}")
     constants = _load_constants()
+
+    seen: dict[str, Provenance] = {}
     entries = [(path, entry) for path in paths for entry in _read_file(path, constants)]
-    return compile_entries(entries)
+    rules = compile_entries(entries, trusted=True, seen=seen)
+
+    problems: list[UnsupportedCheck] = []
+    rules_dir = get_settings().rules_dir
+    if rules_dir:
+        directory = Path(rules_dir).expanduser()
+        if directory.is_dir():
+            # Appended after the built-ins so their evaluation order is unchanged.
+            user_rules, problems = _load_user_rules(directory, constants, seen)
+            rules.extend(user_rules)
+        else:
+            logger.warning("RULES_DIR %s is not a directory; no user rules loaded", directory)
+
+    return Catalog(rules=rules, problems=problems)

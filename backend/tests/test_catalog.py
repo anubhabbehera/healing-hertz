@@ -84,7 +84,7 @@ def _compile(*entries):
 def test_catalog_declares_every_rule_exactly_once():
     from app.rules.loader import load_catalog
 
-    ids = [r.id for r in load_catalog()]
+    ids = [r.id for r in load_catalog().rules]
     assert len(ids) == len(set(ids)) == 35
 
 
@@ -166,7 +166,7 @@ async def test_a_failing_rule_does_not_abort_the_scan(snapshot, monkeypatch):
     import app.rules as rules_pkg
     from app.rules import run_rules
     from app.rules.base import Category
-    from app.rules.loader import CatalogRule, Provenance, load_catalog
+    from app.rules.loader import Catalog, CatalogRule, Provenance, load_catalog
 
     class Exploding:
         def evaluate(self, snapshot, history):
@@ -178,7 +178,8 @@ async def test_a_failing_rule_does_not_abort_the_scan(snapshot, monkeypatch):
         provenance=Provenance("test.yaml", "wifi.exploding"),
         impl=Exploding(),
     )
-    monkeypatch.setattr(rules_pkg, "load_catalog", lambda: [*load_catalog(), broken])
+    patched = Catalog(rules=[*load_catalog().rules, broken], problems=[])
+    monkeypatch.setattr(rules_pkg, "load_catalog", lambda: patched)
 
     findings, unsupported = run_rules(snapshot)
 

@@ -28,7 +28,7 @@ def __getattr__(name: str) -> Any:
     as an error from the scan that needed it.
     """
     if name == "RULES":
-        return load_catalog()
+        return load_catalog().rules
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
@@ -36,10 +36,13 @@ def run_rules(
     snapshot: Snapshot, history: RunHistory | None = None
 ) -> tuple[list[Finding], list[UnsupportedCheck]]:
     history = history or RunHistory()
+    catalog = load_catalog()
     findings: list[Finding] = []
-    failed: list[UnsupportedCheck] = []
+    # User rule files that could not be parsed are reported the same way as a
+    # rule that failed to run: the operator sees them, the scan still completes.
+    failed: list[UnsupportedCheck] = list(catalog.problems)
 
-    for rule in load_catalog():
+    for rule in catalog.rules:
         try:
             findings.extend(rule.evaluate(snapshot, history))
         except Exception as exc:
