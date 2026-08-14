@@ -268,34 +268,3 @@ class RetriesWorsening:
                     )
                 )
         return findings
-
-
-class WeakRssiClients:
-    id = "wifi.weak_rssi_clients"
-
-    def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        if snapshot.rf is None:
-            return []
-        weak = [c for c in snapshot.rf.clients
-                if c.signal_dbm is not None and c.signal_dbm <= -75]
-        if not weak:
-            return []
-        worst = min(c.signal_dbm for c in weak)
-        return [Finding(
-            rule_id=self.id,
-            severity=Severity.HIGH if worst <= -85 else Severity.MEDIUM,
-            category=Category.WIFI,
-            title=f"{len(weak)} client(s) with weak WiFi signal",
-            summary=(
-                "Clients connected below -75 dBm get slow, retry-heavy links and drag "
-                "down airtime for everyone on the same AP."
-            ),
-            evidence={"clients": [
-                {"name": c.name, "signalDbm": c.signal_dbm, "ssid": c.essid}
-                for c in sorted(weak, key=lambda c: c.signal_dbm or 0)[:10]
-            ]},
-            recommendation=(
-                "Relocate the AP or the device, add an AP to cover the dead zone, or "
-                "raise minimum RSSI on the AP so distant clients roam instead of clinging."
-            ),
-        )]

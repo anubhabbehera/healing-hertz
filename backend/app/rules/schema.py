@@ -179,19 +179,72 @@ RowCompute = Annotated[
 ]
 
 
+# --- aggregation -----------------------------------------------------------
+
+
+class CountOp(CatalogModel):
+    op: Literal["count"]
+
+
+class MinOfOp(CatalogModel):
+    op: Literal["min_of"]
+    of: str
+    # Substituted for a missing reading, matching the `or 0` the rules use.
+    null_as: float | None = None
+
+
+class MaxOfOp(CatalogModel):
+    op: Literal["max_of"]
+    of: str
+    null_as: float | None = None
+
+
+GroupCompute = Annotated[CountOp | MinOfOp | MaxOfOp, Field(discriminator="op")]
+
+
+class Aggregate(CatalogModel):
+    """Fold every matching row into a single site-scoped finding.
+
+    Several rules report a population rather than a device -- "4 clients on
+    legacy rates" -- where naming each one separately would be noise.
+    """
+
+    into: Literal["site"]
+    # Below this many matches the rule stays quiet.
+    min_matches: int = 1
+    compute: dict[str, GroupCompute] = Field(default_factory=dict)
+
+
+class TopProjection(CatalogModel):
+    """Evidence built from the matched rows, not from a single value."""
+
+    op: Literal["top"]
+    sort_by: str | None = None
+    order: Literal["asc", "desc"] = "asc"
+    null_as: float | None = None
+    limit: int | None = None
+    # Evidence key -> binding to read from each row.
+    project: dict[str, str]
+
+
+EvidenceValue = RawValue | TopProjection
+
+
 class EmitBlock(CatalogModel):
     source: str
     # Computed before `where`, so a predicate can test a derived value too.
     compute: dict[str, RowCompute] = Field(default_factory=dict)
     where: Predicate | None = None
+    aggregate: Aggregate | None = None
     severity: Severity | SeveritySpec
     # "source" takes the subject the source attached to the row (usually a
-    # device); "site" makes the finding site-scoped.
+    # device); "site" makes the finding site-scoped. Aggregated blocks are
+    # always site-scoped.
     subject: Literal["source", "site"] = "source"
     title: str
     summary: str
     recommendation: str
-    evidence: dict[str, RawValue] = Field(default_factory=dict)
+    evidence: dict[str, EvidenceValue] = Field(default_factory=dict)
 
 
 # --- entries ---------------------------------------------------------------

@@ -166,8 +166,88 @@ def test_evidence_reading_an_unknown_binding_is_rejected():
     from app.rules.declarative import RuleCompileError
 
     entry = _entry(emit={"evidence": {"x": {"raw": "not_a_binding"}}})
+    with pytest.raises(RuleCompileError, match="not available here"):
+        compile_declarative(entry, "test.yaml[test.rule]")
+
+
+# --- aggregation -----------------------------------------------------------
+
+
+def _agg_entry(**emit_over):
+    emit = {
+        "source": "rf_clients",
+        "where": ["signal_dbm", "lte", -75],
+        "aggregate": {"into": "site", "compute": {"count": {"op": "count"}}},
+        "severity": "low",
+        "title": "{count} weak clients",
+        "summary": "s",
+        "recommendation": "r",
+        **emit_over,
+    }
+    return CatalogEntryAdapter.validate_python({
+        "id": "test.rule", "kind": "declarative", "category": "wifi", "emits": [emit],
+    })
+
+
+def test_aggregated_prose_cannot_read_a_row_binding():
+    """Rows are folded away, so a per-row binding is genuinely gone by then."""
+    entry = _agg_entry(title="{signal_dbm}")
+    with pytest.raises(TemplateError):
+        compile_declarative(entry, "test.yaml[test.rule]")
+
+
+def test_aggregate_compute_must_read_a_real_binding():
+    from app.rules.declarative import RuleCompileError
+
+    entry = _agg_entry(aggregate={
+        "into": "site",
+        "compute": {"worst": {"op": "min_of", "of": "not_a_binding"}},
+    })
     with pytest.raises(RuleCompileError, match="does not provide"):
         compile_declarative(entry, "test.yaml[test.rule]")
+
+
+def test_top_projection_requires_an_aggregated_block():
+    from app.rules.declarative import RuleCompileError
+
+    entry = _entry(emit={"evidence": {
+        "x": {"op": "top", "project": {"n": "device_name"}},
+    }})
+    with pytest.raises(RuleCompileError, match="only makes sense in an aggregated block"):
+        compile_declarative(entry, "test.yaml[test.rule]")
+
+
+def test_top_projection_must_read_real_bindings():
+    from app.rules.declarative import RuleCompileError
+
+    entry = _agg_entry(evidence={"x": {"op": "top", "project": {"n": "nope"}}})
+    with pytest.raises(RuleCompileError, match="does not provide"):
+        compile_declarative(entry, "test.yaml[test.rule]")
+
+
+async def test_min_matches_keeps_a_rule_quiet(snapshot):
+    """band_steering_ineffective needs three matches; two must stay silent."""
+    from app.integrations.legacy_unifi import ClientRF, RfSnapshot
+    from app.rules import run_rules
+
+    def strong(n):
+        return [ClientRF(mac=f"aa:{i}", name=f"c{i}", ap_mac=None, essid="Home",
+                         signal_dbm=-50, tx_rate_kbps=200_000, rx_rate_kbps=200_000,
+                         channel=6) for i in range(n)]
+
+    snapshot.rf = RfSnapshot(clients=strong(2), roam_counts={}, roam_data_available=True)
+    assert "wifi.band_steering_ineffective" not in {f.rule_id for f in run_rules(snapshot)[0]}
+
+    snapshot.rf = RfSnapshot(clients=strong(3), roam_counts={}, roam_data_available=True)
+    assert "wifi.band_steering_ineffective" in {f.rule_id for f in run_rules(snapshot)[0]}
+
+
+async def test_a_source_over_a_missing_enrichment_yields_nothing(snapshot):
+    """rf_clients has no guard in any rule; the source absorbs it."""
+    from app.rules.base import RunHistory
+
+    snapshot.rf = None
+    assert list(sources.get("rf_clients").iterate(snapshot, RunHistory())) == []
 
 
 def test_template_naming_an_unknown_binding_is_rejected():

@@ -134,6 +134,75 @@ def _pending_devices(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
         )
 
 
+# --- clients ---------------------------------------------------------------
+
+_CLIENT_BINDINGS = {
+    "client_id", "client_name", "client_mac", "client_ip", "client_type",
+    "access_type", "access_authorized",
+}
+
+
+@register(
+    "clients",
+    _CLIENT_BINDINGS,
+    doc="Connected clients as the Integration API reports them.",
+)
+def _clients(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    for c in snapshot.clients:
+        access = c.access
+        yield Row(
+            vars={
+                "client_id": c.id,
+                "client_name": c.name,
+                "client_mac": c.mac_address,
+                "client_ip": c.ip_address,
+                "client_type": (c.type or "").upper(),
+                "access_type": access.type if access else None,
+                "access_authorized": access.authorized if access else None,
+            },
+            subject_type="client",
+            subject_id=c.id,
+            subject_name=c.name,
+        )
+
+
+_RF_CLIENT_BINDINGS = {
+    "client_mac", "client_name", "client_ssid", "client_ap_mac",
+    "signal_dbm", "tx_rate_kbps", "rx_rate_kbps", "channel", "band_ghz",
+}
+
+
+@register(
+    "rf_clients",
+    _RF_CLIENT_BINDINGS,
+    doc=(
+        "Per-client RF detail from the legacy controller API. Yields nothing "
+        "when that integration is not configured, which is how every rule over "
+        "it stays quiet without its own guard."
+    ),
+)
+def _rf_clients(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    if snapshot.rf is None:
+        return
+    for c in snapshot.rf.clients:
+        yield Row(
+            vars={
+                "client_mac": c.mac,
+                "client_name": c.name,
+                "client_ssid": c.essid,
+                "client_ap_mac": c.ap_mac,
+                "signal_dbm": c.signal_dbm,
+                "tx_rate_kbps": c.tx_rate_kbps,
+                "rx_rate_kbps": c.rx_rate_kbps,
+                "channel": c.channel,
+                "band_ghz": c.band_ghz,
+            },
+            subject_type="client",
+            subject_id=c.mac,
+            subject_name=c.name,
+        )
+
+
 # --- device telemetry ------------------------------------------------------
 
 _DEVICE_STATS_BINDINGS = {

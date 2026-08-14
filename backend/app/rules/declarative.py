@@ -23,6 +23,7 @@ from .schema import (
     EmitBlock,
     NotOf,
     SeveritySpec,
+    TopProjection,
 )
 
 
@@ -111,6 +112,47 @@ def _computed(block: EmitBlock, row_vars: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _apply_group(spec: Any, rows: list[dict[str, Any]]) -> Any:
+    if spec.op == "count":
+        return len(rows)
+    values = [r.get(spec.of) for r in rows]
+    if spec.null_as is not None:
+        values = [spec.null_as if v is None else v for v in values]
+    else:
+        values = [v for v in values if v is not None]
+    if not values:
+        return None
+    return min(values) if spec.op == "min_of" else max(values)
+
+
+def _sorted_rows(spec: Any, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out = rows
+    if spec.sort_by is not None:
+        null_as = 0 if spec.null_as is None else spec.null_as
+
+        def key(row: dict[str, Any]) -> Any:
+            value = row.get(spec.sort_by)
+            return null_as if value is None else value
+
+        out = sorted(rows, key=key, reverse=spec.order == "desc")
+    return out if spec.limit is None else out[: spec.limit]
+
+
+def _evidence(block: EmitBlock, bindings: dict[str, Any],
+              rows: list[dict[str, Any]] | None) -> dict:
+    out: dict[str, Any] = {}
+    for key, spec in block.evidence.items():
+        if isinstance(spec, TopProjection):
+            selected = _sorted_rows(spec, rows or [])
+            out[key] = [
+                {label: row.get(binding) for label, binding in spec.project.items()}
+                for row in selected
+            ]
+        else:
+            out[key] = bindings[spec.raw]
+    return out
+
+
 def _severity_for(block: EmitBlock, bindings: dict[str, Any]) -> str:
     spec = block.severity
     if not isinstance(spec, SeveritySpec):
@@ -155,12 +197,38 @@ class DeclarativeRule:
         findings: list[Finding] = []
         for emit in self.emits:
             block = emit.block
-            for row in emit.source.iterate(snapshot, history):
-                bindings = _computed(block, row.vars)
-                if block.where is not None and not matches(block.where, bindings):
-                    continue
-                findings.append(self._build(block, row, bindings))
+            rows = [
+                (row, _computed(block, row.vars))
+                for row in emit.source.iterate(snapshot, history)
+            ]
+            matched = [
+                (row, b) for row, b in rows
+                if block.where is None or matches(block.where, b)
+            ]
+            if block.aggregate is not None:
+                finding = self._fold(block, [b for _, b in matched])
+                if finding is not None:
+                    findings.append(finding)
+            else:
+                findings.extend(self._build(block, row, b) for row, b in matched)
         return findings
+
+    def _fold(self, block: EmitBlock, matched: list[dict[str, Any]]) -> Finding | None:
+        """Every matching row into one site finding, or nothing."""
+        spec = block.aggregate
+        if len(matched) < spec.min_matches:
+            return None
+        bindings = {name: _apply_group(op, matched) for name, op in spec.compute.items()}
+        where = f"{self.provenance}"
+        return make_finding(
+            rule_id=self.id,
+            category=self.category,
+            severity=_severity_for(block, bindings),
+            title=render(block.title, bindings, where),
+            summary=render(block.summary, bindings, where),
+            recommendation=render(block.recommendation, bindings, where),
+            evidence=_evidence(block, bindings, matched),
+        )
 
     def _build(self, block: EmitBlock, row: sources.Row, bindings: dict[str, Any]) -> Finding:
         where = f"{self.provenance}"
@@ -172,7 +240,7 @@ class DeclarativeRule:
             title=render(block.title, bindings, where),
             summary=render(block.summary, bindings, where),
             recommendation=render(block.recommendation, bindings, where),
-            evidence={k: bindings[v.raw] for k, v in block.evidence.items()},
+            evidence=_evidence(block, bindings, None),
             subject_type="site" if site_scoped else row.subject_type,
             subject_id=None if site_scoped else row.subject_id,
             subject_name=None if site_scoped else row.subject_name,
@@ -207,23 +275,57 @@ def compile_declarative(entry: DeclarativeEntry, provenance: Any) -> Declarative
             available.add(name)
 
         unknown = _predicate_bindings(block.where) - available
-        for step in getattr(block.severity, "escalate", []):
-            unknown |= _predicate_bindings(step.when) - available
         if unknown:
             raise RuleCompileError(
                 f"{where}: predicate reads {sorted(unknown)}, "
                 f"which source {source.name!r} does not provide"
             )
 
+        # An aggregated block folds rows away, so its prose and severity see the
+        # group's computed values -- not any single row's bindings.
+        if block.aggregate is not None:
+            for name, op in block.aggregate.compute.items():
+                if op.op != "count" and op.of not in available:
+                    raise RuleCompileError(
+                        f"{where}: aggregate {name!r} reads {op.of!r}, "
+                        f"which source {source.name!r} does not provide"
+                    )
+            visible = set(block.aggregate.compute)
+        else:
+            visible = available
+
+        for step in getattr(block.severity, "escalate", []):
+            missing = _predicate_bindings(step.when) - visible
+            if missing:
+                raise RuleCompileError(
+                    f"{where}: severity escalation reads {sorted(missing)}, "
+                    "which is not available here"
+                )
+
         for label, template in (("title", block.title), ("summary", block.summary),
                                 ("recommendation", block.recommendation)):
-            validate_template(template, available, f"{where}.{label}")
+            validate_template(template, visible, f"{where}.{label}")
 
         for key, value in block.evidence.items():
-            if value.raw not in available:
+            if isinstance(value, TopProjection):
+                if block.aggregate is None:
+                    raise RuleCompileError(
+                        f"{where}: evidence {key!r} projects matched rows, which only "
+                        "makes sense in an aggregated block"
+                    )
+                reads = set(value.project.values())
+                if value.sort_by is not None:
+                    reads.add(value.sort_by)
+                missing = reads - available
+                if missing:
+                    raise RuleCompileError(
+                        f"{where}: evidence {key!r} reads {sorted(missing)}, "
+                        f"which source {source.name!r} does not provide"
+                    )
+            elif value.raw not in visible:
                 raise RuleCompileError(
                     f"{where}: evidence {key!r} reads {value.raw!r}, "
-                    f"which source {source.name!r} does not provide"
+                    "which is not available here"
                 )
 
         emits.append(CompiledEmit(source=source, block=block))
