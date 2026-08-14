@@ -1,14 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import type { RulesResponse, Severity } from "../api/types";
 import SeverityBadge from "../components/SeverityBadge";
 
 /**
- * Build a rule, check it, copy it.
+ * Build a rule, check it, save it.
  *
- * There is deliberately no save button — see the note in the panel, and the
- * docstring on backend/app/api/routes_rules.py. The operator writes the file.
+ * Saving writes a .yaml file into RULES_DIR through the API. The content is
+ * validated server-side first, so an invalid rule is never written — see the
+ * note on backend/app/api/routes_rules.py for what the write is bounded to.
  */
 
 const SEVERITIES: Severity[] = ["critical", "high", "medium", "low", "info"];
@@ -43,7 +44,13 @@ function block(text: string, indent: string): string {
   return `>-\n${indent}${clean}`;
 }
 
-export default function AddRule({ data }: { data: RulesResponse }) {
+export default function AddRule({ data, editing, onDone }: {
+  data: RulesResponse;
+  /** Filename to load into the editor, when the operator pressed Edit. */
+  editing?: string | null;
+  onDone?: () => void;
+}) {
+  const queryClient = useQueryClient();
   const [name, setName] = useState("spare_port");
   const [category, setCategory] = useState(data.categories[0] ?? "wired");
   const [source, setSource] = useState(data.sources[0]?.name ?? "devices");
@@ -56,6 +63,19 @@ export default function AddRule({ data }: { data: RulesResponse }) {
   const [summary, setSummary] = useState("");
   const [recommendation, setRecommendation] = useState("");
   const [pasted, setPasted] = useState<string | null>(null);
+  const [filename, setFilename] = useState("my-rules.yaml");
+
+  const files = useQuery({ queryKey: ["ruleFiles"], queryFn: api.ruleFiles });
+
+  // Pressing Edit on a rule loads its file into the editor.
+  useEffect(() => {
+    if (!editing) return;
+    const file = files.data?.files.find((f) => f.name === editing);
+    if (file) {
+      setFilename(file.name);
+      setPasted(file.content);
+    }
+  }, [editing, files.data]);
 
   const bindings = data.sources.find((s) => s.name === source)?.bindings ?? [];
   const sourceDoc = data.sources.find((s) => s.name === source)?.doc ?? "";
@@ -89,6 +109,29 @@ export default function AddRule({ data }: { data: RulesResponse }) {
   const draft = pasted ?? generated;
   const check = useMutation({ mutationFn: () => api.validateRule(draft) });
 
+  const save = useMutation({
+    mutationFn: () => api.saveRuleFile(filename, draft),
+    onSuccess: (res) => {
+      if (!res.saved) return;
+      if (res.catalog) queryClient.setQueryData(["rules"], res.catalog);
+      queryClient.invalidateQueries({ queryKey: ["ruleFiles"] });
+      onDone?.();
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: () => api.deleteRuleFile(filename),
+    onSuccess: (res) => {
+      queryClient.setQueryData(["rules"], res.catalog);
+      queryClient.invalidateQueries({ queryKey: ["ruleFiles"] });
+      setPasted(null);
+      onDone?.();
+    },
+  });
+
+  const existing = files.data?.files.some((f) => f.name === filename) ?? false;
+  const result = save.data ?? check.data;
+
   const insert = (binding: string) => setTitle((t) => `${t}{${binding}}`);
 
   return (
@@ -97,12 +140,17 @@ export default function AddRule({ data }: { data: RulesResponse }) {
         <h2>Add a rule</h2>
       </summary>
 
-      <p className="muted">
-        This builds the YAML and checks it. It does not save anything — copy the result
-        into a file in{" "}
-        {data.rules_dir.configured ? <code>{data.rules_dir.path}</code> : <code>RULES_DIR</code>}
-        {" "}yourself, then press Reload rules.
-      </p>
+      {data.rules_dir.configured ? (
+        <p className="muted">
+          Saved into <code>{data.rules_dir.path}</code>. Checked before it is written, so
+          an invalid rule never lands on disk.
+        </p>
+      ) : (
+        <div className="callout">
+          Set <code>RULES_DIR</code> to a writable directory to save rules from here. You
+          can still build and check one below.
+        </div>
+      )}
 
       {pasted === null && (
         <>
@@ -207,37 +255,77 @@ export default function AddRule({ data }: { data: RulesResponse }) {
 
       {pasted === null && <pre>{generated}</pre>}
 
+      <div className="select-row">
+        <label htmlFor="fname">File</label>
+        <input
+          id="fname"
+          value={filename}
+          onChange={(e) => setFilename(e.target.value)}
+          placeholder="my-rules.yaml"
+        />
+        {existing && <span className="muted">replaces the existing file</span>}
+      </div>
+
       <div className="mini-row">
+        <button
+          className="secondary"
+          onClick={() => save.mutate()}
+          disabled={save.isPending || !data.rules_dir.configured}
+          title={data.rules_dir.configured ? "" : "RULES_DIR is not set"}
+        >
+          {save.isPending ? "Saving…" : existing ? "Save changes" : "Save rule"}
+        </button>
         <button className="secondary" onClick={() => check.mutate()} disabled={check.isPending}>
-          {check.isPending ? "Checking…" : "Check this rule"}
+          {check.isPending ? "Checking…" : "Check without saving"}
         </button>
         <button className="secondary" onClick={() => navigator.clipboard?.writeText(draft)}>
           Copy YAML
         </button>
+        {existing && (
+          <button
+            className="secondary"
+            onClick={() => {
+              if (confirm(`Delete ${filename}? Its rules stop running.`)) remove.mutate();
+            }}
+            disabled={remove.isPending}
+          >
+            {remove.isPending ? "Deleting…" : "Delete file"}
+          </button>
+        )}
       </div>
 
-      {check.data && (
+      {save.isError && (
+        <div className="callout error">Could not save: {(save.error as Error).message}</div>
+      )}
+      {remove.isError && (
+        <div className="callout error">Could not delete: {(remove.error as Error).message}</div>
+      )}
+      {save.data?.saved && (
+        <div className="callout">Saved to <code>{save.data.path}</code> and now running.</div>
+      )}
+
+      {result && (
         <>
-          {check.data.errors.map((e, i) => (
+          {result.errors.map((e, i) => (
             <div className="callout error" key={i}>
               <strong>{e.stage}</strong> — {e.message}
             </div>
           ))}
-          {check.data.ok && (
+          {result.ok && (
             <div className="callout">
-              Valid — {check.data.rules.length} rule(s).
-              {check.data.preview && (
+              Valid — {result.rules.length} rule(s).
+              {result.preview && (
                 <>
                   {" "}Against the bundled sample network (not yours) it produces{" "}
-                  <strong>{check.data.preview.matched}</strong> finding(s).
+                  <strong>{result.preview.matched}</strong> finding(s).
                 </>
               )}
             </div>
           )}
-          {check.data.warnings.map((w, i) => (
+          {result.warnings.map((w, i) => (
             <div className="callout" key={i}>{w.message}</div>
           ))}
-          {check.data.preview?.findings.map((f, i) => (
+          {result.preview?.findings.map((f, i) => (
             <p key={i}>
               <SeverityBadge severity={f.severity} /> {f.title}
             </p>

@@ -23,33 +23,24 @@ from typing import Any
 
 from .base import Category, Severity, UnsupportedCheck
 from .declarative import DeclarativeRule
-from .loader import CATALOG_DIR, DisabledRule, Provenance, user_rules_dir
+from .loader import CATALOG_DIR, DisabledRule, Provenance
 from .schema import DeclarativeEntry, PythonEntry, SeveritySpec
 from .sources import REGISTRY as SOURCE_REGISTRY
 
-# The upstream project. Hardcoded rather than read from git: there is no .git in
-# a container, and a request path should not depend on one. A fork's rules will
-# link upstream, which is why the UI labels the link and keeps copy-path primary.
-REPO_URL = "https://github.com/anubhabbehera/healing-hertz"
-# No revision is available at runtime -- the Dockerfile declares ARG REVISION but
-# only consumes it in a LABEL -- so links point at the default branch and say so.
-REPO_REF = "main"
-
-_CATALOG_REPO_DIR = "backend/app/rules/catalog"
-_RULES_REPO_DIR = "backend/app/rules"
+# Paths are reported relative to a named base rather than absolute. An absolute
+# path is specific to one install -- a different checkout, a different RULES_DIR,
+# or a container where it names a file with no host counterpart -- so it is a
+# poor identity for a rule. "app/rules/catalog/02-wifi.yaml" is the same string
+# on every machine; where the base actually is gets shown once, not per rule.
+APP_DIR = Path(__file__).resolve().parents[1]
 
 
-def _github(repo_path: str) -> str:
-    return f"{REPO_URL}/blob/{REPO_REF}/{repo_path}"
-
-
-def path_scope() -> str:
-    """Whether the paths this module reports mean anything outside the process.
-
-    A hint for presentation only. In a container the absolute path is real but
-    has no host counterpart, so the UI leads with the repo-relative path instead.
-    """
-    return "container" if Path("/.dockerenv").exists() else "host"
+def _relative_to_app(path: Path) -> str:
+    resolved = Path(path).resolve()
+    try:
+        return str(resolved.relative_to(APP_DIR.parent))
+    except ValueError:  # pragma: no cover - only if the package is relocated
+        return resolved.name
 
 
 def _is_user_rule(rule_id: str) -> bool:
@@ -59,21 +50,25 @@ def _is_user_rule(rule_id: str) -> bool:
 
 
 def _catalog_file(provenance: Provenance, rule_id: str) -> dict:
-    """Where a rule's YAML lives, in every form that might be useful."""
+    """Where a rule's YAML lives on this machine.
+
+    ``editable`` is what the UI keys its controls off: a rule in RULES_DIR is
+    the operator's to change, a built-in one ships with the app and is switched
+    off through the overrides file instead.
+    """
     if _is_user_rule(rule_id):
-        directory = user_rules_dir()
+        # Relative to RULES_DIR, whose location is reported once in the envelope.
         return {
             "name": provenance.file,
-            "path": str(directory / provenance.file) if directory else None,
-            "repo_path": None,
-            "github_url": None,
+            "path": provenance.file,
+            "base": "rules_dir",
+            "editable": True,
         }
-    repo_path = f"{_CATALOG_REPO_DIR}/{provenance.file}"
     return {
         "name": provenance.file,
-        "path": str(CATALOG_DIR / provenance.file),
-        "repo_path": repo_path,
-        "github_url": _github(repo_path),
+        "path": _relative_to_app(CATALOG_DIR / provenance.file),
+        "base": "app",
+        "editable": False,
     }
 
 
@@ -140,10 +135,9 @@ def _impl_info(rule: Any) -> dict:
     """
     cls = type(rule.impl)
     module = cls.__module__
-    repo_path = f"{_RULES_REPO_DIR}/{module.rsplit('.', 1)[-1]}.py"
     try:
         line = inspect.getsourcelines(cls)[1]
-        path = inspect.getfile(cls)
+        path = _relative_to_app(Path(inspect.getfile(cls)))
     except (OSError, TypeError):  # pragma: no cover - only if source is stripped
         line, path = None, None
     doc = inspect.getdoc(cls) or ""
@@ -154,8 +148,6 @@ def _impl_info(rule: Any) -> dict:
         "doc": doc.split("\n\n", 1)[0],
         "path": path,
         "line": line,
-        "repo_path": repo_path,
-        "github_url": _github(repo_path),
     }
 
 
@@ -216,7 +208,6 @@ def describe_disabled(disabled: DisabledRule) -> dict:
 def describe_unsupported(check: UnsupportedCheck, enrichment: str | None,
                          configured: bool) -> dict:
     """A check that cannot run until an integration supplies its data."""
-    repo_path = f"{_RULES_REPO_DIR}/unsupported.py"
     return {
         "id": check.rule_id,
         "kind": "none",
@@ -232,9 +223,9 @@ def describe_unsupported(check: UnsupportedCheck, enrichment: str | None,
         "enrichment_configured": configured,
         "source_file": {
             "name": "unsupported.py",
-            "path": str(Path(__file__).parent / "unsupported.py"),
-            "repo_path": repo_path,
-            "github_url": _github(repo_path),
+            "path": _relative_to_app(Path(__file__).parent / "unsupported.py"),
+            "base": "app",
+            "editable": False,
         },
         "emits": [],
     }
@@ -242,7 +233,6 @@ def describe_unsupported(check: UnsupportedCheck, enrichment: str | None,
 
 def describe_problem(problem: UnsupportedCheck) -> dict:
     """A user rule file that failed to load."""
-    directory = user_rules_dir()
     name = f"{problem.rule_id.split('.', 1)[-1]}.yaml"
     return {
         "id": problem.rule_id,
@@ -255,9 +245,9 @@ def describe_problem(problem: UnsupportedCheck) -> dict:
         "reason": problem.reason,
         "source_file": {
             "name": name,
-            "path": str(directory / name) if directory else None,
-            "repo_path": None,
-            "github_url": None,
+            "path": name,
+            "base": "rules_dir",
+            "editable": True,
         },
         "emits": [],
     }

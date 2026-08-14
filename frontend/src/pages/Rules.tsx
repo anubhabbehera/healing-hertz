@@ -36,7 +36,12 @@ function CopyPath({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RuleDetail({ rule, data }: { rule: RuleSummary; data: RulesResponse }) {
+function RuleDetail({ rule, data, onEdit, onToggle }: {
+  rule: RuleSummary;
+  data: RulesResponse;
+  onEdit?: (name: string) => void;
+  onToggle?: (ruleId: string, disabled: boolean) => void;
+}) {
   const source = rule.emits[0]?.source
     ? data.sources.find((s) => s.name === rule.emits[0].source)
     : undefined;
@@ -95,34 +100,28 @@ function RuleDetail({ rule, data }: { rule: RuleSummary; data: RulesResponse }) 
       ))}
 
       <div className="mini-row">
-        {rule.source_file.path && (
-          <>
-            <code className="muted">
-              {data.path_scope === "container" && rule.source_file.repo_path
-                ? rule.source_file.repo_path
-                : rule.source_file.path}
-            </code>
-            <CopyPath
-              label="Copy path"
-              value={
-                data.path_scope === "container" && rule.source_file.repo_path
-                  ? rule.source_file.repo_path
-                  : rule.source_file.path
-              }
-            />
-          </>
+        <code className="muted">
+          {rule.source_file.base === "rules_dir" ? "RULES_DIR/" : ""}
+          {rule.source_file.path}
+        </code>
+        <CopyPath label="Copy path" value={rule.source_file.path} />
+        {rule.source_file.editable && onEdit && (
+          <button className="secondary mini" onClick={() => onEdit(rule.source_file.name)}>
+            Edit
+          </button>
         )}
-        {rule.source_file.github_url && (
-          <a href={rule.source_file.github_url} target="_blank" rel="noreferrer">
-            View on GitHub ({data.repo_ref}) ↗
-          </a>
+        {!rule.source_file.editable && rule.status !== "not_checkable" &&
+          rule.status !== "unloadable" && onToggle && (
+          <button
+            className="secondary mini"
+            onClick={() => onToggle(rule.id, rule.status !== "disabled")}
+            title="Built-in rules are switched off in a local overrides file, not by editing them"
+          >
+            {rule.status === "disabled" ? "Enable" : "Disable"}
+          </button>
         )}
       </div>
-      {data.path_scope === "container" && rule.source_file.path && (
-        <p className="muted">
-          Inside the container this is <code>{rule.source_file.path}</code>.
-        </p>
-      )}
+
     </div>
   );
 }
@@ -138,6 +137,15 @@ export default function Rules() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<RuleStatus | "all">("all");
   const [category, setCategory] = useState("all");
+  const [editing, setEditing] = useState<string | null>(null);
+
+  const override = useMutation({
+    mutationFn: ({ id, disabled }: { id: string; disabled: boolean }) =>
+      api.setRuleOverride(id, disabled),
+    onSuccess: (res) => queryClient.setQueryData(["rules"], res.catalog),
+  });
+  const toggle = (ruleId: string, disabled: boolean) =>
+    override.mutate({ id: ruleId, disabled });
 
   const visible = useMemo(() => {
     if (!data) return [];
@@ -174,12 +182,8 @@ export default function Rules() {
         <div className="callout error">
           <code>RULES_DIR</code> is set to <code>{dir.path}</code>, which does not exist,
           so no custom rules are loaded.
-          {data.path_scope === "container" && (
-            <>
-              {" "}That path is read <strong>inside the container</strong> — mount a
-              directory there in <code>docker-compose.yml</code> for it to work.
-            </>
-          )}
+          {" "}Under Docker it is read <strong>inside the container</strong> — mount a
+          directory there in <code>docker-compose.yml</code> for it to work.
         </div>
       )}
 
@@ -260,7 +264,7 @@ export default function Rules() {
                         <span className="muted">{rule.source_file.name}</span>
                       </span>
                     </summary>
-                    <RuleDetail rule={rule} data={data} />
+                    <RuleDetail rule={rule} data={data} onEdit={setEditing} onToggle={toggle} />
                   </details>
                 </td>
               </tr>
@@ -270,7 +274,13 @@ export default function Rules() {
         {visible.length === 0 && <p className="muted">No checks match those filters.</p>}
       </div>
 
-      <AddRule data={data} />
+      {override.isError && (
+        <div className="callout error">
+          Could not change that rule: {(override.error as Error).message}
+        </div>
+      )}
+
+      <AddRule data={data} editing={editing} onDone={() => setEditing(null)} />
     </div>
   );
 }

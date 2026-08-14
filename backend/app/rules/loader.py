@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import importlib
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from functools import lru_cache
@@ -158,15 +159,20 @@ class CatalogRule:
 
 @dataclass(frozen=True)
 class DisabledRule:
-    """A catalog entry with ``enabled: false``.
+    """A check that exists but isn't running.
 
-    Parsed and validated, never compiled. Kept so the catalog can show a check
-    that exists but isn't running -- retiring a rule this way is what keeps its
-    id reserved and its dismissals from being orphaned.
+    Parsed and validated, never compiled. Kept so the catalog can show it --
+    retiring a rule this way is what keeps its id reserved and its dismissals
+    from being orphaned.
+
+    ``reason`` distinguishes the two ways that happens, because only one of them
+    is the operator's to undo: ``catalog`` is ``enabled: false`` in the rule file
+    itself, ``override`` is the operator switching a built-in off locally.
     """
 
     provenance: Provenance
     entry: object  # a validated PythonEntry | DeclarativeEntry, uncompiled
+    reason: str = "catalog"
 
 
 def _resolve_impl(entry: PythonEntry, provenance: Provenance) -> object:
@@ -247,6 +253,7 @@ def compile_entries(
     trusted: bool = True,
     seen: dict[str, Provenance] | None = None,
     disabled: list[DisabledRule] | None = None,
+    overrides: set[str] | None = None,
 ) -> list[object]:
     """Compile parsed entries into runnable rules, rejecting duplicate ids.
 
@@ -280,9 +287,14 @@ def compile_entries(
                 f"{provenance}: duplicate rule id, already declared in {seen[entry.id]}"
             )
         seen[entry.id] = provenance
-        if not entry.enabled:
+        overridden = overrides is not None and entry.id in overrides
+        if not entry.enabled or overridden:
             if disabled is not None:
-                disabled.append(DisabledRule(provenance=provenance, entry=entry))
+                disabled.append(DisabledRule(
+                    provenance=provenance,
+                    entry=entry,
+                    reason="override" if overridden else "catalog",
+                ))
             continue
 
         if isinstance(entry, DeclarativeEntry):
@@ -319,6 +331,7 @@ def _load_user_rules(
     constants: dict[str, object],
     seen: dict[str, Provenance],
     disabled: list[DisabledRule],
+    overrides: set[str],
 ) -> tuple[list[object], list[UnsupportedCheck]]:
     """Compile an operator's catalog, reporting rather than raising on failure."""
     rules: list[object] = []
@@ -326,9 +339,9 @@ def _load_user_rules(
     for path in _rule_files(directory):
         try:
             entries = [(path, entry) for entry in _read_file(path, constants)]
-            rules.extend(
-                compile_entries(entries, trusted=False, seen=seen, disabled=disabled)
-            )
+            rules.extend(compile_entries(
+                entries, trusted=False, seen=seen, disabled=disabled, overrides=overrides
+            ))
         except CatalogError as exc:
             logger.warning("skipping user rule file %s: %s", path.name, exc)
             problems.append(UnsupportedCheck(
@@ -347,6 +360,87 @@ def user_rules_dir() -> Path | None:
     """
     rules_dir = get_settings().rules_dir
     return Path(rules_dir).expanduser() if rules_dir else None
+
+
+OVERRIDES_FILE = "_overrides.yaml"
+
+_OVERRIDES_HEADER = """\
+# Local overrides. Managed from the Rules tab, but plain YAML you can edit.
+#
+# Listing a built-in rule id here switches that check off for this install. The
+# shipped catalog is left alone, so this survives an upgrade -- and it works in
+# a container, where the built-in rule files are inside the image.
+"""
+
+
+def overrides_path() -> Path | None:
+    directory = user_rules_dir()
+    return directory / OVERRIDES_FILE if directory else None
+
+
+def load_overrides() -> set[str]:
+    """Rule ids the operator has switched off locally.
+
+    A malformed overrides file disables nothing rather than failing the scan --
+    the same reasoning as a malformed user rule file.
+    """
+    path = overrides_path()
+    if path is None or not path.is_file():
+        return set()
+    try:
+        raw = yaml.safe_load(path.read_text()) or {}
+        return {str(i) for i in (raw.get("disabled") or [])}
+    except (yaml.YAMLError, AttributeError, OSError) as exc:
+        logger.warning("ignoring unreadable %s: %s", OVERRIDES_FILE, exc)
+        return set()
+
+
+def save_overrides(disabled: set[str]) -> Path:
+    path = overrides_path()
+    if path is None:
+        raise RuleFileError("RULES_DIR is not configured, so overrides cannot be saved.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = yaml.safe_dump({"disabled": sorted(disabled)}, sort_keys=False)
+    path.write_text(_OVERRIDES_HEADER + body)
+    return path
+
+
+class RuleFileError(Exception):
+    """A rule filename is not one this process will touch."""
+
+
+# Deliberately narrow. Anything outside this is refused rather than sanitised,
+# because a name that needs cleaning up is a name someone is probing with.
+_SAFE_FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,62}\.yaml$")
+
+
+def user_rule_path(name: str) -> Path:
+    """Resolve a filename to a path inside RULES_DIR, or refuse.
+
+    The single gate for every read, write and delete the API performs. Two
+    independent checks, because either alone can be worked around:
+
+    1. The name must match a strict pattern -- no separators, no traversal, no
+       leading underscore (reserved for files the loader treats as data, not
+       rules), and a .yaml extension.
+    2. The resolved path's parent must still be RULES_DIR. The pattern already
+       excludes traversal, but this also catches a symlink inside the directory
+       pointing somewhere else entirely.
+    """
+    directory = user_rules_dir()
+    if directory is None:
+        raise RuleFileError("RULES_DIR is not configured, so there is nowhere to save rules.")
+    if name.startswith("_"):
+        raise RuleFileError(f"{name!r} is reserved: names starting with '_' are not rule files.")
+    if not _SAFE_FILENAME.match(name):
+        raise RuleFileError(
+            f"{name!r} is not a usable name. Use letters, digits, dot, dash or "
+            "underscore, ending in .yaml."
+        )
+    path = (directory / name).resolve()
+    if path.parent != directory.resolve():
+        raise RuleFileError(f"{name!r} does not resolve to a file inside RULES_DIR.")
+    return path
 
 
 @dataclass(frozen=True)
@@ -374,15 +468,20 @@ def load_catalog() -> Catalog:
 
     seen: dict[str, Provenance] = {}
     disabled: list[DisabledRule] = []
+    overrides = load_overrides()
     entries = [(path, entry) for path in paths for entry in _read_file(path, constants)]
-    rules = compile_entries(entries, trusted=True, seen=seen, disabled=disabled)
+    rules = compile_entries(
+        entries, trusted=True, seen=seen, disabled=disabled, overrides=overrides
+    )
 
     problems: list[UnsupportedCheck] = []
     directory = user_rules_dir()
     if directory is not None:
         if directory.is_dir():
             # Appended after the built-ins so their evaluation order is unchanged.
-            user_rules, problems = _load_user_rules(directory, constants, seen, disabled)
+            user_rules, problems = _load_user_rules(
+                directory, constants, seen, disabled, overrides
+            )
             rules.extend(user_rules)
         else:
             logger.warning("RULES_DIR %s is not a directory; no user rules loaded", directory)

@@ -1,22 +1,26 @@
-"""Browse the rule catalog, and check a draft rule before saving it.
+"""Browse the rule catalog, and manage the operator's own checks.
 
-**Nothing here writes to the filesystem, and nothing here takes a path.**
+Configuring checks here rather than in the repo is the point of the tool, so
+these endpoints do write to disk. What they are allowed to touch is bounded on
+every axis, and `loader.user_rule_path` is the single gate every read, write and
+delete passes through:
 
-That is deliberate and load-bearing. The app has no authentication and is
-loopback-only by design (SECURITY.md); a write endpoint would therefore be an
-arbitrary-file-write primitive for anything able to issue a request from the
-host. CORS does not help -- it governs who may *read* a response, while a simple
-POST still executes, and the side effect is the whole point of such an attack.
+  * only inside RULES_DIR -- a strict name pattern with no separators, no
+    traversal and no reserved underscore prefix, then a resolved-parent check
+    that also catches a symlink pointing out of the directory;
+  * only files ending .yaml;
+  * only content that validates as declarative rules, checked before anything is
+    written, so an invalid file is never created;
+  * never Python, because a user rule may not name code to import. Rule content
+    is data.
 
-So authoring a rule is deliberately generate-and-copy: the operator gets
-validated YAML and saves it themselves. If you are here to add a "save to
-RULES_DIR" endpoint, that is the thing this design exists to avoid.
+No endpoint takes a path, and none reads or writes anywhere else. If you are
+adding one that does, that is the boundary being crossed.
 
-Validation is not a write path under SECURITY.md's read-only rule, which scopes
-"only GET requests are issued" to outbound console traffic: it issues no UniFi
-request, opens no database session, and reads nothing beyond the catalog files
-the process already loads. POST /api/settings/test-connection is the existing
-precedent for a POST that computes and mutates nothing.
+This does not touch the UniFi console, so SECURITY.md's "read-only against
+UniFi" guarantee is unaffected -- that one is about never changing the
+operator's network. The relevant caveat is different: there is no
+authentication, so the loopback bind is what keeps these endpoints private.
 """
 
 from __future__ import annotations
@@ -33,10 +37,14 @@ from app.rules import describe
 from app.rules.base import RunHistory
 from app.rules.loader import (
     CatalogError,
+    RuleFileError,
     _load_constants,
     _substitute,
     compile_entries,
     load_catalog,
+    load_overrides,
+    save_overrides,
+    user_rule_path,
     user_rules_dir,
 )
 from app.rules.schema import CatalogFile
@@ -109,8 +117,7 @@ def _catalog_payload() -> dict:
 
     return {
         "loaded_at": catalog.loaded_at.isoformat(),
-        "path_scope": describe.path_scope(),
-        "repo_ref": describe.REPO_REF,
+        "overrides": sorted(load_overrides()),
         "rules_dir": _rules_dir_info(),
         "counts": counts,
         "categories": describe.describe_categories(),
@@ -199,24 +206,21 @@ async def _demo_snapshot():
     return _DEMO_SNAPSHOT
 
 
-@router.post("/validate")
-async def validate_draft(draft: RuleDraft) -> dict:
-    """Check a draft rule without saving it.
-
-    Deliberately 200 on both outcomes: the request is well-formed either way, and
-    the content is what is being reported on. A 4xx would make the client throw
-    where it wants to render.
+async def _check_draft(text: str, *, replacing: set[str] | None = None) -> dict:
+    """Validate rule YAML the way the loader would.
 
     Every step below is the loader's own, so a draft that passes here is a draft
     that will load -- the restrictions on user rules (the `custom.` namespace,
     and no naming Python to import) come from `compile_entries(trusted=False)`
     rather than a second implementation that could drift.
+
+    ``replacing`` are ids already defined by the file being overwritten; they
+    must not count as collisions with themselves.
     """
-    errors: list[dict] = []
     warnings: list[dict] = []
 
     try:
-        raw = yaml.load(draft.yaml, Loader=NoAliasLoader)
+        raw = yaml.load(text, Loader=NoAliasLoader)
     except yaml.YAMLError as exc:
         return {"ok": False, "errors": [{"stage": "yaml", "rule_id": None,
                                          "message": str(exc)}],
@@ -237,10 +241,13 @@ async def validate_draft(draft: RuleDraft) -> dict:
                                          "message": str(exc)}],
                 "warnings": [], "rules": [], "preview": None}
     except ValidationError as exc:
-        for err in exc.errors():
-            location = ".".join(str(p) for p in err["loc"])
-            errors.append({"stage": "schema", "rule_id": None,
-                           "message": f"{location}: {err['msg']}"})
+        # Per-field rather than one stringified blob, so the form can point at
+        # the key that is wrong.
+        errors = [
+            {"stage": "schema", "rule_id": None,
+             "message": f"{'.'.join(str(p) for p in err['loc'])}: {err['msg']}"}
+            for err in exc.errors()
+        ]
         return {"ok": False, "errors": errors, "warnings": [], "rules": [],
                 "preview": None}
 
@@ -249,6 +256,8 @@ async def validate_draft(draft: RuleDraft) -> dict:
     catalog = load_catalog()
     seen = {r.id: r.provenance for r in catalog.rules}
     seen |= {d.entry.id: d.provenance for d in catalog.disabled}
+    for rule_id in replacing or ():
+        seen.pop(rule_id, None)
 
     disabled: list = []
     try:
@@ -287,3 +296,143 @@ async def validate_draft(draft: RuleDraft) -> dict:
         "rules": [describe.describe_rule(r) for r in compiled],
         "preview": await _demo_preview(compiled),
     }
+
+
+@router.post("/validate")
+async def validate_draft(draft: RuleDraft) -> dict:
+    """Check a draft rule without saving it.
+
+    Deliberately 200 on both outcomes: the request is well-formed either way, and
+    the content is what is being reported on. A 4xx would make the client throw
+    where it wants to render.
+    """
+    return await _check_draft(draft.yaml)
+
+
+# --- managing your own rule files ------------------------------------------
+#
+# These write to disk. That is the point of the tool -- checks are meant to be
+# configured here, not in the repo -- but it is a real surface, so it is bounded
+# on every axis that matters:
+#
+#   * only inside RULES_DIR, resolved by loader.user_rule_path, which refuses
+#     separators, traversal, symlinks out of the directory and reserved names;
+#   * only files ending .yaml;
+#   * only content that validates as declarative rules, checked before anything
+#     is written -- an invalid file is never created;
+#   * never Python, because user rules cannot name code to import.
+#
+# It remains an unauthenticated endpoint, so the loopback bind is what keeps it
+# private. SECURITY.md says so plainly.
+
+
+class RuleFileWrite(BaseModel):
+    content: str = Field(min_length=1, max_length=MAX_DRAFT_CHARS)
+
+
+class OverrideUpdate(BaseModel):
+    rule_id: str = Field(min_length=1, max_length=200)
+    disabled: bool
+
+
+def _require_rules_dir() -> Path:
+    directory = user_rules_dir()
+    if directory is None:
+        raise HTTPException(
+            status_code=409,
+            detail="RULES_DIR is not set, so there is nowhere to keep your rules.",
+        )
+    return directory
+
+
+def _ids_in(path: Path) -> set[str]:
+    """Rule ids a file currently defines, so overwriting it isn't self-collision."""
+    if not path.is_file():
+        return set()
+    try:
+        raw = yaml.safe_load(path.read_text()) or {}
+        return {r["id"] for r in raw.get("rules", []) if isinstance(r, dict) and "id" in r}
+    except (yaml.YAMLError, OSError, AttributeError):
+        return set()
+
+
+@router.get("/files")
+async def list_rule_files() -> dict:
+    """The operator's own rule files, with their contents, for editing."""
+    directory = user_rules_dir()
+    if directory is None or not directory.is_dir():
+        return {"dir": str(directory) if directory else None, "files": []}
+    files = []
+    for path in sorted(directory.glob("*.yaml")):
+        if path.name.startswith("_"):
+            continue
+        try:
+            files.append({"name": path.name, "path": str(path),
+                          "content": path.read_text()})
+        except OSError as exc:  # pragma: no cover - unreadable file
+            logger.warning("cannot read %s: %s", path, exc)
+    return {"dir": str(directory), "files": files}
+
+
+@router.put("/files/{name}")
+async def save_rule_file(name: str, body: RuleFileWrite) -> dict:
+    """Create or replace one of the operator's rule files.
+
+    The content is validated first and only written if it would load, so saving
+    can never leave the catalog in a state the next scan trips over.
+    """
+    _require_rules_dir()
+    try:
+        path = user_rule_path(name)
+    except RuleFileError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    result = await _check_draft(body.content, replacing=_ids_in(path))
+    if not result["ok"]:
+        # Reported, not raised: the form renders these inline the same way it
+        # renders a plain validation failure.
+        return {**result, "saved": False, "name": name, "path": str(path)}
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body.content)
+    load_catalog.cache_clear()
+    return {**result, "saved": True, "name": name, "path": str(path),
+            "catalog": _catalog_payload()}
+
+
+@router.delete("/files/{name}")
+async def delete_rule_file(name: str) -> dict:
+    """Remove one of the operator's rule files."""
+    _require_rules_dir()
+    try:
+        path = user_rule_path(name)
+    except RuleFileError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"{name} does not exist.")
+
+    path.unlink()
+    load_catalog.cache_clear()
+    return {"deleted": name, "catalog": _catalog_payload()}
+
+
+@router.post("/overrides")
+async def set_override(update: OverrideUpdate) -> dict:
+    """Switch a check on or off for this install.
+
+    Written to an overrides file rather than editing the shipped catalog, so the
+    choice survives an upgrade and works in a container where the built-in rule
+    files live inside the image.
+    """
+    _require_rules_dir()
+    known = {r.id for r in load_catalog().rules}
+    known |= {d.entry.id for d in load_catalog().disabled}
+    if update.rule_id not in known:
+        raise HTTPException(status_code=404, detail=f"No rule called {update.rule_id}.")
+
+    disabled = load_overrides()
+    disabled.add(update.rule_id) if update.disabled else disabled.discard(update.rule_id)
+    save_overrides(disabled)
+    load_catalog.cache_clear()
+    return {"rule_id": update.rule_id, "disabled": update.disabled,
+            "catalog": _catalog_payload()}
