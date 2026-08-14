@@ -134,6 +134,17 @@ def _pending_devices(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
         )
 
 
+def band_label(frequency_ghz: float | None) -> str | None:
+    """A radio's band as it should read in prose.
+
+    frequency_ghz is a float and the API reports 5 GHz as an integer, so pydantic
+    hands back 5.0 -- which interpolates as "5.0 GHz". Formatting it here rather
+    than in each template keeps the decision in one place and copes with a
+    missing reading, which a format spec in a template would not.
+    """
+    return None if frequency_ghz is None else f"{frequency_ghz:g}"
+
+
 # --- clients ---------------------------------------------------------------
 
 _CLIENT_BINDINGS = {
@@ -248,7 +259,7 @@ def _device_stats(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
 
 _AP_RADIO_BINDINGS = {
     "device_id", "device_name", "device_model",
-    "radio_channel", "radio_width_mhz", "radio_frequency_ghz",
+    "radio_channel", "radio_width_mhz", "radio_frequency_ghz", "radio_band",
     "radio_standard", "radio_standard_normalized",
 }
 
@@ -280,6 +291,7 @@ def _online_ap_radios(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
                     "radio_channel": radio.channel,
                     "radio_width_mhz": radio.channel_width_mhz,
                     "radio_frequency_ghz": radio.frequency_ghz,
+                    "radio_band": band_label(radio.frequency_ghz),
                     "radio_standard": standard,
                     # Normalised here so the "match exactly, never by prefix"
                     # rule stays next to the reason for it.
@@ -296,7 +308,7 @@ def _online_ap_radios(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
 # --- radio telemetry -------------------------------------------------------
 
 _AP_RADIO_STATS_BINDINGS = {
-    "device_id", "device_name", "radio_frequency_ghz", "tx_retries_pct",
+    "device_id", "device_name", "radio_frequency_ghz", "radio_band", "tx_retries_pct",
 }
 
 
@@ -320,6 +332,7 @@ def _ap_radio_stats(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
                     "device_id": dev_id,
                     "device_name": detail.name,
                     "radio_frequency_ghz": radio.frequency_ghz,
+                    "radio_band": band_label(radio.frequency_ghz),
                     "tx_retries_pct": radio.tx_retries_pct,
                 },
                 subject_type="device",

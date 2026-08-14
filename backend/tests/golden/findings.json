@@ -3036,8 +3036,8 @@
         "rule_id": "wifi.legacy_radio_standard",
         "severity": "low",
         "category": "wifi",
-        "title": "Office AP 5.0 GHz runs 802.11a",
-        "summary": "Office AP's 5.0 GHz radio operates at 802.11a, a pre-802.11n standard. Legacy rates are slow and every frame sent at them consumes airtime the whole cell could be using.",
+        "title": "Office AP 5 GHz runs 802.11a",
+        "summary": "Office AP's 5 GHz radio operates at 802.11a, a pre-802.11n standard. Legacy rates are slow and every frame sent at them consumes airtime the whole cell could be using.",
         "evidence": {
           "device": "Office AP",
           "wlanStandard": "802.11a",
@@ -6263,8 +6263,8 @@
         "rule_id": "wifi.high_retries",
         "severity": "high",
         "category": "wifi",
-        "title": "High TX retries on Office AP 5.0 GHz (35%)",
-        "summary": "35.0% of transmissions on Office AP's 5.0 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "title": "High TX retries on Office AP 5 GHz (35%)",
+        "summary": "35.0% of transmissions on Office AP's 5 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
         "evidence": {
           "device": "Office AP",
           "frequencyGHz": 5.0,
@@ -6670,8 +6670,8 @@
         "rule_id": "wifi.high_retries",
         "severity": "medium",
         "category": "wifi",
-        "title": "High TX retries on Office AP 5.0 GHz (20%)",
-        "summary": "20.0% of transmissions on Office AP's 5.0 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "title": "High TX retries on Office AP 5 GHz (20%)",
+        "summary": "20.0% of transmissions on Office AP's 5 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
         "evidence": {
           "device": "Office AP",
           "frequencyGHz": 5.0,

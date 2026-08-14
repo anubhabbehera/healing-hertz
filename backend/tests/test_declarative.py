@@ -60,9 +60,24 @@ def test_render_matches_fstring_formatting():
     assert render("{cpu:.1f}", {"cpu": cpu}, "t") == f"{cpu:.1f}"
 
 
-def test_render_preserves_float_rendering_quirks():
-    """5 parsed as a float renders "5.0"; the catalog must not quietly fix that."""
+def test_render_does_not_reformat_values():
+    """Rendering is literal: 5.0 stays "5.0".
+
+    Which is why a band is formatted into a binding by sources.band_label rather
+    than left to the template -- see test_band_label_reads_as_prose.
+    """
     assert render("{freq} GHz", {"freq": 5.0}, "t") == "5.0 GHz"
+
+
+@pytest.mark.parametrize(
+    ("frequency", "expected"),
+    [(5.0, "5"), (2.4, "2.4"), (6.0, "6"), (None, None)],
+)
+def test_band_label_reads_as_prose(frequency, expected):
+    """The API reports 5 GHz as an integer, so the float must not leak into a title."""
+    from app.rules.sources import band_label
+
+    assert band_label(frequency) == expected
 
 
 # --- predicate semantics ---------------------------------------------------
