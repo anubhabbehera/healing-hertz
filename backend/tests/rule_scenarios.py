@@ -86,10 +86,11 @@ def _legacy_radio_standard(s: Snapshot) -> None:
 
 
 def _legacy_radio_standard_5ghz(s: Snapshot) -> None:
-    # Pins a float-rendering quirk: Radio.frequency_ghz is a float, the fixture
-    # carries `"frequencyGHz": 5`, and the title interpolates the field raw — so
-    # this renders "5.0 GHz", not "5 GHz". Cosmetic, but a port that "tidies" it
-    # changes user-visible text, so the golden has to see it.
+    # Guards how a band reads in prose. Radio.frequency_ghz is a float and the
+    # API reports 5 GHz as an integer, so the raw value interpolates as
+    # "5.0 GHz"; sources.band_label is what makes it read "5 GHz". Only the
+    # 5 GHz radio shows the difference, so only this scenario catches a
+    # regression in it.
     s.device_details["ap1"].interfaces.radios[1].wlan_standard = "802.11a"
 
 

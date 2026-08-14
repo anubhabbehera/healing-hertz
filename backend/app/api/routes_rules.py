@@ -36,6 +36,7 @@ from app.config import get_settings
 from app.rules import describe
 from app.rules.base import RunHistory
 from app.rules.loader import (
+    TRASH_DIR,
     CatalogError,
     RuleFileError,
     _load_constants,
@@ -44,6 +45,7 @@ from app.rules.loader import (
     load_catalog,
     load_overrides,
     save_overrides,
+    trash_rule_file,
     user_rule_path,
     user_rules_dir,
 )
@@ -402,7 +404,12 @@ async def save_rule_file(name: str, body: RuleFileWrite) -> dict:
 
 @router.delete("/files/{name}")
 async def delete_rule_file(name: str) -> dict:
-    """Remove one of the operator's rule files."""
+    """Stop one of the operator's rule files from running.
+
+    The file is moved into RULES_DIR/.trash rather than destroyed, and its
+    content comes back in the response so the UI can offer an immediate undo --
+    which is just a save, so it needs no separate endpoint.
+    """
     _require_rules_dir()
     try:
         path = user_rule_path(name)
@@ -411,9 +418,16 @@ async def delete_rule_file(name: str) -> dict:
     if not path.is_file():
         raise HTTPException(status_code=404, detail=f"{name} does not exist.")
 
-    path.unlink()
+    content = path.read_text()
+    trashed = trash_rule_file(path)
     load_catalog.cache_clear()
-    return {"deleted": name, "catalog": _catalog_payload()}
+    return {
+        "deleted": name,
+        "content": content,
+        # Relative to RULES_DIR, like every other path this API reports.
+        "trashed_to": f"{TRASH_DIR}/{trashed.name}",
+        "catalog": _catalog_payload(),
+    }
 
 
 @router.post("/overrides")

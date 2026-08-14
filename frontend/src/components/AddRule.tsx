@@ -109,8 +109,12 @@ export default function AddRule({ data, editing, onDone }: {
   const draft = pasted ?? generated;
   const check = useMutation({ mutationFn: () => api.validateRule(draft) });
 
+  // Takes its arguments explicitly rather than reading the draft state: undo
+  // sets that state and saves in the same handler, where a state read would
+  // still see the previous value.
   const save = useMutation({
-    mutationFn: () => api.saveRuleFile(filename, draft),
+    mutationFn: (arg?: { name: string; content: string }) =>
+      api.saveRuleFile(arg?.name ?? filename, arg?.content ?? draft),
     onSuccess: (res) => {
       if (!res.saved) return;
       if (res.catalog) queryClient.setQueryData(["rules"], res.catalog);
@@ -119,11 +123,15 @@ export default function AddRule({ data, editing, onDone }: {
     },
   });
 
+  // Deleting keeps the file, so the undo below is just a save.
+  const [undo, setUndo] = useState<{ name: string; content: string; at: string } | null>(null);
+
   const remove = useMutation({
     mutationFn: () => api.deleteRuleFile(filename),
     onSuccess: (res) => {
       queryClient.setQueryData(["rules"], res.catalog);
       queryClient.invalidateQueries({ queryKey: ["ruleFiles"] });
+      setUndo({ name: res.deleted, content: res.content, at: res.trashed_to });
       setPasted(null);
       onDone?.();
     },
@@ -269,7 +277,7 @@ export default function AddRule({ data, editing, onDone }: {
       <div className="mini-row">
         <button
           className="secondary"
-          onClick={() => save.mutate()}
+          onClick={() => save.mutate(undefined)}
           disabled={save.isPending || !data.rules_dir.configured}
           title={data.rules_dir.configured ? "" : "RULES_DIR is not set"}
         >
@@ -284,9 +292,8 @@ export default function AddRule({ data, editing, onDone }: {
         {existing && (
           <button
             className="secondary"
-            onClick={() => {
-              if (confirm(`Delete ${filename}? Its rules stop running.`)) remove.mutate();
-            }}
+            onClick={() => remove.mutate()}
+            title="The file is kept in .trash, so this can be undone"
             disabled={remove.isPending}
           >
             {remove.isPending ? "Deleting…" : "Delete file"}
@@ -301,7 +308,24 @@ export default function AddRule({ data, editing, onDone }: {
         <div className="callout error">Could not delete: {(remove.error as Error).message}</div>
       )}
       {save.data?.saved && (
-        <div className="callout">Saved to <code>{save.data.path}</code> and now running.</div>
+        <div className="callout">Saved as <code>{save.data.name}</code> and now running.</div>
+      )}
+      {undo && (
+        <div className="callout">
+          <strong>{undo.name}</strong> stopped running. The file is kept at{" "}
+          <code>{undo.at}</code>.{" "}
+          <button
+            className="secondary mini"
+            onClick={() => {
+              setFilename(undo.name);
+              setPasted(undo.content);
+              save.mutate({ name: undo.name, content: undo.content });
+              setUndo(null);
+            }}
+          >
+            Undo
+          </button>
+        </div>
       )}
 
       {result && (

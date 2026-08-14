@@ -296,3 +296,61 @@ async def test_python_impl_paths_are_relative_too(api):
     impl = next(r["impl"] for r in body["rules"] if r.get("impl"))
     assert not impl["path"].startswith("/")
     assert impl["path"].startswith("app/rules/")
+
+
+# --- deleting is recoverable ----------------------------------------------
+
+
+async def test_deleting_moves_the_file_to_trash(api, rules_dir):
+    """Destroying a check the operator wrote is not obviously recoverable --
+    there is no other copy of it anywhere."""
+    await api.put("/api/rules/files/mine.yaml", json={"content": RULE})
+
+    body = (await api.delete("/api/rules/files/mine.yaml")).json()
+
+    assert not (rules_dir / "mine.yaml").exists()
+    trashed = list((rules_dir / ".trash").glob("*mine.yaml"))
+    assert len(trashed) == 1
+    assert trashed[0].read_text() == RULE
+    assert body["trashed_to"].startswith(".trash/")
+    # Returned so the UI can offer an undo without another endpoint.
+    assert body["content"] == RULE
+
+
+async def test_a_trashed_rule_stops_running(api, rules_dir, snapshot):
+    from app.rules import run_rules
+
+    await api.put("/api/rules/files/mine.yaml", json={"content": RULE})
+    assert "custom.spare_port" in {f.rule_id for f in run_rules(snapshot)[0]}
+
+    await api.delete("/api/rules/files/mine.yaml")
+    assert "custom.spare_port" not in {f.rule_id for f in run_rules(snapshot)[0]}
+
+
+async def test_the_trash_directory_is_not_read_for_rules(api, rules_dir):
+    """It sits inside RULES_DIR, so it must not be mistaken for rule files."""
+    await api.put("/api/rules/files/mine.yaml", json={"content": RULE})
+    await api.delete("/api/rules/files/mine.yaml")
+
+    body = (await api.get("/api/rules")).json()
+    assert body["counts"].get("unloadable", 0) == 0
+    assert [f["name"] for f in (await api.get("/api/rules/files")).json()["files"]] == []
+
+
+async def test_deleting_the_same_name_twice_keeps_both_copies(api, rules_dir):
+    for _ in range(2):
+        await api.put("/api/rules/files/mine.yaml", json={"content": RULE})
+        await api.delete("/api/rules/files/mine.yaml")
+
+    assert len(list((rules_dir / ".trash").glob("*mine.yaml"))) == 2
+
+
+async def test_undo_is_just_a_save(api, rules_dir):
+    """Which is why deleting returns the content and needs no restore endpoint."""
+    await api.put("/api/rules/files/mine.yaml", json={"content": RULE})
+    deleted = (await api.delete("/api/rules/files/mine.yaml")).json()
+
+    restored = (await api.put("/api/rules/files/mine.yaml",
+                              json={"content": deleted["content"]})).json()
+    assert restored["saved"] is True
+    assert "custom.spare_port" in {r["id"] for r in restored["catalog"]["rules"]}

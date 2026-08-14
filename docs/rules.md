@@ -72,8 +72,8 @@ only ever names a binding.
 | `pending_devices` | devices seen but not adopted | `pending_id` `pending_name` `pending_model` `pending_mac` `name_or_model_or_mac` |
 | `device_stats` | per-device telemetry | `device_id` `device_name` `uptime_sec` `cpu_pct` `memory_pct` `load_1_min` `load_5_min` `load_15_min` `uplink_tx_bps` `uplink_rx_bps` |
 | `device_ports` | every port on every device | `device_id` `device_name` `device_model` `port_idx` `port_state` `port_connector` `port_speed_mbps` `port_max_speed_mbps` `poe_state` `poe_standard` `poe_type` `poe_enabled` |
-| `online_ap_radios` | broadcasting radios of online APs | `device_id` `device_name` `device_model` `radio_channel` `radio_width_mhz` `radio_frequency_ghz` `radio_standard` `radio_standard_normalized` |
-| `ap_radio_stats` | per-radio counters for APs | `device_id` `device_name` `radio_frequency_ghz` `tx_retries_pct` |
+| `online_ap_radios` | broadcasting radios of online APs | `device_id` `device_name` `device_model` `radio_channel` `radio_width_mhz` `radio_frequency_ghz` `radio_band` `radio_standard` `radio_standard_normalized` |
+| `ap_radio_stats` | per-radio counters for APs | `device_id` `device_name` `radio_frequency_ghz` `radio_band` `tx_retries_pct` |
 | `clients` | connected clients | `client_id` `client_name` `client_mac` `client_ip` `client_type` `access_type` `access_authorized` |
 | `rf_clients` | per-client RF detail | `client_mac` `client_name` `client_ssid` `client_ap_mac` `signal_dbm` `tx_rate_kbps` `rx_rate_kbps` `channel` `band_ghz` |
 

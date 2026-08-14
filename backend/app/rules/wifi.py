@@ -5,6 +5,7 @@ from statistics import median
 from app.collectors.snapshot import Snapshot
 
 from .base import Binding, RunHistory
+from .sources import band_label
 
 
 def _online_ap_radios(snapshot: Snapshot):
@@ -199,6 +200,7 @@ class RetriesWorsening:
                     vars={
                         "device_name": dev.name,
                         "radio_frequency_ghz": radio.frequency_ghz,
+                        "radio_band": band_label(radio.frequency_ghz),
                         "tx_retries_pct": pct,
                         "baseline_pct": baseline,
                         "baseline_pct_rounded": round(baseline, 1),

@@ -272,3 +272,12 @@ export interface RuleSaveResult extends RuleValidation {
   path: string;
   catalog?: RulesResponse;
 }
+
+export interface RuleDeleteResult {
+  deleted: string;
+  /** The file's content, so a delete can be undone with a plain save. */
+  content: string;
+  /** Where it went, relative to RULES_DIR. */
+  trashed_to: string;
+  catalog: RulesResponse;
+}
