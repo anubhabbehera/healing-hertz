@@ -1,4 +1,6 @@
 import type {
+  RulesResponse,
+  RuleValidation,
   CompareResponse,
   Dismissal,
   Finding,
@@ -63,6 +65,17 @@ export const api = {
         reason: reason || null,
       }),
     }),
+  rules: () => request<RulesResponse>("/api/rules"),
+
+  reloadRules: () => request<RulesResponse>("/api/rules/reload", { method: "POST" }),
+
+  validateRule: (yaml: string) =>
+    request<RuleValidation>("/api/rules/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ yaml }),
+    }),
+
   restore: async (id: number) => {
     const resp = await fetch(`/api/dismissals/${id}`, { method: "DELETE" });
     if (!resp.ok) throw new ApiError(resp.status, resp.statusText);
