@@ -325,3 +325,105 @@ def test_the_converted_wired_rules_are_declarative():
 
 def test_declarative_entry_type_is_exported():
     assert DeclarativeEntry.__name__ == "DeclarativeEntry"
+
+
+# --- python rules that return bindings -------------------------------------
+
+
+def _py_entry(**over):
+    base = {
+        "id": "test.rule",
+        "kind": "python",
+        "impl": "app.rules.wifi:MeshUplink",
+        "category": "wifi",
+        "provides": ["a", "b"],
+        "emits": [{
+            "severity": "low", "title": "{a}", "summary": "{b}", "recommendation": "r",
+        }],
+    }
+    return CatalogEntryAdapter.validate_python({**base, **over})
+
+
+def _compile_py(entry):
+    from app.rules.loader import Provenance, _compile_python_emits
+
+    return _compile_python_emits(entry, Provenance("test.yaml", entry.id))
+
+
+def test_python_prose_is_checked_against_provides():
+    """A template naming a binding the impl never supplies is a load error."""
+    with pytest.raises(TemplateError):
+        _compile_py(_py_entry(emits=[{
+            "severity": "low", "title": "{not_provided}", "summary": "s",
+            "recommendation": "r",
+        }]))
+
+
+def test_python_evidence_is_checked_against_provides():
+    from app.rules.loader import CatalogError
+
+    with pytest.raises(CatalogError, match="does not declare in provides"):
+        _compile_py(_py_entry(emits=[{
+            "severity": "low", "title": "{a}", "summary": "s", "recommendation": "r",
+            "evidence": {"x": {"raw": "not_provided"}},
+        }]))
+
+
+def test_python_severity_escalation_is_checked_against_provides():
+    from app.rules.loader import CatalogError
+
+    with pytest.raises(CatalogError, match="not in provides"):
+        _compile_py(_py_entry(emits=[{
+            "severity": {"base": "low",
+                         "escalate": [{"when": ["not_provided", "gte", 2], "to": "high"}]},
+            "title": "{a}", "summary": "s", "recommendation": "r",
+        }]))
+
+
+def test_provides_without_emits_is_rejected():
+    """Declaring bindings nothing renders is a half-finished conversion."""
+    from app.rules.loader import CatalogError
+
+    with pytest.raises(CatalogError, match="nothing reads them"):
+        _compile_py(_py_entry(emits=[]))
+
+
+def test_duplicate_emit_keys_are_rejected():
+    from app.rules.loader import CatalogError
+
+    with pytest.raises(CatalogError, match="duplicate emit key"):
+        _compile_py(_py_entry(emits=[
+            {"key": "x", "severity": "low", "title": "{a}", "summary": "s",
+             "recommendation": "r"},
+            {"key": "x", "severity": "low", "title": "{b}", "summary": "s",
+             "recommendation": "r"},
+        ]))
+
+
+def test_a_binding_with_no_matching_emit_key_is_an_error():
+    """The impl and its catalog entry must agree on the keys."""
+    from app.rules.base import Binding, Category
+    from app.rules.loader import CatalogError, CatalogRule, Provenance
+
+    class Impl:
+        def evaluate(self, snapshot, history):
+            return [Binding(key="typo", vars={"a": 1, "b": 2})]
+
+    rule = CatalogRule(
+        id="test.rule", category=Category.WIFI,
+        provenance=Provenance("test.yaml", "test.rule"),
+        impl=Impl(), emits=_compile_py(_py_entry()),
+    )
+    with pytest.raises(CatalogError, match="no emit block"):
+        rule.evaluate(None, None)
+
+
+def test_every_rule_keeps_its_prose_in_the_catalog():
+    """A rule building its own Finding is prose the catalog cannot see."""
+    from app.rules.loader import CatalogRule, load_catalog
+
+    silent = [
+        r.id for r in load_catalog().rules
+        if isinstance(r, CatalogRule) and not r.emits
+    ]
+    assert silent == []

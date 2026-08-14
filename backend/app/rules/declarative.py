@@ -153,7 +153,7 @@ def _evidence(block: EmitBlock, bindings: dict[str, Any],
     return out
 
 
-def _severity_for(block: EmitBlock, bindings: dict[str, Any]) -> str:
+def severity_for(block, bindings: dict[str, Any]) -> str:
     spec = block.severity
     if not isinstance(spec, SeveritySpec):
         return spec
@@ -163,15 +163,15 @@ def _severity_for(block: EmitBlock, bindings: dict[str, Any]) -> str:
     return spec.base
 
 
-def _predicate_bindings(node: Any) -> set[str]:
+def predicate_bindings(node: Any) -> set[str]:
     if isinstance(node, Comparison):
         return {node.binding}
     if isinstance(node, AllOf):
-        return set().union(*(_predicate_bindings(c) for c in node.all))
+        return set().union(*(predicate_bindings(c) for c in node.all))
     if isinstance(node, AnyOf):
-        return set().union(*(_predicate_bindings(c) for c in node.any))
+        return set().union(*(predicate_bindings(c) for c in node.any))
     if isinstance(node, NotOf):
-        return _predicate_bindings(node.negate)
+        return predicate_bindings(node.negate)
     return set()
 
 
@@ -223,7 +223,7 @@ class DeclarativeRule:
         return make_finding(
             rule_id=self.id,
             category=self.category,
-            severity=_severity_for(block, bindings),
+            severity=severity_for(block, bindings),
             title=render(block.title, bindings, where),
             summary=render(block.summary, bindings, where),
             recommendation=render(block.recommendation, bindings, where),
@@ -236,7 +236,7 @@ class DeclarativeRule:
         return make_finding(
             rule_id=self.id,
             category=self.category,
-            severity=_severity_for(block, bindings),
+            severity=severity_for(block, bindings),
             title=render(block.title, bindings, where),
             summary=render(block.summary, bindings, where),
             recommendation=render(block.recommendation, bindings, where),
@@ -274,7 +274,7 @@ def compile_declarative(entry: DeclarativeEntry, provenance: Any) -> Declarative
                 )
             available.add(name)
 
-        unknown = _predicate_bindings(block.where) - available
+        unknown = predicate_bindings(block.where) - available
         if unknown:
             raise RuleCompileError(
                 f"{where}: predicate reads {sorted(unknown)}, "
@@ -295,7 +295,7 @@ def compile_declarative(entry: DeclarativeEntry, provenance: Any) -> Declarative
             visible = available
 
         for step in getattr(block.severity, "escalate", []):
-            missing = _predicate_bindings(step.when) - visible
+            missing = predicate_bindings(step.when) - visible
             if missing:
                 raise RuleCompileError(
                     f"{where}: severity escalation reads {sorted(missing)}, "

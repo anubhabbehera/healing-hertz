@@ -9,10 +9,23 @@
 # site-scoped finding. Naming each client separately would be noise.
 
 rules:
+  # Asserts the absence of matches in one collection given the presence of
+  # matches in another, which no per-row predicate can express.
   - id: clients.none_on_ap
     kind: python
     impl: app.rules.clients:NoWirelessClients
     category: clients
+    provides: [ap_count, ap_names, wireless_count]
+    emits:
+      - severity: info
+        title: "No wireless clients despite online APs"
+        summary: >-
+          {ap_count} access point(s) are online but no wireless clients are
+          connected — SSIDs may be disabled or misconfigured.
+        recommendation: "Verify SSIDs are enabled and broadcasting on the expected bands."
+        evidence:
+          onlineAps: {raw: ap_names}
+          wirelessClients: {raw: wireless_count}
 
   - id: clients.unauthorized_guests
     kind: declarative
@@ -42,10 +55,24 @@ rules:
             op: top
             project: {name: client_name, mac: client_mac, ip: client_ip}
 
+  # Evidence is a name→count mapping rather than projected rows, and the roam
+  # counts arrive already aggregated per client.
   - id: clients.excessive_roaming
     kind: python
     impl: app.rules.clients:ExcessiveRoaming
     category: wifi
+    provides: [client_count, roams]
+    emits:
+      - severity: medium
+        title: "{client_count} client(s) roaming excessively"
+        summary: >-
+          Clients bouncing between APs many times a day usually sit in an overlap
+          zone with near-equal signal, causing stalls on every hop.
+        recommendation: >-
+          Lower transmit power on the overlapping APs (or reposition them) so each
+          area has one clearly-best AP; check band-steering settings.
+        evidence:
+          roamsLast24h: {raw: roams}
 
   # One slow client can hold an entire cell hostage. A client negotiating legacy
   # rates occupies the radio far longer per byte than a modern one, so without
@@ -89,10 +116,28 @@ rules:
               signalDbm: signal_dbm
               ssid: client_ssid
 
+  # Groups clients by AP MAC, then joins back to the device list through a
+  # case-normalised MAC map to get a display name.
   - id: capacity.ap_client_load
     kind: python
     impl: app.rules.clients:ApClientLoad
     category: capacity
+    provides: [ap_name, client_count, threshold]
+    emits:
+      - severity: medium
+        title: "{ap_name} is carrying {client_count} wireless clients"
+        summary: >-
+          {client_count} clients share {ap_name}'s radios. Past roughly {threshold}
+          associations the cell spends more time arbitrating airtime than moving
+          data, and latency becomes erratic even at strong signal.
+        recommendation: >-
+          Add an AP to split the coverage area, or move stationary devices
+          (TVs, consoles, desktops) to Ethernet to free airtime.
+        evidence:
+          # key "ap", not "name" — the advisor payload sanitizer pseudonymizes
+          # "name"/"hostname" as client identity.
+          ap: {raw: ap_name}
+          clients: {raw: client_count}
 
   - id: wifi.band_steering_ineffective
     kind: declarative

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import importlib
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
@@ -32,10 +32,15 @@ from pydantic import ValidationError
 from app.collectors.snapshot import Snapshot
 from app.config import get_settings
 
-from .base import Category, Finding, RunHistory, UnsupportedCheck
-from .declarative import RuleCompileError, compile_declarative
-from .render import TemplateError
-from .schema import CatalogEntry, CatalogFile, DeclarativeEntry, PythonEntry
+from .base import Binding, Category, Finding, RunHistory, UnsupportedCheck
+from .declarative import (
+    RuleCompileError,
+    compile_declarative,
+    predicate_bindings,
+    severity_for,
+)
+from .render import TemplateError, make_finding, render, validate_template
+from .schema import CatalogEntry, CatalogFile, DeclarativeEntry, PythonEmit, PythonEntry
 
 logger = logging.getLogger(__name__)
 
@@ -103,19 +108,51 @@ class Provenance:
 
 @dataclass
 class CatalogRule:
-    """A catalog entry bound to its implementation.
+    """A catalog entry bound to its Python implementation.
 
     Satisfies the ``Rule`` protocol in base.py, so it drops into ``RULES``
     with no change to the engine.
+
+    With emit blocks the impl returns Bindings and its prose is rendered here,
+    through the same factory declarative rules use. Without them the impl builds
+    its own Findings -- still supported, but the catalog then knows nothing
+    about what the rule says.
     """
 
     id: str
     category: Category
     provenance: Provenance
     impl: object
+    emits: dict[str, PythonEmit] = field(default_factory=dict)
 
     def evaluate(self, snapshot: Snapshot, history: RunHistory) -> list[Finding]:
-        return self.impl.evaluate(snapshot, history)
+        produced = self.impl.evaluate(snapshot, history)
+        if not self.emits:
+            return produced
+        return [self._render(b) for b in produced]
+
+    def _render(self, binding: Binding) -> Finding:
+        try:
+            block = self.emits[binding.key]
+        except KeyError:
+            raise CatalogError(
+                f"{self.provenance}: returned a binding keyed {binding.key!r}, "
+                f"which has no emit block (declared: {sorted(self.emits)})"
+            ) from None
+        where = str(self.provenance)
+        site_scoped = binding.subject_type == "site"
+        return make_finding(
+            rule_id=self.id,
+            category=self.category,
+            severity=severity_for(block, binding.vars),
+            title=render(block.title, binding.vars, where),
+            summary=render(block.summary, binding.vars, where),
+            recommendation=render(block.recommendation, binding.vars, where),
+            evidence={k: binding.vars[v.raw] for k, v in block.evidence.items()},
+            subject_type=binding.subject_type,
+            subject_id=None if site_scoped else binding.subject_id,
+            subject_name=None if site_scoped else binding.subject_name,
+        )
 
 
 def _resolve_impl(entry: PythonEntry, provenance: Provenance) -> object:
@@ -138,6 +175,41 @@ def _resolve_impl(entry: PythonEntry, provenance: Provenance) -> object:
     if not callable(getattr(instance, "evaluate", None)):
         raise CatalogError(f"{provenance}: {entry.impl} has no evaluate() method")
     return instance
+
+
+def _compile_python_emits(entry: PythonEntry, provenance: Provenance) -> dict[str, PythonEmit]:
+    """Check a Python rule's prose against the bindings it promises to provide."""
+    if not entry.emits:
+        if entry.provides:
+            raise CatalogError(
+                f"{provenance}: declares provides but no emits, so nothing reads them"
+            )
+        return {}
+
+    available = set(entry.provides)
+    blocks: dict[str, PythonEmit] = {}
+    for block in entry.emits:
+        if block.key in blocks:
+            raise CatalogError(f"{provenance}: duplicate emit key {block.key!r}")
+        where = f"{provenance} emit[{block.key}]"
+        for label, template in (("title", block.title), ("summary", block.summary),
+                                ("recommendation", block.recommendation)):
+            validate_template(template, available, f"{where}.{label}")
+        for name, value in block.evidence.items():
+            if value.raw not in available:
+                raise CatalogError(
+                    f"{where}: evidence {name!r} reads {value.raw!r}, "
+                    f"which {entry.impl} does not declare in provides"
+                )
+        for step in getattr(block.severity, "escalate", []):
+            missing = predicate_bindings(step.when) - available
+            if missing:
+                raise CatalogError(
+                    f"{where}: severity escalation reads {sorted(missing)}, "
+                    "which is not in provides"
+                )
+        blocks[block.key] = block
+    return blocks
 
 
 def _read_file(path: Path, constants: dict[str, object]) -> list[CatalogEntry]:
@@ -207,6 +279,7 @@ def compile_entries(
                     category=entry.category,
                     provenance=provenance,
                     impl=_resolve_impl(entry, provenance),
+                    emits=_compile_python_emits(entry, provenance),
                 )
             )
     return rules

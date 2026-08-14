@@ -268,9 +268,29 @@ class _BaseEntry(CatalogModel):
         return v
 
 
+class PythonEmit(CatalogModel):
+    """Prose for one shape of finding a Python rule produces.
+
+    Unlike a declarative emit there is no source or predicate -- the class
+    already decided what fires. This is only what to write about it.
+    """
+
+    # Matches Binding.key. Rules reporting one kind of thing can leave it.
+    key: str = "default"
+    severity: Severity | SeveritySpec
+    title: str
+    summary: str
+    recommendation: str
+    evidence: dict[str, RawValue] = Field(default_factory=dict)
+
+
 class PythonEntry(_BaseEntry):
     kind: Literal["python"]
     impl: str
+    # Bindings the impl guarantees to provide; templates are checked against them.
+    provides: list[str] = Field(default_factory=list)
+    # Empty means the impl builds its own Findings.
+    emits: list[PythonEmit] = Field(default_factory=list)
 
     @field_validator("impl")
     @classmethod

@@ -1,18 +1,64 @@
 # Internet path latency and packet loss.
 #
-# Each entry is one diagnostic check. `kind: python` means the predicate still
-# lives in app/rules/wan.py; the catalog owns the rule's identity and metadata.
-# Entry order here is evaluation order, which is user-visible: findings are sorted
-# by severity with a stable sort, so within a severity band they appear in the
-# order their rules ran.
+# Both rules read the optional WAN probe. Their logic stays in app/rules/wan.py
+# -- one reports two unrelated conditions under a single id, the other compares
+# against a median of recent runs -- but their prose lives here.
 
 rules:
   - id: wan.latency_loss
     kind: python
     impl: app.rules.wan:WanLatencyLoss
     category: capacity
+    provides: [loss_pct, samples, per_target, latency_ms, jitter_ms]
+    emits:
+      - key: loss
+        severity:
+          base: medium
+          escalate:
+            - {when: [loss_pct, gte, 10], to: high}
+        title: "WAN probe failures: {loss_pct:.0f}% of connections"
+        summary: >-
+          {loss_pct:.1f}% of {samples} TCP probes to public anchors
+          failed — indicates packet loss or an unstable WAN path.
+        recommendation: >-
+          Check the WAN link (modem/ONT stats, cabling) and re-run at a quiet
+          hour; sustained loss is worth an ISP ticket with these numbers.
+        evidence:
+          lossPct: {raw: loss_pct}
+          samples: {raw: samples}
+          perTarget: {raw: per_target}
+
+      - key: latency
+        severity:
+          base: medium
+          escalate:
+            - {when: [latency_ms, gte, 150], to: high}
+        title: "High WAN latency ({latency_ms:.0f} ms)"
+        summary: >-
+          Average TCP-connect latency to public anchors is {latency_ms:.0f} ms
+          (jitter {jitter_ms:.0f} ms) — typical wired links measure 5–30 ms.
+        recommendation: >-
+          If sustained, check for bufferbloat (enable Smart Queues sized to your
+          plan), a saturated uplink, or ISP path issues.
+        evidence:
+          latencyMs: {raw: latency_ms}
+          jitterMs: {raw: jitter_ms}
+          perTarget: {raw: per_target}
 
   - id: wan.latency_worsening
     kind: python
     impl: app.rules.wan:WanLatencyWorsening
     category: capacity
+    provides: [latency_ms, baseline_ms, baseline_ms_rounded]
+    emits:
+      - severity: medium
+        title: "WAN latency worsening ({baseline_ms:.0f} → {latency_ms:.0f} ms)"
+        summary: >-
+          Probe latency rose to {latency_ms:.0f} ms from a recent baseline of
+          {baseline_ms:.0f} ms across the last scans.
+        recommendation: >-
+          Something changed on the WAN path — check for new heavy uploads/downloads,
+          QoS misconfiguration, or ISP degradation.
+        evidence:
+          latencyMs: {raw: latency_ms}
+          baselineMs: {raw: baseline_ms_rounded}

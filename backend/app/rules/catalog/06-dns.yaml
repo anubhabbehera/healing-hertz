@@ -1,18 +1,63 @@
 # DNS resolution volume and filtering behaviour.
 #
-# Each entry is one diagnostic check. `kind: python` means the predicate still
-# lives in app/rules/dns.py; the catalog owns the rule's identity and metadata.
-# Entry order here is evaluation order, which is user-visible: findings are sorted
-# by severity with a stable sort, so within a severity band they appear in the
-# order their rules ran.
+# Both rules read the optional NextDNS integration and both compare against a
+# baseline taken over recent runs, so their logic stays in app/rules/dns.py.
+# Their prose lives here.
 
 rules:
   - id: dns.security_blocks
     kind: python
     impl: app.rules.dns:DnsSecurityBlocks
     category: clients
+    provides: [block_count, reasons, top_blocked]
+    emits:
+      - severity: high
+        title: "{block_count} security-category DNS blocks in 24h"
+        summary: >-
+          NextDNS blocked queries in security categories (threat feeds, phishing,
+          malware, etc.) — a device on the network tried to reach flagged domains.
+        recommendation: >-
+          Open the NextDNS logs, filter by the security reason, and identify which
+          device issued these queries; scan it for malware or misbehaving apps.
+        evidence:
+          reasons: {raw: reasons}
+          topBlockedDomains: {raw: top_blocked}
 
+  # Two independent conditions under one id, so a scan can report either, both
+  # or neither. The emit keys match the Binding keys the rule returns.
   - id: dns.anomalies
     kind: python
     impl: app.rules.dns:DnsBlockedSpike
     category: clients
+    provides:
+      [blocked_pct, baseline_pct, blocked_pct_rounded, baseline_pct_rounded,
+       queries, top_blocked]
+    emits:
+      - key: spike
+        severity: medium
+        title: "Blocked-DNS ratio spiked ({baseline_pct:.0f}% → {blocked_pct:.0f}%)"
+        summary: >-
+          The share of blocked DNS queries jumped versus recent scans — often
+          a new device, app, or infection generating unwanted queries.
+        recommendation: >-
+          Check the NextDNS top-blocked domains and per-device logs for what
+          changed since the last scan.
+        evidence:
+          blockedPct: {raw: blocked_pct_rounded}
+          baselinePct: {raw: baseline_pct_rounded}
+          queries24h: {raw: queries}
+          topBlockedDomains: {raw: top_blocked}
+
+      - key: high_ratio
+        severity: low
+        title: "High blocked-DNS ratio ({blocked_pct:.0f}%)"
+        summary: >-
+          {blocked_pct:.0f}% of the last 24h of DNS queries were blocked —
+          usually a chatty IoT/ad-heavy device, occasionally something worse.
+        recommendation: >-
+          Review the NextDNS top-blocked list; if one device dominates, decide
+          whether to isolate it or allowlist legitimate domains.
+        evidence:
+          blockedPct: {raw: blocked_pct_rounded}
+          queries24h: {raw: queries}
+          topBlockedDomains: {raw: top_blocked}

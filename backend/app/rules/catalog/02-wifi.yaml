@@ -30,10 +30,38 @@ rules:
           channel: {raw: radio_channel}
           widthMHz: {raw: radio_width_mhz}
 
+  # Groups radios by channel and reports per group. The two bands group
+  # differently: on 2.4 GHz any two APs sharing is a problem, on 5 GHz only
+  # wide channels overlapping is.
   - id: wifi.channel_overlap
     kind: python
     impl: app.rules.wifi:ChannelOverlap
     category: wifi
+    provides: [channel, ap_count, ap_names, ap_list, aps]
+    emits:
+      - key: band_24
+        severity: medium
+        title: "{ap_count} APs share 2.4 GHz channel {channel}"
+        summary: >-
+          APs {ap_list} all broadcast on 2.4 GHz channel {channel};
+          co-channel contention reduces airtime for every client.
+        recommendation: "Spread these APs across channels 1, 6 and 11."
+        evidence:
+          channel: {raw: channel}
+          aps: {raw: ap_names}
+
+      - key: band_5_wide
+        severity: medium
+        title: "{ap_count} APs share 5 GHz channel {channel} at wide width"
+        summary: >-
+          APs {ap_list} share 5 GHz channel {channel} with 80 MHz+ width;
+          wide overlapping channels amplify co-channel interference.
+        recommendation: >-
+          Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel
+          width to 40 MHz in dense deployments.
+        evidence:
+          channel: {raw: channel}
+          aps: {raw: aps}
 
   - id: wifi.wide_24_width
     kind: declarative
@@ -82,10 +110,28 @@ rules:
           channel: {raw: radio_channel}
           widthMHz: {raw: radio_width_mhz}
 
+  # 80 MHz is the sweet spot on 5 GHz, but only when channels are scarce --
+  # so both the predicate and the summary read how many radios share the band.
   - id: wifi.narrow_5_width
     kind: python
     impl: app.rules.wifi:Narrow5Width
     category: wifi
+    provides: [device_name, width_mhz, channel, radios_on_5ghz]
+    emits:
+      - severity: low
+        title: "{device_name} 5 GHz width is {width_mhz} MHz"
+        summary: >-
+          {device_name} runs a {width_mhz} MHz channel on 5 GHz. With only
+          {radios_on_5ghz} radio(s) on the band there is room for 80 MHz, which roughly
+          doubles throughput for modern clients.
+        recommendation: >-
+          Set the 5 GHz channel width to 80 MHz (VHT80/HE80). Keep it at 40 MHz only
+          if you later add APs and channels start overlapping.
+        evidence:
+          device: {raw: device_name}
+          widthMHz: {raw: width_mhz}
+          channel: {raw: channel}
+          radiosOn5GHz: {raw: radios_on_5ghz}
 
   - id: wifi.legacy_radio_standard
     kind: declarative
@@ -109,10 +155,31 @@ rules:
           wlanStandard: {raw: radio_standard}
           frequencyGHz: {raw: radio_frequency_ghz}
 
+  # Counting hops means walking the uplink chain, with a guard against a
+  # controller reporting a cycle.
   - id: wifi.mesh_uplink
     kind: python
     impl: app.rules.wifi:MeshUplink
     category: wifi
+    provides: [device_name, uplink_device_name, hops, hop_phrase]
+    emits:
+      - severity:
+          base: medium
+          escalate:
+            - {when: [hops, gte, 2], to: high}
+        title: "{device_name} is wirelessly meshed via {uplink_device_name}"
+        summary: >-
+          {device_name} uplinks through {uplink_device_name} over the air{hop_phrase}. A
+          meshed AP splits its radio time between serving clients and relaying, roughly
+          halving throughput per hop.
+        recommendation: >-
+          Run Ethernet to this AP if at all possible. If it must stay meshed, keep
+          it within one hop of a wired AP and make sure both radios see each other
+          well above -65 dBm.
+        evidence:
+          device: {raw: device_name}
+          uplinkDevice: {raw: uplink_device_name}
+          wirelessHops: {raw: hops}
 
   - id: wifi.high_retries
     kind: declarative
@@ -136,10 +203,29 @@ rules:
           frequencyGHz: {raw: radio_frequency_ghz}
           txRetriesPct: {raw: tx_retries_pct}
 
+  # The baseline is keyed by device and frequency together, so the history
+  # lookup key has to be synthesised before it can be consulted.
   - id: wifi.retries_worsening
     kind: python
     impl: app.rules.wifi:RetriesWorsening
     category: wifi
+    provides:
+      [device_name, radio_frequency_ghz, tx_retries_pct, baseline_pct,
+       baseline_pct_rounded]
+    emits:
+      - severity: medium
+        title: "Retries worsening on {device_name} {radio_frequency_ghz} GHz"
+        summary: >-
+          TX retries rose to {tx_retries_pct:.1f}% from a recent baseline of
+          {baseline_pct:.1f}% — something changed in the RF environment.
+        recommendation: >-
+          Look for new interference sources (neighbor APs, cameras, microwaves) and
+          re-run the channel plan.
+        evidence:
+          device: {raw: device_name}
+          frequencyGHz: {raw: radio_frequency_ghz}
+          txRetriesPct: {raw: tx_retries_pct}
+          baselinePct: {raw: baseline_pct_rounded}
 
   - id: wifi.weak_rssi_clients
     kind: declarative

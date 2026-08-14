@@ -177,10 +177,26 @@ rules:
           device: {raw: device_name}
           uptimeSec: {raw: uptime_sec}
 
+  # One low uptime is a reboot; the pattern across runs spanning a day is the
+  # finding, which needs history filtered per device and a span measured.
   - id: device.reboot_loop
     kind: python
     impl: app.rules.device_health:RebootLoop
     category: device_health
+    provides: [device_name, uptime_sec, low_uptime_runs]
+    emits:
+      - severity: high
+        title: "{device_name} appears to be reboot-looping"
+        summary: >-
+          {device_name} has shown under 24h uptime across {low_uptime_runs} scans spanning
+          more than a day — it is likely restarting repeatedly.
+        recommendation: >-
+          Check PoE budget on its switch port, inspect for overheating, and review
+          firmware release notes; downgrade if a recent update introduced instability.
+        evidence:
+          device: {raw: device_name}
+          uptimeSec: {raw: uptime_sec}
+          lowUptimeRuns: {raw: low_uptime_runs}
 
   # Uptime this long means the device has skipped every firmware window.
   - id: device.stale_uptime
@@ -222,7 +238,23 @@ rules:
           model: {raw: device_model}
           currentFirmware: {raw: device_firmware_version}
 
+  # Groups online APs by version and reports across the groups, so the
+  # recommendation can name the newest version present.
   - id: firmware.version_drift
     kind: python
     impl: app.rules.device_health:MixedApFirmware
     category: firmware
+    provides: [version_count, by_version, newest]
+    emits:
+      - severity: low
+        title: "Access points run {version_count} different firmware versions"
+        summary: >-
+          Roaming, band steering and fast-transition behaviour are negotiated between
+          APs. When they run different firmware those features can behave
+          inconsistently, producing dropouts that look like RF problems.
+        recommendation: >-
+          Bring every AP to the same version (currently {newest}) in one maintenance
+          window rather than updating them piecemeal.
+        evidence:
+          versions: {raw: by_version}
+          newest: {raw: newest}

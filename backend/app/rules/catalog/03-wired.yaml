@@ -63,7 +63,27 @@ rules:
           poeStandard: {raw: poe_standard}
           poeState: {raw: poe_state}
 
+  # Capacity is the widest UP port on the device detail, throughput comes from
+  # the stats record: a join and a reduction, so the predicate stays in Python.
+  # The prose does not have to.
   - id: site.gateway_saturation
     kind: python
     impl: app.rules.wired:GatewaySaturation
     category: capacity
+    provides:
+      [device_name, utilization, throughput_mbps, capacity_mbps,
+       tx_rate_bps, rx_rate_bps]
+    emits:
+      - severity: medium
+        title: "Gateway uplink near saturation ({utilization:.0%})"
+        summary: >-
+          {device_name} is pushing {throughput_mbps:.0f} Mbps against roughly
+          {capacity_mbps} Mbps of port capacity.
+        recommendation: >-
+          Enable smart queues / QoS to protect latency, identify top talkers, and
+          consider a faster uplink if this is sustained.
+        evidence:
+          device: {raw: device_name}
+          txRateBps: {raw: tx_rate_bps}
+          rxRateBps: {raw: rx_rate_bps}
+          portCapacityMbps: {raw: capacity_mbps}
