@@ -142,141 +142,201 @@ export default function AddRule({ data, editing, onDone }: {
 
   const insert = (binding: string) => setTitle((t) => `${t}{${binding}}`);
 
+  const yamlMode = pasted !== null;
+
   return (
-    <details className="card">
+    <details className="card addrule">
       <summary>
         <h2>Add a rule</h2>
+        <span className="muted">
+          {data.rules_dir.configured
+            ? `Saved into ${data.rules_dir.path}`
+            : "RULES_DIR is not set — you can still build and check one"}
+        </span>
       </summary>
 
-      {data.rules_dir.configured ? (
-        <p className="muted">
-          Saved into <code>{data.rules_dir.path}</code>. Checked before it is written, so
-          an invalid rule never lands on disk.
-        </p>
-      ) : (
+      {/* One switch, at the top: build it in the form, or write the YAML by hand.
+          The old mid-page toggle read as a step in the form rather than a mode. */}
+      <div className="addrule-modes">
+        <div className="segmented">
+          <button
+            className={yamlMode ? "" : "on"}
+            onClick={() => setPasted(null)}
+          >
+            Form
+          </button>
+          <button
+            className={yamlMode ? "on" : ""}
+            onClick={() => setPasted(pasted ?? generated)}
+          >
+            YAML
+          </button>
+        </div>
+      </div>
+
+      {!data.rules_dir.configured && (
         <div className="callout">
-          Set <code>RULES_DIR</code> to a writable directory to save rules from here. You
-          can still build and check one below.
+          Set <code>RULES_DIR</code> to a writable directory to save rules from here.
         </div>
       )}
 
-      {pasted === null && (
+      {!yamlMode && (
         <>
-          <div className="select-row">
-            <label htmlFor="rid">Id</label>
-            <span className="muted">custom.</span>
-            <input id="rid" value={name} onChange={(e) => setName(e.target.value.replace(/[^a-z0-9_]/g, ""))} />
-            <label htmlFor="rcat">Category</label>
-            <select id="rcat" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {data.categories.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <label htmlFor="rsev">Severity</label>
-            <select id="rsev" value={severity} onChange={(e) => setSeverity(e.target.value as Severity)}>
-              {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-
-          <div className="select-row">
-            <label htmlFor="rsrc">Source</label>
-            <select id="rsrc" value={source} onChange={(e) => { setSource(e.target.value);
-              setConditions([{ binding: "", op: "eq", value: "" }]); }}>
-              {data.sources.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-            </select>
-          </div>
-          <p className="muted">{sourceDoc}</p>
-
-          <div className="select-row">
-            <label htmlFor="rcomb">Match</label>
-            <select id="rcomb" value={combinator} onChange={(e) => setCombinator(e.target.value as "all" | "any")}>
-              <option value="all">all conditions</option>
-              <option value="any">any condition</option>
-            </select>
-          </div>
-
-          {conditions.map((c, i) => (
-            <div className="select-row" key={i}>
-              <select
-                value={c.binding}
-                onChange={(e) => setConditions((cs) =>
-                  cs.map((x, j) => (j === i ? { ...x, binding: e.target.value } : x)))}
-              >
-                <option value="">— binding —</option>
-                {bindings.map((b) => <option key={b} value={b}>{b}</option>)}
+          <section className="step">
+            <div className="step-head"><span className="step-n">1</span> What it looks at</div>
+            <div className="field">
+              <label htmlFor="rsrc">Source</label>
+              <select id="rsrc" value={source} onChange={(e) => { setSource(e.target.value);
+                setConditions([{ binding: "", op: "eq", value: "" }]); }}>
+                {data.sources.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
               </select>
-              <select
-                value={c.op}
-                onChange={(e) => setConditions((cs) =>
-                  cs.map((x, j) => (j === i ? { ...x, op: e.target.value } : x)))}
-              >
-                {OPS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-              <input
-                value={c.value}
-                disabled={UNARY.has(c.op)}
-                placeholder={c.op === "in" || c.op === "not_in" ? "comma, separated" : "value"}
-                onChange={(e) => setConditions((cs) =>
-                  cs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))}
-              />
-              <button className="secondary mini"
-                onClick={() => setConditions((cs) => cs.filter((_, j) => j !== i))}>
-                Remove
-              </button>
             </div>
-          ))}
-          <button className="secondary mini"
-            onClick={() => setConditions((cs) => [...cs, { binding: "", op: "eq", value: "" }])}>
-            Add condition
-          </button>
+            <p className="hint">{sourceDoc}</p>
+          </section>
 
-          <dl className="kv">
-            <dt>Title</dt>
-            <dd>
-              <input value={title} onChange={(e) => setTitle(e.target.value)}
-                     placeholder="{device_name} port {port_idx} is down" />
-              <div className="mini-row">
-                {bindings.slice(0, 8).map((b) => (
-                  <button key={b} className="secondary mini" onClick={() => insert(b)}>
-                    {`{${b}}`}
-                  </button>
-                ))}
+          <section className="step">
+            <div className="step-head">
+              <span className="step-n">2</span> When it fires
+              {conditions.length > 1 && (
+                <select
+                  className="inline-select"
+                  value={combinator}
+                  onChange={(e) => setCombinator(e.target.value as "all" | "any")}
+                  aria-label="Match"
+                >
+                  <option value="all">match all</option>
+                  <option value="any">match any</option>
+                </select>
+              )}
+            </div>
+
+            {conditions.map((c, i) => (
+              <div className="cond-row" key={i}>
+                <select
+                  value={c.binding}
+                  onChange={(e) => setConditions((cs) =>
+                    cs.map((x, j) => (j === i ? { ...x, binding: e.target.value } : x)))}
+                >
+                  <option value="">field…</option>
+                  {bindings.map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+                <select
+                  value={c.op}
+                  onChange={(e) => setConditions((cs) =>
+                    cs.map((x, j) => (j === i ? { ...x, op: e.target.value } : x)))}
+                >
+                  {OPS.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
+                <input
+                  value={c.value}
+                  disabled={UNARY.has(c.op)}
+                  placeholder={c.op === "in" || c.op === "not_in" ? "comma, separated" : "value"}
+                  onChange={(e) => setConditions((cs) =>
+                    cs.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))}
+                />
+                <button
+                  className="icon-btn"
+                  title="Remove this condition"
+                  aria-label="Remove this condition"
+                  onClick={() => setConditions((cs) => cs.filter((_, j) => j !== i))}
+                >
+                  ×
+                </button>
               </div>
-            </dd>
-            <dt>Summary</dt>
-            <dd><textarea value={summary} rows={2} onChange={(e) => setSummary(e.target.value)} /></dd>
-            <dt>Recommendation</dt>
-            <dd><textarea value={recommendation} rows={2}
-                          onChange={(e) => setRecommendation(e.target.value)} /></dd>
-          </dl>
+            ))}
+            <button className="secondary mini"
+              onClick={() => setConditions((cs) => [...cs, { binding: "", op: "eq", value: "" }])}>
+              + condition
+            </button>
+            <p className="hint">
+              No conditions means every row from the source becomes a finding.
+            </p>
+          </section>
+
+          <section className="step">
+            <div className="step-head">
+              <span className="step-n">3</span> What it reports
+              <select
+                className="inline-select"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value as Severity)}
+                aria-label="Severity"
+              >
+                {SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="rtitle">Title</label>
+              <input id="rtitle" value={title} onChange={(e) => setTitle(e.target.value)}
+                     placeholder="{device_name} port {port_idx} is down" />
+            </div>
+            <div className="chip-row">
+              <span className="hint">insert</span>
+              {bindings.slice(0, 8).map((b) => (
+                <button key={b} className="chip" onClick={() => insert(b)}>
+                  {`{${b}}`}
+                </button>
+              ))}
+            </div>
+            <div className="field">
+              <label htmlFor="rsum">Summary</label>
+              <textarea id="rsum" value={summary} rows={2}
+                        placeholder="What this means, in a sentence or two."
+                        onChange={(e) => setSummary(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="rrec">Recommendation</label>
+              <textarea id="rrec" value={recommendation} rows={2}
+                        placeholder="What the operator should do."
+                        onChange={(e) => setRecommendation(e.target.value)} />
+            </div>
+          </section>
+
+          <section className="step">
+            <div className="step-head"><span className="step-n">4</span> Where it lives</div>
+            <div className="field">
+              <label htmlFor="rid">Id</label>
+              <span className="prefix">custom.</span>
+              <input id="rid" value={name}
+                     onChange={(e) => setName(e.target.value.replace(/[^a-z0-9_]/g, ""))} />
+            </div>
+            <div className="field">
+              <label htmlFor="rcat">Category</label>
+              <select id="rcat" value={category} onChange={(e) => setCategory(e.target.value)}>
+                {data.categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="fname">File</label>
+              <input id="fname" value={filename} onChange={(e) => setFilename(e.target.value)}
+                     placeholder="my-rules.yaml" />
+              {existing && <span className="hint">replaces the existing file</span>}
+            </div>
+          </section>
+
+          <details className="yaml-preview">
+            <summary>Preview YAML</summary>
+            <pre>{generated}</pre>
+          </details>
         </>
       )}
 
-      <div className="mini-row">
-        <button className="secondary" onClick={() => setPasted(pasted === null ? generated : null)}>
-          {pasted === null ? "Paste YAML instead" : "Back to the form"}
-        </button>
-      </div>
-
-      {pasted !== null && (
-        <textarea rows={16} value={pasted} onChange={(e) => setPasted(e.target.value)}
-                  style={{ width: "100%", fontFamily: "monospace" }} />
+      {yamlMode && (
+        <>
+          <textarea className="yaml-editor" rows={16} value={pasted ?? ""}
+                    onChange={(e) => setPasted(e.target.value)} />
+          <div className="field">
+            <label htmlFor="fname-yaml">File</label>
+            <input id="fname-yaml" value={filename} onChange={(e) => setFilename(e.target.value)}
+                   placeholder="my-rules.yaml" />
+            {existing && <span className="hint">replaces the existing file</span>}
+          </div>
+        </>
       )}
 
-      {pasted === null && <pre>{generated}</pre>}
-
-      <div className="select-row">
-        <label htmlFor="fname">File</label>
-        <input
-          id="fname"
-          value={filename}
-          onChange={(e) => setFilename(e.target.value)}
-          placeholder="my-rules.yaml"
-        />
-        {existing && <span className="muted">replaces the existing file</span>}
-      </div>
-
-      <div className="mini-row">
+      <div className="addrule-actions">
         <button
-          className="secondary"
+          className="primary"
           onClick={() => save.mutate(undefined)}
           disabled={save.isPending || !data.rules_dir.configured}
           title={data.rules_dir.configured ? "" : "RULES_DIR is not set"}
@@ -284,14 +344,14 @@ export default function AddRule({ data, editing, onDone }: {
           {save.isPending ? "Saving…" : existing ? "Save changes" : "Save rule"}
         </button>
         <button className="secondary" onClick={() => check.mutate()} disabled={check.isPending}>
-          {check.isPending ? "Checking…" : "Check without saving"}
+          {check.isPending ? "Checking…" : "Check only"}
         </button>
         <button className="secondary" onClick={() => navigator.clipboard?.writeText(draft)}>
           Copy YAML
         </button>
         {existing && (
           <button
-            className="secondary"
+            className="secondary danger"
             onClick={() => remove.mutate()}
             title="The file is kept in .trash, so this can be undone"
             disabled={remove.isPending}

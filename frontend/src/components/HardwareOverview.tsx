@@ -1,4 +1,4 @@
-import type { DeviceHardware, Finding, Severity } from "../api/types";
+import type { DeviceHardware, DeviceRadio, Finding, Severity } from "../api/types";
 
 const SEVERITY_RANK: Record<Severity, number> = {
   critical: 0,
@@ -48,7 +48,7 @@ function deviceFlags(d: DeviceHardware): Flag[] {
     flags.push({ label: d.state.toLowerCase().replace(/_/g, " "), tone: "high" });
   }
   if (!d.supported) flags.push({ label: "unsupported", tone: "high" });
-  if (d.firmware_updatable) flags.push({ label: "firmware update", tone: "medium" });
+  // Firmware has its own column, marked there — a chip as well is the same fact twice.
   if (d.uptime_sec !== null && d.uptime_sec < HOUR_SEC) {
     flags.push({ label: "just rebooted", tone: "info" });
   }
@@ -80,6 +80,34 @@ function compare(a: number[], b: number[]): number {
     if (a[i] !== b[i]) return a[i] - b[i];
   }
   return 0;
+}
+
+/** "5.0" reads as a version string next to a firmware column; bands are 2.4/5/6. */
+function bandLabel(ghz: number): string {
+  return Number.isInteger(ghz) ? String(ghz) : ghz.toFixed(1);
+}
+
+function radioTitle(r: DeviceRadio): string {
+  const parts = [r.frequency_ghz ? `${bandLabel(r.frequency_ghz)} GHz` : "unknown band"];
+  if (r.channel !== null) parts.push(`ch ${r.channel}`);
+  if (r.channel_width_mhz !== null) parts.push(`${r.channel_width_mhz} MHz`);
+  if (r.wlan_standard) parts.push(r.wlan_standard);
+  if (r.tx_retries_pct !== null) parts.push(`${Math.round(r.tx_retries_pct)}% retries`);
+  return parts.join(" · ");
+}
+
+/** Bands as chips on one line — three of them stacked and wrapped read as noise. */
+function Radios({ radios }: { radios: DeviceRadio[] }) {
+  if (radios.length === 0) return <div className="value">—</div>;
+  return (
+    <div className="hw-bands">
+      {radios.map((r, i) => (
+        <span className="hw-band" key={i} title={radioTitle(r)}>
+          {r.frequency_ghz ? bandLabel(r.frequency_ghz) : "?"}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function Meter({ label, value, warn }: { label: string; value: number | null; warn: number }) {
@@ -169,11 +197,12 @@ export default function HardwareOverview({
               <span className={`dot ${d.state === "ONLINE" ? worst ?? "good" : "critical"}`} />
               <div className="hw-id">
                 <div className="name">{d.name || d.model || d.mac}</div>
+                {/* Flags ride the type line rather than a line of their own: two
+                    lines of identity leave the row's full width to the stats. */}
                 <div className="sub">
-                  {KIND_LABEL[d.kind]} · {d.model}
-                  {d.firmware_version && ` · ${d.firmware_version}`}
-                </div>
-                <div className="hw-flags">
+                  <span className="kind">
+                    {KIND_LABEL[d.kind]} · {d.model}
+                  </span>
                   {deviceFlags(d).map((flag) => (
                     <span className={`hw-chip ${flag.tone}`} key={flag.label}>
                       {flag.label}
@@ -181,27 +210,45 @@ export default function HardwareOverview({
                   ))}
                 </div>
               </div>
-              <Meter label="CPU" value={d.cpu_pct} warn={CPU_WARN} />
-              <Meter label="MEM" value={d.mem_pct} warn={MEM_WARN} />
-              <div className="hw-meta">
-                <div className="label">Uptime</div>
-                <div className="value">{formatUptime(d.uptime_sec)}</div>
-              </div>
-              <div className="hw-meta">
-                <div className="label">{d.kind === "access_point" ? "Radios" : "Ports"}</div>
-                <div className="value">
-                  {d.kind === "access_point" && d.radios.length > 0
-                    ? d.radios
-                        .map((r) => (r.frequency_ghz ? `${r.frequency_ghz}G` : "?"))
-                        .join(" ")
-                    : d.ports_total > 0
-                      ? `${d.ports_up}/${d.ports_total}`
-                      : "—"}
+              <div className="hw-stats">
+                <Meter label="CPU" value={d.cpu_pct} warn={CPU_WARN} />
+                <Meter label="MEM" value={d.mem_pct} warn={MEM_WARN} />
+                <div className="hw-meta">
+                  <div className="label">Uptime</div>
+                  <div className="value">{formatUptime(d.uptime_sec)}</div>
                 </div>
+                <div className="hw-meta firmware">
+                  <div className="label">Firmware</div>
+                  <div
+                    className={`value${d.firmware_updatable ? " updatable" : ""}`}
+                    title={
+                      d.firmware_updatable
+                        ? `${d.firmware_version ?? "unknown"} — update available`
+                        : d.firmware_version ?? "unknown"
+                    }
+                  >
+                    {d.firmware_version ?? "—"}
+                    {d.firmware_updatable && <span className="upd">↑</span>}
+                  </div>
+                </div>
+                <div className="hw-meta bands">
+                  <div className="label">
+                    {d.kind === "access_point" ? "Radios · GHz" : "Ports"}
+                  </div>
+                  {d.kind === "access_point" ? (
+                    <Radios radios={d.radios} />
+                  ) : (
+                    <div className="value">
+                      {d.ports_total > 0 ? `${d.ports_up}/${d.ports_total}` : "—"}
+                    </div>
+                  )}
+                </div>
+                <span className={`badge ${worst ?? "muted-badge"}`}>
+                  {issues.length > 0
+                    ? `${issues.length} issue${issues.length > 1 ? "s" : ""}`
+                    : "OK"}
+                </span>
               </div>
-              <span className={`badge ${worst ?? "muted-badge"}`}>
-                {issues.length > 0 ? `${issues.length} issue${issues.length > 1 ? "s" : ""}` : "ok"}
-              </span>
             </div>
           );
         })}
