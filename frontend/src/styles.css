@@ -331,6 +331,33 @@ h2 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07
 .dot.low { background: var(--low); }
 .dot.info { background: var(--info); }
 .dot.good { background: var(--good); }
+/* Switched off: a hollow ring, so "not running" reads as absence of color. */
+.dot.off { background: transparent; border: 1.5px solid var(--ink-muted); }
+
+/* Tinted pills — the tint carries the grouping, so the same category is the
+   same color on every row and the eye can group without reading. Unlike
+   .badge these are outlined-tint rather than solid: a row can carry several,
+   and five solid pills would out-shout the rule id they describe. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.7;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.pill.tint-0, .pill.accent { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.pill.tint-1 { color: var(--low); background: var(--low-soft); border-color: color-mix(in srgb, var(--low) 35%, transparent); }
+.pill.tint-2 { color: var(--medium); background: var(--medium-soft); border-color: color-mix(in srgb, var(--medium) 35%, transparent); }
+.pill.tint-3 { color: var(--high); background: var(--high-soft); border-color: color-mix(in srgb, var(--high) 35%, transparent); }
+.pill.tint-4 { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); border-color: color-mix(in srgb, var(--good) 35%, transparent); }
+.pill.tint-5 { color: var(--blue); background: color-mix(in srgb, var(--blue) 14%, transparent); border-color: color-mix(in srgb, var(--blue) 35%, transparent); }
+.pill.medium { color: var(--medium); background: var(--medium-soft); border-color: color-mix(in srgb, var(--medium) 35%, transparent); }
+.pill.critical { color: var(--critical); background: var(--critical-soft); border-color: color-mix(in srgb, var(--critical) 35%, transparent); }
+.pill.off, .pill.plain { color: var(--ink-muted); background: transparent; border-color: var(--border); }
 
 /* ---------- buttons ---------- */
 
@@ -360,6 +387,9 @@ button.secondary {
   transition: border-color 0.15s ease;
 }
 button.secondary:hover { border-color: var(--ink-muted); }
+
+/* .mini on a button is a size, not the mini-tile it would otherwise inherit. */
+button.mini { padding: 3px 10px; font-size: 12px; border-radius: 7px; }
 
 /* ---------- progress ---------- */
 
@@ -460,29 +490,41 @@ button.secondary:hover { border-color: var(--ink-muted); }
 
 /* ---------- hardware overview ---------- */
 
-/* Long inventories scroll inside the card so the AI column beside it stays
-   aligned with the findings preview. */
-.hw-list { max-height: 420px; overflow-y: auto; }
+/* The whole inventory is on screen at once — an inner scrollbar hid devices
+   behind a gesture and left the card's own height meaningless. */
+.hw-list { display: flow-root; }
 
+/* Two tiers, not two columns: identity on top, then the numbers across the
+   row's full width. Side by side, the stats had a third of the row to share
+   and every cell was cramped. */
 .hw-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 4px;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 12px 4px 14px;
   border-top: 1px solid var(--border-soft);
   font-size: 13px;
 }
 .hw-row:first-of-type { border-top: none; }
+.hw-row > .dot { align-self: start; margin-top: 6px; }
 
-.hw-id { flex: 1; min-width: 130px; }
+.hw-id { min-width: 0; }
 .hw-id .name { font-weight: 600; }
-.hw-id .sub { color: var(--ink-muted); font-size: 11.5px; margin-top: 1px; }
+.hw-id .sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  margin-top: 2px;
+}
 
-.hw-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .hw-chip {
   font-size: 10.5px;
   font-weight: 600;
-  padding: 1px 7px;
+  line-height: 1.55;
+  padding: 0 7px;
   border-radius: 999px;
   border: 1px solid transparent;
 }
@@ -492,7 +534,7 @@ button.secondary:hover { border-color: var(--ink-muted); }
 .hw-chip.low      { background: var(--low-soft); color: var(--low); border-color: var(--low); }
 .hw-chip.info     { background: var(--info-soft); color: var(--info); border-color: var(--info); }
 
-.hw-meter { width: 76px; flex-shrink: 0; }
+.hw-meter { min-width: 0; }
 .hw-meter .label {
   font-size: 10px;
   color: var(--ink-muted);
@@ -511,20 +553,95 @@ button.secondary:hover { border-color: var(--ink-muted); }
 .hw-meter .num.warn { color: var(--medium); }
 .hw-meter .num.bad { color: var(--critical); }
 
-.hw-meta { width: 58px; flex-shrink: 0; text-align: right; }
+/* One grid, same track sizes on every row, so the columns line up down the
+   card. The meters take the slack the fixed cells don't need. */
+.hw-stats {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 54px 76px 104px 58px;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.hw-meta { min-width: 0; text-align: right; }
 .hw-meta .label {
   font-size: 10px;
   color: var(--ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 600;
+  white-space: nowrap;
 }
 .hw-meta .value { font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 3px; }
 
-@media (max-width: 720px) {
-  .hw-row { flex-wrap: wrap; }
-  .hw-id { flex-basis: 100%; }
+.hw-meta.firmware { width: auto; }
+.hw-meta.firmware .value {
+  font-size: 12.5px;
+  color: var(--ink-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.hw-meta.firmware .value.updatable { color: var(--medium); }
+.hw-meta.firmware .upd { margin-left: 3px; font-size: 11px; }
+
+/* Bands read as one line of chips: "2.4 5 6" stacked was the cramped part. */
+.hw-meta.bands { width: auto; }
+.hw-bands { display: flex; gap: 4px; justify-content: flex-end; margin-top: 3px; }
+.hw-band {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--ink-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* "1 Issue" is not a proper noun — this badge sets its own case. */
+.hw-row .badge { justify-self: end; text-align: center; text-transform: none; }
+
+@media (max-width: 720px) {
+  .hw-stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 58px; row-gap: 12px; }
+}
+
+/* ---------- rule list ---------- */
+
+.rule-item { border-top: 1px solid var(--border-soft); }
+.rule-item:first-of-type { border-top: none; }
+.rule-item > summary {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 3px 8px;
+  padding: 11px 6px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+}
+.rule-item > summary::-webkit-details-marker { display: none; }
+.rule-item > summary:hover { background: var(--surface-2); }
+.rule-item > summary .chev {
+  color: var(--ink-muted);
+  font-size: 10px;
+  line-height: 1.9;
+  transition: transform 0.15s ease;
+}
+.rule-item[open] > summary .chev { transform: rotate(90deg); }
+
+.rule-line { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.rule-line .title { font-weight: 600; font-size: 13.5px; }
+.rule-line .subject { color: var(--ink-secondary); font-size: 13px; }
+
+.rule-tags { grid-column: 2; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rule-tags .file { font-size: 11.5px; }
+
+.rule-body { padding: 4px 6px 16px 26px; }
+/* The file-and-actions row is a line of controls, not the mini-tile grid. */
+.rule-body .mini-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 
 /* ---------- tables ---------- */
 
@@ -563,6 +680,141 @@ select {
   background: var(--surface);
   font-size: 13px;
   color: var(--ink);
+}
+
+/* Text fields were browser defaults — a dark inset box that matched nothing.
+   Same border, radius and surface as the selects they sit beside. */
+input[type="text"], input:not([type]), textarea {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+}
+textarea { resize: vertical; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+input:disabled { opacity: 0.5; }
+::placeholder { color: var(--ink-muted); opacity: 1; }
+
+/* ---------- add-a-rule form ---------- */
+
+.addrule > summary { cursor: pointer; }
+.addrule > summary h2 { display: inline-block; }
+.addrule > summary .muted { font-size: 12px; margin-left: 10px; }
+
+.addrule-modes { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; }
+.segmented {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+  padding: 2px;
+}
+.segmented button {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.segmented button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+/* Numbered steps: the form asks four questions, in the order you'd ask them. */
+.step { border-top: 1px solid var(--border-soft); padding: 14px 0 4px; }
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-secondary);
+  margin-bottom: 12px;
+}
+.step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+  font-size: 11px;
+}
+.step-head .inline-select { margin-left: auto; text-transform: none; letter-spacing: 0; padding: 4px 26px 4px 9px; font-size: 12px; }
+
+.field { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.field > label { width: 110px; flex-shrink: 0; color: var(--ink-secondary); font-size: 13px; }
+.field > input, .field > textarea { flex: 1; min-width: 0; max-width: 460px; }
+.field .prefix { color: var(--ink-muted); font-size: 13px; margin-left: -4px; }
+.hint { color: var(--ink-muted); font-size: 12px; margin: 0 0 10px 120px; }
+.step-head + .hint, .cond-row + .hint { margin-left: 120px; }
+
+.cond-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 118px minmax(0, 1fr) 28px;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 8px 120px;
+  max-width: 560px;
+}
+.icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-muted);
+  border-radius: 7px;
+  height: 28px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.icon-btn:hover { color: var(--critical); border-color: var(--border); }
+.step > button.mini { margin-left: 120px; }
+
+.chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px 120px; }
+.chip-row .hint { margin: 0; }
+.chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--ink-secondary);
+  border-radius: 7px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  font-family: ui-monospace, "SF Mono", monospace;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); color: var(--ink); }
+
+.yaml-preview { border-top: 1px solid var(--border-soft); padding-top: 12px; }
+.yaml-preview > summary { cursor: pointer; color: var(--ink-muted); font-size: 12.5px; }
+.yaml-preview pre { font-size: 12px; overflow-x: auto; }
+.yaml-editor { width: 100%; font-family: ui-monospace, "SF Mono", monospace; font-size: 12.5px; margin: 12px 0; }
+
+.addrule-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid var(--border-soft);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.addrule-actions .danger { margin-left: auto; color: var(--critical); }
+.addrule-actions .danger:hover { border-color: var(--critical); }
+
+@media (max-width: 760px) {
+  .field { flex-wrap: wrap; }
+  .field > label { width: 100%; }
+  .hint, .cond-row, .chip-row, .step > button.mini { margin-left: 0; }
+  .cond-row { grid-template-columns: 1fr 1fr 28px; }
+  .cond-row input { grid-column: span 2; }
 }
 
 .callout {

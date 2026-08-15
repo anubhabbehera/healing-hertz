@@ -13,6 +13,42 @@ const STATUS_LABEL: Record<RuleStatus, string> = {
   unloadable: "Failed to load",
 };
 
+/** A rule's state is a dot, not a word: running is the norm and needs no label. */
+const STATUS_TONE: Record<RuleStatus, string> = {
+  active: "good",
+  disabled: "off",
+  not_checkable: "medium",
+  unloadable: "critical",
+};
+
+/** Categories are open-ended, so tints cycle by catalog order rather than being
+    enumerated — the same category keeps the same color on every row. */
+const CATEGORY_TINTS = 6;
+
+function humanize(name: string): string {
+  const words = name.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function RuleTags({ rule, categories }: { rule: RuleSummary; categories: string[] }) {
+  const tint = rule.category ? categories.indexOf(rule.category) % CATEGORY_TINTS : 0;
+  return (
+    <span className="rule-tags">
+      {rule.category && (
+        <span className={`pill tint-${tint}`}>{humanize(rule.category)}</span>
+      )}
+      {/* Every checkable rule is declarative unless it is Python — the common
+          case says nothing, so only the exception gets a tag. */}
+      {rule.kind === "python" && <span className="pill plain">Python</span>}
+      {rule.origin === "user" && <span className="pill accent">Custom</span>}
+      {rule.status !== "active" && (
+        <span className={`pill ${STATUS_TONE[rule.status]}`}>{STATUS_LABEL[rule.status]}</span>
+      )}
+      <span className="muted file">{rule.source_file.name}</span>
+    </span>
+  );
+}
+
 function CopyPath({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -237,40 +273,29 @@ export default function Rules() {
           </div>
         )}
 
-        <table className="data">
-          <thead>
-            <tr>
-              <th>Rule</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>File</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((rule) => (
-              <tr key={rule.id}>
-                <td colSpan={4}>
-                  <details>
-                    <summary>
-                      <span className="title">{rule.id}</span>{" "}
-                      <span className="subject">
-                        {rule.title ?? rule.emits[0]?.title ?? ""}
-                      </span>
-                      <span className="mini-row">
-                        <span className="badge muted-badge">{rule.category ?? "—"}</span>
-                        <span className="badge muted-badge">{STATUS_LABEL[rule.status]}</span>
-                        <span className="badge muted-badge">{rule.kind}</span>
-                        {rule.origin === "user" && <span className="badge muted-badge">custom</span>}
-                        <span className="muted">{rule.source_file.name}</span>
-                      </span>
-                    </summary>
-                    <RuleDetail rule={rule} data={data} onEdit={setEditing} onToggle={toggle} />
-                  </details>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="rule-list">
+          {visible.map((rule) => (
+            <details className="rule-item" key={rule.id}>
+              <summary>
+                <span className="chev">▸</span>
+                <span className="rule-line">
+                  <span
+                    className={`dot ${STATUS_TONE[rule.status]}`}
+                    title={STATUS_LABEL[rule.status]}
+                  />
+                  <span className="title">{rule.id}</span>
+                  <span className="subject">
+                    {rule.title ?? rule.emits[0]?.title ?? ""}
+                  </span>
+                </span>
+                <RuleTags rule={rule} categories={data.categories} />
+              </summary>
+              <div className="rule-body">
+                <RuleDetail rule={rule} data={data} onEdit={setEditing} onToggle={toggle} />
+              </div>
+            </details>
+          ))}
+        </div>
         {visible.length === 0 && <p className="muted">No checks match those filters.</p>}
       </div>
 
