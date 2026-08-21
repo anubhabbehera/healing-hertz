@@ -48,6 +48,9 @@ export function useChartColors() {
     const style = getComputedStyle(document.documentElement);
     const v = (name: string) => style.getPropertyValue(name).trim();
     return { line: v("--accent"), grid: v("--border"), tick: v("--ink-muted"),
-             surface: v("--surface"), ink: v("--ink") };
+             surface: v("--surface"), ink: v("--ink"),
+             // Series identity, in this fixed order — see the --series-* block
+             // in styles.css for how the four were chosen and validated.
+             series: [v("--series-1"), v("--series-2"), v("--series-3"), v("--series-4")] };
   }, [theme]);
 }

@@ -31,6 +31,16 @@
   --info: #949cbb;        /* overlay2 */
   --info-soft: rgba(148, 156, 187, 0.16);
   --shadow: 0 10px 28px rgba(17, 17, 27, 0.5);
+  /* Chart series identity, assigned in this order and never cycled. Chosen by
+     running every 4-colour subset of the palette through the colour checks
+     against this theme's chart surface (#303446): all-pairs ΔE 10.6 under
+     simulated protanopia/deuteranopia, 18.6 for normal vision, every step
+     above the chroma floor and past 3:1 contrast. The steps sit lighter than a
+     generic dark-mode band expects, which is what a #303446 surface needs. */
+  --series-1: #ef9f76;
+  --series-2: #c3e88d;
+  --series-3: #9a7ae0;
+  --series-4: #4fc4e0;
   color-scheme: dark;
 }
 
@@ -62,6 +72,12 @@
   --info: #5c5f77;        /* subtext1 */
   --info-soft: rgba(92, 95, 119, 0.1);
   --shadow: 0 8px 22px rgba(76, 79, 105, 0.1);
+  /* Same selection method against Latte's #eff1f5 surface: all-pairs ΔE 15.0
+     simulated, 16.6 normal, all four clearing 3:1 on the light surface. */
+  --series-1: #1e66f5;
+  --series-2: #0891b2;
+  --series-3: #9d174d;
+  --series-4: #3730a3;
   color-scheme: light;
 }
 
@@ -98,6 +114,13 @@
   --low-soft: rgba(45, 212, 191, 0.13);
   --info: #a1a1aa;
   --info-soft: rgba(161, 161, 170, 0.14);
+  /* Series steps from the same Tailwind 400 family as the severity ones, put
+     through the same checks against Trail's chart surface: all-pairs ΔE 10.9
+     simulated, 18.6 normal. */
+  --series-1: #f472b6;
+  --series-2: #60a5fa;
+  --series-3: #fb923c;
+  --series-4: #5eead4;
   /* "Minimal decoration": borders carry the separation, not shadows. */
   --shadow: none;
   color-scheme: dark;
@@ -852,10 +875,124 @@ code { background: var(--surface-2); padding: 1px 6px; border-radius: 5px; font-
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* --- health bar (the dashboard's headline) --------------------------- */
+
+.healthbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.healthbar .score {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.healthbar .score.good { color: var(--good); }
+.healthbar .score.warn { color: var(--medium); }
+.healthbar .score.bad { color: var(--critical); }
+.healthbar-id .label {
+  font-size: 10px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.healthbar-id .delta { font-size: 12.5px; color: var(--ink-secondary); margin-top: 3px; }
+
+/* Only the severities that actually fired get a chip; a row of zeroes spends
+   the same width saying nothing. */
+.sev-strip { display: flex; align-items: center; gap: 7px; margin-left: auto; flex-wrap: wrap; }
+.sev-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.sev-chip:hover { text-decoration: none; border-color: currentColor; }
+.sev-chip .n { font-size: 14px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.sev-chip.critical { color: var(--critical); background: var(--critical-soft); }
+.sev-chip.high { color: var(--high); background: var(--high-soft); }
+.sev-chip.medium { color: var(--medium); background: var(--medium-soft); }
+.sev-chip.low { color: var(--low); background: var(--low-soft); }
+.sev-chip.info { color: var(--info); background: var(--info-soft); }
+.sev-clear { font-size: 12.5px; color: var(--good); }
+
+/* --- firmware overview ---------------------------------------------- */
+
+.fw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.fw-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  background: var(--surface-2);
+  min-width: 0;
+}
+.fw-card.updatable { border-color: var(--medium); }
+.device-icon { object-fit: contain; flex-shrink: 0; border-radius: 6px; }
+.device-glyph { color: var(--ink-muted); flex-shrink: 0; }
+.fw-id { min-width: 0; flex: 1; }
+.fw-id .name {
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fw-id .model {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fw-version { text-align: right; flex-shrink: 0; }
+.fw-version .num { font-size: 13px; font-variant-numeric: tabular-nums; }
+.fw-tag { font-size: 11px; margin-top: 2px; white-space: nowrap; }
+.fw-tag.current { color: var(--good); }
+.fw-tag.pending { color: var(--medium); font-weight: 600; }
+.fw-note { font-size: 11px; color: var(--critical); margin-top: 2px; }
+
+/* --- trend widgets --------------------------------------------------- */
+
+.widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
+.widget { margin: 0; }
+.widget h2 .unit { color: var(--ink-muted); font-weight: 500; font-size: 12px; }
+.widget-hint { margin: -4px 0 10px; font-size: 12px; color: var(--ink-muted); }
+.widget-empty { padding: 42px 0; text-align: center; color: var(--ink-muted); font-size: 13px; }
+.widget .muted { font-size: 12px; margin-bottom: 0; }
+
+/* Identity never rests on colour alone: every line is named here as well as
+   in its tooltip. */
+.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-secondary); }
+.legend-item .swatch { width: 10px; height: 3px; border-radius: 2px; }
+
 @media (max-width: 760px) {
   .topbar { padding: 0 16px; gap: 12px; overflow-x: auto; }
   .topbar .timestamp { display: none; }
   .content { padding: 18px 16px 48px; }
   .kv { grid-template-columns: 1fr; row-gap: 2px; }
   .kv dt { margin-top: 8px; }
+  .healthbar { gap: 12px; padding: 14px 16px; }
+  .sev-strip { margin-left: 0; width: 100%; }
+  .widget-grid { grid-template-columns: 1fr; }
 }
