@@ -126,33 +126,272 @@
   color-scheme: dark;
 }
 
-/* Serif for hierarchy — but only where a heading has room to be one. Page
-   titles scale up so Georgia reads as a headline rather than as body text set
-   in the wrong face; card headings stay the sans micro-label they are, because
-   a serif at 13px next to its meta line reads as a mistake. Values keep the
-   sans tabular numerals: Trail's monospace is for dense data tables, and our
-   tiles are display numbers. */
+/* Trail used to carry its hierarchy in two borrowed faces — Georgia for page
+   titles, a monospace for dense data tables. The app now has one typeface, so
+   both are gone and Trail keeps its identity in proportion instead: the title
+   still scales up and sets light, which is what made it read as a headline.
+   The evidence table loses nothing by it — the alignment monospace was there
+   for comes from the tabular figures now set on body. */
 :root[data-theme="trail"] h1 {
-  font-family: "Georgia", "Times New Roman", serif;
   letter-spacing: -0.02em;
   font-size: 26px;
   font-weight: 400;
-}
-:root[data-theme="trail"] .evidence-table td {
-  font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", monospace;
 }
 :root[data-theme="trail"] .card { border-radius: 18px; }
 :root[data-theme="trail"] .tile,
 :root[data-theme="trail"] .mini { border-radius: 12px; }
 :root[data-theme="trail"] .topbar nav a.active { color: var(--ink); }
 
+/* Synth — CRED's neumorphic design system. Experimental.
+
+   Read out of CRED's own Synth component library, published to the Figma
+   community at figma.com/community/file/1001365737437617016 — the colour ramp,
+   the four named shadow effects, the corner radii and the type metrics are all
+   that file's published styles rather than an impression of the look. Where a
+   value below is not CRED's, the comment says so and why.
+
+   Two things the file does not define. It has no severity palette — its only
+   secondary colours are the stock Android Material purple and teal, which are
+   template leftovers, not CRED's. And it has no chart palette. Both are chosen
+   here and validated against this theme's own surface. */
+:root[data-theme="synth"] {
+  /* Every surface drops one step down the file's own ramp: the page goes below
+     Synth Black (30% of the way to Primary/Synth black/Black #000000), and the
+     card takes Synth Black itself. The shadows still do the separating, so the
+     step between page and card only has to be enough to keep text legible. */
+  --bg: #17191a;            /* Synth Black, 30% toward the file's Black */
+  --surface: #212426;       /* Primary/Synth black/Synth Black — the card */
+  --surface-2: #2a2d2f;     /* Primary/White/600 */
+  --border: #343739;        /* Primary/White/500 */
+  --border-soft: #2a2d2f;   /* Primary/White/600 */
+  /* Pure white was the loudest thing on the page, so ink starts one step in.
+     The darker card pays for it: Primary/White/300, which was under AA before
+     and had to be lifted, is now 4.74:1 and can be the file's real value. */
+  --ink: #cfd0d0;           /* Primary/White/200 */
+  --ink-secondary: #a4a6a7; /* between White/200 and White/300 */
+  --ink-muted: #8c8e8f;     /* Primary/White/300 */
+  /* Copper is the accent that carries type: CRED's blue is a button fill only,
+     and Primary/Blue/400 as text on this surface is far under AA. Muted to 70%
+     chroma and taken down a step in lightness — but the button label keeps a
+     fuller copper, because the muted one lands at 4.36:1 on the blue, and a
+     14px label needs 4.5. */
+  --accent: #e3c9b3;        /* Primary/Copper/400, muted */
+  --accent-strong: #26458c; /* Primary/Blue/700 — already the ramp's quiet end */
+  --accent-ink: #f0d6c0;    /* copper on the blue button — the file's own pairing */
+  --accent-soft: rgba(227, 201, 179, 0.09);
+  --badge-ink: #17191a;     /* the page colour — ink on a solid badge */
+  --blue: #e3c9b3;
+  /* Severity steps chosen here, not CRED's, and muted to 70% chroma against the
+     darker card. Each still clears 4.5:1 as text and as a solid badge under
+     --badge-ink. They lose separation from each other in the process — the
+     worst pair falls from ΔE 6.1 to 4.4 — which is affordable only because a
+     severity always ships with its word next to it, never colour alone. */
+  --good: #95c89c;
+  --critical: #dd8786;
+  --critical-soft: rgba(221, 135, 134, 0.12);
+  --high: #e0aa7c;
+  --high-soft: rgba(224, 170, 124, 0.12);
+  --medium: #dcc68a;
+  --medium-soft: rgba(220, 198, 138, 0.12);
+  --low: #7cc6b6;
+  --low-soft: rgba(124, 198, 182, 0.12);
+  --info: #8c8e8f;
+  --info-soft: rgba(140, 142, 143, 0.13);
+  /* Series muted as far as they can go, which is not far: colour IS the
+     identity on a chart, so the checks bind here in a way they do not on a
+     labelled badge. At 90% chroma the set still passes everything against this
+     theme's chart surface (#212426) — all-pairs ΔE 9.5 under simulated
+     protanopia/deuteranopia, 19.3 for normal vision. One more step down and the
+     green falls under the chroma floor and starts reading as grey. */
+  --series-1: #c95a30;
+  --series-2: #36a182;
+  --series-3: #397bea;
+  --series-4: #b950b3;
+  --shadow: var(--neu-card);
+  color-scheme: dark;
+
+  /* --- the four shadow effects, verbatim from the file's effect styles --- */
+  --neu-card: 6px 6px 12px rgba(0, 0, 0, 0.24),
+             -6px -6px 12px rgba(255, 255, 255, 0.12);        /* NeuCard */
+  --neu-button: 6px 6px 12px rgba(0, 0, 0, 0.16),
+               -6px -6px 12px rgba(255, 255, 255, 0.04);      /* Primary/NeuButton */
+  --neu-circle: 8px 8px 12px rgba(0, 0, 0, 0.16),
+               -8px -8px 12px rgba(255, 255, 255, 0.04);      /* NeuCircular Button */
+  --neu-pit: inset 6px 6px 12px rgba(0, 0, 0, 0.18),
+             inset -6px -6px 12px rgba(255, 255, 255, 0.08);  /* NeuInner Shadows */
+  --neu-pressed: inset 0 14px 14px rgba(0, 0, 0, 0.32);       /* NeuButton-BluePressed */
+
+  /* Radii as drawn: cards 24, inner blocks 12, chips 8, and every button a
+     full pill — the file's buttons are 54/46/38px tall at radius 100. */
+  --neu-radius: 24px;
+  --neu-radius-sm: 12px;
+  --neu-radius-xs: 8px;
+  --neu-pill: 999px;
+
+  /* Gilroy, the file's typeface, is commercial and cannot ship here, so the
+     family stays the system stack. The metrics do carry over: a 22px line box
+     up to 18px type, and the 2.4px tracking on 12px all-caps labels. */
+  --neu-track-caps: 0.2em;
+}
+
+/* Surfaces are NeuCards: the border stops carrying the separation and the
+   light/dark shadow pair does it instead. */
+:root[data-theme="synth"] .card,
+:root[data-theme="synth"] .healthbar,
+:root[data-theme="synth"] .tile,
+:root[data-theme="synth"] .scan-progress {
+  border-color: transparent;
+  border-radius: var(--neu-radius);
+  box-shadow: var(--neu-card);
+}
+:root[data-theme="synth"] .card:hover,
+:root[data-theme="synth"] .tile:hover { border-color: transparent; }
+:root[data-theme="synth"] .scan-progress { border-radius: 0; }
+
+/* Nested blocks sit *in* their card, not on it — a second raised surface
+   inside one reads as a sticker. This is the file's own layout rule: every
+   component frame in it is a NeuInner Shadows well with the parts inside. */
+:root[data-theme="synth"] .mini,
+:root[data-theme="synth"] .fw-card {
+  background: transparent;
+  border-color: transparent;
+  border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+}
+:root[data-theme="synth"] .fw-card.updatable {
+  box-shadow: var(--neu-pit), inset 0 0 0 1px var(--medium);
+}
+
+/* The call to action is the Blue NeuButton: a pill, filled with the file's blue
+   gradient, copper label, and on press it keeps its outer shadow and gains an
+   inner one from above — the button sinks rather than the page lifting.
+   One change: the gradient's light stop is Primary/Blue/400 #426bb6, on which
+   copper lands at 3.74:1, under AA for a 14px label. Stepped toward Blue/700
+   until it clears (4.93:1); the hue is the file's. */
+:root[data-theme="synth"] button.primary {
+  background: linear-gradient(160deg, #34589f, #26458c);
+  border-radius: var(--neu-pill);
+  box-shadow: var(--neu-button);
+}
+:root[data-theme="synth"] button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: none;
+}
+:root[data-theme="synth"] button.primary:active:not(:disabled) {
+  box-shadow: var(--neu-button), var(--neu-pressed);
+}
+
+/* Secondary controls are the Black NeuButton — same pill, same shadow, the
+   surface's own colour. Round ones get the circular button's wider offset. */
+:root[data-theme="synth"] button.secondary,
+:root[data-theme="synth"] .chip {
+  background: var(--surface);
+  border-color: transparent;
+  border-radius: var(--neu-pill);
+  box-shadow: var(--neu-button);
+}
+:root[data-theme="synth"] .chip { border-radius: var(--neu-radius-xs); }
+:root[data-theme="synth"] .theme-toggle,
+:root[data-theme="synth"] .icon-btn {
+  background: var(--surface);
+  border-color: transparent;
+  border-radius: var(--neu-pill);
+  box-shadow: var(--neu-circle);
+}
+:root[data-theme="synth"] button.secondary:hover,
+:root[data-theme="synth"] .theme-toggle:hover,
+:root[data-theme="synth"] .icon-btn:hover,
+:root[data-theme="synth"] .chip:hover {
+  border-color: transparent;
+  color: var(--ink);
+  transform: none;
+}
+:root[data-theme="synth"] button.secondary:active,
+:root[data-theme="synth"] .theme-toggle:active,
+:root[data-theme="synth"] .icon-btn:active,
+:root[data-theme="synth"] .chip:active {
+  box-shadow: var(--neu-button), var(--neu-pressed);
+}
+
+/* Anything you type into, or that fills up, is a well. */
+:root[data-theme="synth"] input[type="text"],
+:root[data-theme="synth"] input:not([type]),
+:root[data-theme="synth"] textarea,
+:root[data-theme="synth"] select,
+:root[data-theme="synth"] .dismiss-form input[type="text"],
+:root[data-theme="synth"] .segmented {
+  background: var(--bg);
+  border-color: transparent;
+  border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+}
+:root[data-theme="synth"] input:focus,
+:root[data-theme="synth"] textarea:focus,
+:root[data-theme="synth"] select:focus {
+  border-color: transparent;
+  box-shadow: var(--neu-pit), inset 0 0 0 1px var(--accent);
+}
+/* The 6px/12px well is drawn for a 54px control; on a 5px meter it would fill
+   the bar, so the tracks take the same shape scaled to their height. */
+:root[data-theme="synth"] .progress-bar,
+:root[data-theme="synth"] .hw-meter .bar {
+  background: var(--bg);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.4);
+}
+:root[data-theme="synth"] .segmented { border-radius: var(--neu-pill); }
+/* The selected segment is the one thing that rises out of the well. */
+:root[data-theme="synth"] .segmented button.on {
+  background: var(--surface);
+  border-radius: var(--neu-pill);
+  box-shadow: var(--neu-button);
+}
+
+/* Synth's divider is a shadowed gradient rule rather than a line, so hairlines
+   between rows are softened to match instead of drawn at full strength. */
+:root[data-theme="synth"] .finding,
+:root[data-theme="synth"] .finding-row,
+:root[data-theme="synth"] .hw-row,
+:root[data-theme="synth"] .rule-item { border-top-color: rgba(0, 0, 0, 0.35); }
+:root[data-theme="synth"] .finding:hover,
+:root[data-theme="synth"] .rule-item > summary:hover,
+:root[data-theme="synth"] table.data tr:hover td { background: rgba(255, 255, 255, 0.04); }
+
+/* The bar floats above the page rather than being ruled off from it. */
+:root[data-theme="synth"] .topbar {
+  border-bottom-color: transparent;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.24);
+}
+:root[data-theme="synth"] code { background: var(--bg); border-radius: 6px; }
+
+/* The file sets 12px all-caps labels at 2.4px tracking — much wider than our
+   own 0.08em. It is the loudest single thing about CRED's type, so the
+   uppercase micro-labels take it; body copy keeps its metrics. */
+:root[data-theme="synth"] h2,
+:root[data-theme="synth"] .tile .label,
+:root[data-theme="synth"] .mini .label,
+:root[data-theme="synth"] .healthbar-id .label,
+:root[data-theme="synth"] .hw-meta .label,
+:root[data-theme="synth"] .hw-meter .label { letter-spacing: var(--neu-track-caps); }
+:root[data-theme="synth"] h1 { font-size: 24px; line-height: 30px; letter-spacing: 0.14px; }
+
 * { box-sizing: border-box; }
 
 html { scrollbar-color: var(--border) transparent; }
 
+/* Outfit — a geometric sans, picked against CRED's Gilroy and applied to every
+   theme, not just Synth.
+
+   Tabular figures are set here rather than per-element, and that is not a
+   preference. Outfit's default figures are proportional, and severely so: its
+   `1` is 321 units wide against 659 for `0`. Its `tnum` feature levels every
+   digit to 590, so a column of numbers only lines up with this property on.
+   The system stack this replaces has near-tabular defaults, which is why the
+   per-element `tabular-nums` declarations elsewhere in this file were enough
+   before and are merely redundant now. This is a dashboard; digits align. */
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Outfit Variable", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
   background: var(--bg);
   color: var(--ink);
   font-size: 14px;
@@ -205,8 +444,8 @@ a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 
-/* Cycles Frappé → Latte → Trail → Frappé; the icon is the theme you're in,
-   and the tooltip names it plus whatever the next click brings. */
+/* Cycles Frappé → Latte → Trail → Synth → Frappé; the icon is the theme you're
+   in, and the tooltip names it plus whatever the next click brings. */
 .theme-toggle {
   background: transparent;
   border: 1px solid var(--border);
