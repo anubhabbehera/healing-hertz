@@ -118,6 +118,34 @@ async def test_firmware_drift_ignores_offline_and_single_version(snapshot):
     assert "firmware.version_drift" not in rule_ids(run_rules(snapshot)[0])
 
 
+async def test_firmware_drift_ignores_all_in_one_consoles(snapshot):
+    # An Express 7 / Dream Machine is an AP *and* a gateway or switch, and runs
+    # its own firmware line — that is not drift the operator can resolve.
+    for dev in snapshot.devices:
+        if "accessPoint" in dev.features:
+            dev.firmware_version = "6.6.55"
+    console = next(d for d in snapshot.devices if "gateway" in d.features)
+    console.features = ["gateway", "switching", "accessPoint"]
+    console.firmware_version = "5.1.19"
+    assert "firmware.version_drift" not in rule_ids(run_rules(snapshot)[0])
+
+
+async def test_firmware_drift_ignores_separate_trains(snapshot):
+    # A model frozen on an older major version cannot be brought to the newer
+    # train, so a split across majors is not drift either.
+    aps = [d for d in snapshot.devices if d.features == ["accessPoint"] and d.state == "ONLINE"]
+    for dev in aps:
+        dev.firmware_version = "8.6.11"
+    aps[0].firmware_version = "6.6.55"
+    assert "firmware.version_drift" not in rule_ids(run_rules(snapshot)[0])
+
+    # ...but a split *within* one train still is, and "newest" compares
+    # numerically: 8.6.55 outranks 8.6.9.
+    aps[0].firmware_version = "8.6.9"
+    drift = next(f for f in run_rules(snapshot)[0] if f.rule_id == "firmware.version_drift")
+    assert drift.evidence["newest"] == "8.6.11"
+
+
 async def test_reboot_loop_needs_history(snapshot):
     # Force low uptime on the gateway in the current snapshot
     snapshot.device_stats["gw1"].uptime_sec = 1200
