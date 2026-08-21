@@ -108,7 +108,10 @@ function RuleDetail({ rule, data, onEdit, onToggle }: {
               <Predicate node={emit.where} constants={data.constants} />
             </>
           )}
-          <p>
+          {/* A div, not a paragraph: an escalation step nests a Predicate,
+              which is a block, and the browser closes a <p> before one — which
+              dropped the nested condition out of its indent. */}
+          <div className="severity-line">
             <SeverityBadge severity={emit.severity.base} />
             {emit.severity.escalate.map((step, i) => (
               <span key={i} className="muted">
@@ -116,7 +119,7 @@ function RuleDetail({ rule, data, onEdit, onToggle }: {
                 <Predicate node={step.when} constants={data.constants} />
               </span>
             ))}
-          </p>
+          </div>
           {/* Templates shown verbatim: the placeholders are the point. */}
           <dl className="kv">
             <dt>Title</dt>

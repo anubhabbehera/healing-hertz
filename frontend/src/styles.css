@@ -665,6 +665,8 @@ button.mini { padding: 3px 10px; font-size: 12px; border-radius: 7px; }
 .rule-body { padding: 4px 6px 16px 26px; }
 /* The file-and-actions row is a line of controls, not the mini-tile grid. */
 .rule-body .mini-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+/* Keeps the paragraph spacing this line used to get from being a <p>. */
+.severity-line { margin: 14px 0; }
 
 /* ---------- tables ---------- */
 
