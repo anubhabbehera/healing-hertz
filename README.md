@@ -216,6 +216,7 @@ nothing is silently missing.
 | **Weak-signal clients** and **devices roaming between access points** | Add `UNIFI_USERNAME` / `UNIFI_PASSWORD` for a **View Only** local admin account. Uses an older UniFi interface that Ubiquiti doesn't officially document, so it may change with firmware updates — failures are skipped, never fatal. |
 | **Internet latency and packet loss** | On by default. Measured from the computer running the app during each scan, and tracked over time. |
 | **DNS problems, malware and phishing blocks** | Add `NEXTDNS_API_KEY` (from your [NextDNS](https://nextdns.io/) account settings) and `NEXTDNS_PROFILE_ID` (the short ID in your profile URL, e.g. `abc123`). Surfaces security blocks and unusual spikes in blocked traffic. See below for pointing your network at NextDNS in the first place. |
+| **Product icons for your hardware** | On by default (`DEVICE_ICONS`). The backend looks each model up in Ubiquiti's public device catalogue, fetches the icon once and caches it under `ICON_CACHE_DIR`, then serves it locally — your browser never talks to ui.com, and a machine with no internet access falls back to drawn glyphs. Set `DEVICE_ICONS=false` to make no outbound request at all. |
 
 ### Pointing UniFi at NextDNS over encrypted DNS
 

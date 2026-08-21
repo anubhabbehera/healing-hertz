@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     routes_dismissals,
+    routes_icons,
     routes_rules,
     routes_runs,
     routes_scan,
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(routes_settings.router)
     app.include_router(routes_dismissals.router)
     app.include_router(routes_rules.router)
+    app.include_router(routes_icons.router)
 
     @app.get("/api/health")
     async def health() -> dict:

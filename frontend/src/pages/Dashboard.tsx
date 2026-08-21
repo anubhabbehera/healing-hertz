@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import type { RunDetail, Severity } from "../api/types";
+import FirmwareOverview from "../components/FirmwareOverview";
 import HardwareOverview from "../components/HardwareOverview";
 import SeverityBadge from "../components/SeverityBadge";
 
@@ -14,44 +15,76 @@ function scoreClass(score: number | null): string {
   return "bad";
 }
 
-function HeroTiles({ run }: { run: RunDetail }) {
-  const m = run.site_metrics ?? {};
-  const online = m["site.device_online_count"];
-  const latency = m["wan.latency_ms"];
-  const loss = m["wan.loss_pct"];
+/** The score, its movement and the severity mix on one line.
+ *
+ *  The score is the page's headline number, so it gets the width rather than
+ *  sharing a row of four equals. The severity counts ride alongside it because
+ *  they explain the score — as a separate strip of five they read as their own
+ *  metric, and the empty ones took up as much room as the ones that mattered. */
+function HealthBar({ run }: { run: RunDetail }) {
   const delta =
     run.health_score !== null && run.previous_health_score != null
       ? run.health_score - run.previous_health_score
       : null;
-  const findingCount = Object.values(run.severity_counts).reduce((a, b) => a + (b ?? 0), 0);
+  const present = SEVERITIES.filter((sev) => (run.severity_counts[sev] ?? 0) > 0);
+  const total = SEVERITIES.reduce((sum, sev) => sum + (run.severity_counts[sev] ?? 0), 0);
+
+  return (
+    <div className="healthbar">
+      <div className={`score ${scoreClass(run.health_score)}`}>{run.health_score ?? "—"}</div>
+      <div className="healthbar-id">
+        <div className="label">Health score</div>
+        <div className="delta">
+          {delta === null
+            ? "first scan"
+            : delta === 0
+              ? "no change since last scan"
+              : `${delta > 0 ? "+" : ""}${delta} since last scan`}
+        </div>
+      </div>
+      <div className="sev-strip">
+        {total === 0 ? (
+          <span className="sev-clear">no open findings</span>
+        ) : (
+          present.map((sev) => (
+            <Link to="/findings" className={`sev-chip ${sev}`} key={sev} title={`${sev} findings`}>
+              <span className="n">{run.severity_counts[sev]}</span>
+              {sev}
+            </Link>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function KpiTiles({ run }: { run: RunDetail }) {
+  const m = run.site_metrics ?? {};
+  const online = m["site.device_online_count"];
+  const offline =
+    online != null && run.device_count != null ? run.device_count - online : null;
+  const latency = m["wan.latency_ms"];
+  const loss = m["wan.loss_pct"];
+  const dnsBlocked = m["dns.blocked_pct"];
 
   return (
     <div className="tile-row">
       <div className="tile">
-        <div className={`value ${scoreClass(run.health_score)}`}>{run.health_score ?? "—"}</div>
-        <div>
-          <div className="label">Health score</div>
-          {delta !== null && (
-            <div className="delta">
-              {delta === 0 ? "no change" : `${delta > 0 ? "+" : ""}${delta} vs last scan`}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="tile">
-        <div className={`value ${online != null && online < (run.device_count ?? 0) ? "warn" : "good"}`}>
+        <div className={`value ${offline ? "warn" : "good"}`}>
           {online ?? run.device_count ?? "—"}
+          {run.device_count != null && <span className="unit">/{run.device_count}</span>}
         </div>
         <div>
           <div className="label">Devices online</div>
-          {online != null && run.device_count != null && online < run.device_count && (
-            <div className="delta">{run.device_count - online} offline</div>
-          )}
+          <div className="delta">{offline ? `${offline} offline` : "full fleet reporting"}</div>
         </div>
       </div>
       <div className="tile">
         <div className="value">{run.client_count}</div>
-        <div className="label">Active clients</div>
+        <div>
+          <div className="label">Active clients</div>
+          <div className="delta">across all bands</div>
+        </div>
       </div>
       {latency != null ? (
         <div className="tile">
@@ -61,13 +94,29 @@ function HeroTiles({ run }: { run: RunDetail }) {
           </div>
           <div>
             <div className="label">WAN latency</div>
-            <div className="delta">{loss != null ? `${loss.toFixed(1)}% loss` : ""}</div>
+            <div className="delta">{loss != null ? `${loss.toFixed(1)}% probe loss` : ""}</div>
+          </div>
+        </div>
+      ) : dnsBlocked != null ? (
+        <div className="tile">
+          <div className="value">
+            {dnsBlocked.toFixed(0)}
+            <span className="unit">%</span>
+          </div>
+          <div>
+            <div className="label">DNS blocked</div>
+            <div className="delta">last 24h</div>
           </div>
         </div>
       ) : (
         <div className="tile">
-          <div className={`value ${findingCount ? "warn" : "good"}`}>{findingCount}</div>
-          <div className="label">Open findings</div>
+          <div className={`value ${run.dismissed_count ? "" : "good"}`}>
+            {run.dismissed_count}
+          </div>
+          <div>
+            <div className="label">Dismissed</div>
+            <div className="delta">excluded from the score</div>
+          </div>
         </div>
       )}
     </div>
@@ -109,18 +158,8 @@ export default function Dashboard() {
         {new Date(run.started_at!).toLocaleString()}
       </p>
 
-      <HeroTiles run={run} />
-
-      <div className="tile-row" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}>
-        {SEVERITIES.map((sev) => (
-          <div className="mini" key={sev}>
-            <div className="label">{sev}</div>
-            <div className="value" style={{ color: run.severity_counts[sev] ? `var(--${sev})` : "var(--ink-muted)" }}>
-              {run.severity_counts[sev] ?? 0}
-            </div>
-          </div>
-        ))}
-      </div>
+      <HealthBar run={run} />
+      <KpiTiles run={run} />
 
       <div className="grid-2">
         <div>
@@ -149,6 +188,8 @@ export default function Dashboard() {
               ))
             )}
           </div>
+
+          <FirmwareOverview devices={run.devices ?? []} />
 
           <HardwareOverview devices={run.devices ?? []} findings={run.findings} />
         </div>

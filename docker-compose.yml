@@ -12,6 +12,9 @@ services:
     env_file: .env
     environment:
       DB_PATH: /data/healing_hertz.db
+      # On the persistent volume: /app is not writable by the unprivileged user
+      # the image runs as, and a cached icon should outlive the container.
+      ICON_CACHE_DIR: /data/icon-cache
     volumes:
       - db-data:/data
       # Your own rules. RULES_DIR is read *inside* the container, so a host path
