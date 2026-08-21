@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     db_path: str = "./healing_hertz.db"
     demo_mode: bool = False
 
+    # Product icons for the hardware views. The backend fetches each model's
+    # icon from Ubiquiti's public device catalogue once and caches it, so the
+    # browser needs no internet access. Off means the UI draws its own glyphs
+    # and nothing here ever reaches out.
+    device_icons: bool = True
+    icon_cache_dir: str = "./icon-cache"
+
     # Directory of operator-supplied rule files. Empty disables user rules
     # entirely, so the default deployment gains no new surface.
     rules_dir: str = ""

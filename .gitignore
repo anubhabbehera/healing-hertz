@@ -222,6 +222,9 @@ node_modules/
 frontend/dist/
 *.db
 *.tsbuildinfo
+# Device icons fetched from Ubiquiti's catalogue at runtime — a local cache,
+# never something the repository should carry.
+icon-cache/
 
 # Local scratch — screenshots, notes, anything not meant for the repo.
 .local/
