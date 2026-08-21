@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-export type Theme = "dark" | "light" | "trail";
+export type Theme = "dark" | "light" | "trail" | "synth";
 
 export const THEMES: { id: Theme; label: string; icon: string }[] = [
   { id: "dark", label: "Frappé — dark", icon: "☾" },
   { id: "light", label: "Latte — light", icon: "☀" },
   { id: "trail", label: "Trail — dark", icon: "◈" },
+  { id: "synth", label: "Synth — neumorphic", icon: "◍" },
 ];
 
 const isTheme = (value: string | null): value is Theme =>
@@ -29,7 +30,8 @@ export function useThemeState() {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem("hh-theme");
     if (isTheme(saved)) return saved;
-    // Only the Catppuccin pair follows the OS; Trail is an explicit choice.
+    // Only the Catppuccin pair follows the OS; Trail and Synth are explicit
+    // choices — neither has a light counterpart to switch to.
     return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   });
   useEffect(() => {
