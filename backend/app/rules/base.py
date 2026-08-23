@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Protocol
 
+from app.analytics.timeseries import Series
 from app.collectors.snapshot import Snapshot
 
 
@@ -88,6 +89,9 @@ class HistoricalRun:
 @dataclass
 class RunHistory:
     runs: list[HistoricalRun] = field(default_factory=list)  # newest first
+    # One entry per (metric, subject) over a much longer window than `runs`:
+    # trend statistics need the depth, run-to-run comparisons do not.
+    series: list[Series] = field(default_factory=list)
 
 
 class Rule(Protocol):

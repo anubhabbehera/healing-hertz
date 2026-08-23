@@ -1,0 +1,144 @@
+# What the stored history says about each metric.
+#
+# Every rule here reads the `metric_trends` source, which needs several scans
+# behind it before it says anything: the statistics describe noise until the
+# series has depth, so each rule sets its own minimum sample count rather than
+# trusting whatever happens to be stored. A fresh install therefore sees none of
+# these findings, and that is correct — there is nothing yet to have a trend.
+
+rules:
+  - id: trend.metric_anomaly
+    kind: declarative
+    category: capacity
+    emits:
+      # The score is a modified z-score: distance from the median in robust
+      # standard deviations, with the reading being judged excluded from its own
+      # baseline. 3.5 is the conventional outlier cut; below it a reading is
+      # within the range this metric has always wandered over.
+      - source: metric_trends
+        where:
+          all:
+            - [metric_watched, eq, true]
+            - [sample_count, gte, 8]
+            - [zscore_abs, gte, 3.5]
+        severity:
+          base: medium
+          escalate:
+            - when: [zscore_abs, gte, 6]
+              to: high
+        title: "{subject_name} {metric_label} is {latest:.1f}, well outside its normal"
+        summary: >-
+          {metric_label} for {subject_name} normally sits around {median:.1f}; this scan
+          read {latest:.1f}, which is {zscore_abs:.1f} robust standard deviations away
+          over {sample_count} scans. The comparison is against this subject's own
+          history, not against other devices, so it is unusual for this one
+          specifically.
+        recommendation: >-
+          Check what changed around this scan — a new client, a firmware update, a
+          config change. If the new level is the intended one, the baseline catches up
+          on its own after a few more scans.
+        evidence:
+          metric: {raw: metric}
+          subject: {raw: subject_name}
+          latest: {raw: latest}
+          median: {raw: median}
+          zscore: {raw: zscore}
+          samples: {raw: sample_count}
+
+  - id: trend.sustained_shift
+    kind: declarative
+    category: capacity
+    emits:
+      # CUSUM: the deviations accumulate instead of being judged one reading at
+      # a time, so a small shift that holds trips it while a single spike does
+      # not. That makes this the complement of the anomaly rule above, not a
+      # duplicate of it.
+      - source: metric_trends
+        where:
+          all:
+            - [metric_watched, eq, true]
+            - [sample_count, gte, 10]
+            - [changepoint_direction, eq, up]
+        severity: medium
+        title: "{subject_name} {metric_label} stepped up around {changepoint_at}"
+        summary: >-
+          {metric_label} for {subject_name} moved from about {changepoint_before:.1f} to
+          about {changepoint_after:.1f} and stayed there — a level change starting around
+          {changepoint_at}, not a spike that recovered.
+        recommendation: >-
+          Look at what happened at that time rather than at what is happening now: a
+          firmware upgrade, a device added, a channel or config change. The current
+          reading is the new normal, so a spot check will look fine.
+        evidence:
+          metric: {raw: metric}
+          subject: {raw: subject_name}
+          changedAt: {raw: changepoint_at}
+          before: {raw: changepoint_before}
+          after: {raw: changepoint_after}
+          samples: {raw: sample_count}
+
+  - id: trend.approaching_limit
+    kind: declarative
+    category: capacity
+    emits:
+      # Straight-line extrapolation of a median-of-slopes trend. It assumes the
+      # trend holds, which is why the prose says so — the value is the date it
+      # puts on a problem, not the precision of the date.
+      - source: metric_trends
+        where:
+          all:
+            - [sample_count, gte, 10]
+            - [days_to_target, is_not_null]
+            - [days_to_target, lte, 30]
+        severity:
+          base: medium
+          escalate:
+            - when: [days_to_target, lte, 7]
+              to: high
+        title: >-
+          {subject_name} {metric_label} reaches {forecast_target:.0f} in about
+          {days_to_target:.1f} days
+        summary: >-
+          {metric_label} for {subject_name} is at {latest:.1f} and rising about
+          {slope_per_day:.2f} per day across {sample_count} scans. Held to that trend it
+          reaches {forecast_target:.0f} in roughly {days_to_target:.1f} days.
+        recommendation: >-
+          Deal with the cause while there is still headroom — the trend is what makes
+          this actionable now rather than at the point it becomes an outage.
+        evidence:
+          metric: {raw: metric}
+          subject: {raw: subject_name}
+          latest: {raw: latest}
+          slopePerDay: {raw: slope_per_day}
+          target: {raw: forecast_target}
+          daysToTarget: {raw: days_to_target}
+
+  - id: trend.health_declining
+    kind: declarative
+    category: capacity
+    emits:
+      # The health score is the one metric where down is the bad direction, so
+      # it gets its own rule rather than a sign convention in the source.
+      - source: metric_trends
+        where:
+          all:
+            - [metric, eq, site.health_score]
+            - [sample_count, gte, 10]
+            - [slope_per_day, lte, -0.5]
+        severity: low
+        subject: site
+        title: "Health score is trending down ({slope_per_day:.1f} points a day)"
+        summary: >-
+          Across {sample_count} scans the site health score has fallen about
+          {slope_per_day:.1f} points a day, currently {latest:.0f}. Individual findings
+          each look small; the trend is what says they are accumulating rather than
+          being fixed.
+        recommendation: >-
+          Compare the two most recent runs in the history view to see which findings are
+          new, and clear the oldest ones first — they are the ones that have been
+          costing points the longest.
+        evidence:
+          latest: {raw: latest}
+          median: {raw: median}
+          slopePerDay: {raw: slope_per_day}
+          samples: {raw: sample_count}

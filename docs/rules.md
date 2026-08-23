@@ -78,6 +78,7 @@ only ever names a binding.
 | `rf_clients` | per-client RF detail | `client_mac` `client_name` `client_ssid` `client_ap_mac` `signal_dbm` `tx_rate_kbps` `rx_rate_kbps` `channel` `band_ghz` |
 | `networks` | configured networks with their address space | `network_id` `network_name` `network_enabled` `network_vlan_id` `network_management` `network_is_default` `network_isolation_enabled` `network_internet_access_enabled` `network_dhcp_mode` `network_cidr` `network_prefix_length` `network_usable_hosts` `network_client_count` `network_pool_pressure` `network_trusted_dhcp_servers` |
 | `wifi_broadcasts` | each broadcast WiFi network's settings | `wifi_id` `wifi_name` `wifi_enabled` `wifi_type` `wifi_security` `wifi_encryption` `wifi_pmf_mode` `wifi_fast_roaming_enabled` `wifi_hidden` `wifi_client_isolation_enabled` `wifi_band_steering_enabled` `wifi_bss_transition_enabled` `wifi_mlo_enabled` `wifi_uapsd_enabled` `wifi_bands` `wifi_band_count` `wifi_on_24` `wifi_on_5` `wifi_on_6` `wifi_basic_rate_24_kbps` `wifi_basic_rate_5_kbps` `wifi_mac_filter_action` `wifi_mac_filter_count` |
+| `metric_trends` | robust statistics over each stored metric's history | `metric` `metric_label` `metric_watched` `subject_id` `subject_name` `sample_count` `latest` `median` `mad` `zscore` `zscore_abs` `ewma` `slope_per_day` `forecast_target` `days_to_target` `changepoint_at` `changepoint_direction` `changepoint_before` `changepoint_after` |
 
 `app/rules/sources.py` is the authority; adding a binding there is cheap.
 

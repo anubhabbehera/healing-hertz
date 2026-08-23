@@ -82,9 +82,9 @@ async def test_list_rules(api):
     ids = {r["id"] for r in body["rules"]}
     assert "wifi.dfs_channel" in ids
     assert "wifi.weak_rssi_clients" in ids            # a not-checkable entry
-    assert body["counts"]["active"] == 47
+    assert body["counts"]["active"] == 51
     assert body["counts"]["not_checkable"] == 12
-    assert len(body["sources"]) == 10
+    assert len(body["sources"]) == 11
     assert body["categories"]
 
 
@@ -243,3 +243,29 @@ async def test_startup_clears_runs_left_over_from_a_restart(db):
             status = (await client.get("/api/scans/crashed00001")).json()
     assert status["status"] == "failed"
     assert "Interrupted" in status["error"]
+
+
+async def test_metric_series_span_runs_and_carry_the_new_pool_metric(api):
+    """The trend read-model is per (metric, subject) across completed scans."""
+    from app.analytics.timeseries import Series
+    from app.db import repo
+    from app.db.engine import get_session_factory
+
+    await run_scan_and_wait(api)
+    await run_scan_and_wait(api)
+
+    async with get_session_factory()() as session:
+        series = await repo.load_metric_series(session)
+
+    by_key = {(s.metric, s.subject_id): s for s in series}
+    assert all(isinstance(s, Series) for s in series)
+
+    health = by_key[("site.health_score", None)]
+    assert len(health.points) == 2
+    # Oldest first: every statistic over a series depends on that order.
+    assert health.points[0].at <= health.points[1].at
+
+    # Address-pool occupancy is stored per network, so it can be trended.
+    pools = [s for s in series if s.metric == "network.pool_pressure_pct"]
+    assert {s.subject_name for s in pools} >= {"Default", "Guest"}
+    assert all(0 <= p.value <= 100 for s in pools for p in s.points)

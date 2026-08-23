@@ -13,11 +13,12 @@ have an object to traverse.
 
 from __future__ import annotations
 
+import statistics
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
-from app.analytics import subnets
+from app.analytics import subnets, timeseries
 from app.collectors.snapshot import Snapshot
 
 from .base import RunHistory
@@ -506,4 +507,103 @@ def _wifi_broadcasts(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
             subject_type="site",
             subject_id=wifi.id,
             subject_name=wifi.name,
+        )
+
+
+# --- trends ----------------------------------------------------------------
+
+# Metrics whose movement is worth reporting on its own. Everything else is
+# still stored and still charted; it just doesn't raise a finding when it
+# wanders, because a port renegotiating or a client count rising is not news.
+_WATCHED_METRICS = {
+    "device.cpu_pct": "CPU",
+    "device.mem_pct": "memory",
+    "radio.tx_retries_pct": "TX retries",
+    "wan.latency_ms": "WAN latency",
+    "wan.loss_pct": "WAN packet loss",
+    "dns.blocked_pct": "DNS blocks",
+    "network.pool_pressure_pct": "address pool use",
+    "site.health_score": "health score",
+}
+
+# Where a metric becomes a problem, for the rules that ask when the trend gets
+# there. Only metrics with a real ceiling appear: "days until the client count
+# reaches 100" is arithmetic, not a warning.
+_FORECAST_TARGET = {
+    "device.cpu_pct": 90.0,
+    "device.mem_pct": 90.0,
+    "radio.tx_retries_pct": 20.0,
+    "wan.loss_pct": 5.0,
+    "network.pool_pressure_pct": 100.0,
+}
+
+_TREND_BINDINGS = {
+    "metric", "metric_label", "metric_watched", "subject_id", "subject_name",
+    "sample_count", "latest", "median", "mad", "zscore", "zscore_abs", "ewma",
+    "slope_per_day", "forecast_target", "days_to_target",
+    "changepoint_at", "changepoint_direction", "changepoint_before", "changepoint_after",
+}
+
+
+@register(
+    "metric_trends",
+    _TREND_BINDINGS,
+    doc=(
+        "One row per stored metric and subject, with robust statistics over its "
+        "history: deviation from its own normal, trend per day, time to a "
+        "threshold, and any sustained step change."
+    ),
+)
+def _metric_trends(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    for series in history.series:
+        values = series.values
+        latest = series.latest
+        if latest is None:
+            continue
+        # The point being judged is not part of the baseline it is judged
+        # against; leaving it in drags the median toward it and hides exactly
+        # the reading worth reporting.
+        baseline = values[:-1]
+        zscore = timeseries.modified_zscore(latest.value, baseline)
+        target = _FORECAST_TARGET.get(series.metric)
+        changepoint = timeseries.cusum_changepoint(series.points)
+        yield Row(
+            vars={
+                "metric": series.metric,
+                "metric_label": _WATCHED_METRICS.get(series.metric, series.metric),
+                "metric_watched": series.metric in _WATCHED_METRICS,
+                "subject_id": series.subject_id,
+                "subject_name": series.subject_name,
+                "sample_count": len(values),
+                "latest": latest.value,
+                "median": statistics.median(values),
+                "mad": timeseries.mad(values),
+                "zscore": zscore,
+                # Predicates compare, they do not compute -- and "how far out,
+                # either way" is the comparison every anomaly rule wants.
+                "zscore_abs": abs(zscore) if zscore is not None else None,
+                "ewma": timeseries.ewma(values),
+                "slope_per_day": timeseries.theil_sen_slope(series.points),
+                "forecast_target": target,
+                "days_to_target": (
+                    timeseries.days_until(series.points, target)
+                    if target is not None else None
+                ),
+                "changepoint_at": (
+                    changepoint.at.strftime("%Y-%m-%d %H:%M UTC") if changepoint else None
+                ),
+                "changepoint_direction": changepoint.direction if changepoint else None,
+                "changepoint_before": changepoint.before if changepoint else None,
+                "changepoint_after": changepoint.after if changepoint else None,
+            },
+            # Device-scoped metrics keep their device subject so a finding lands
+            # on the hardware; everything else is site-scoped, including the
+            # per-network pool metrics, which have no device behind them.
+            subject_type=(
+                "device"
+                if series.metric.split(".")[0] in ("device", "port", "radio")
+                else "site"
+            ),
+            subject_id=series.subject_id,
+            subject_name=series.subject_name,
         )

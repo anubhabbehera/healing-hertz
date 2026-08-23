@@ -16,6 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
+from app.analytics.timeseries import Point, Series
 from app.collectors.snapshot import Snapshot, collect_snapshot
 from app.integrations.legacy_unifi import ClientRF, RfSnapshot
 from app.integrations.nextdns import DnsSnapshot
@@ -309,6 +310,33 @@ def _no_config_plane(s: Snapshot) -> None:
     s.config = None
 
 
+def _series(metric: str, subject_id: str | None, name: str, values: list[float]) -> Series:
+    """A metric series ending at BASE_TIME, one scan a day, oldest first."""
+    last = len(values) - 1
+    return Series(
+        metric=metric, subject_id=subject_id, subject_name=name,
+        points=[
+            Point(at=BASE_TIME - timedelta(days=last - i), value=value)
+            for i, value in enumerate(values)
+        ],
+    )
+
+
+# One history covering all four shapes the trend rules look for: a spike that
+# has no history behind it, a step that held, a climb with a ceiling ahead of
+# it, and a slow decline.
+_TREND_HISTORY = RunHistory(series=[
+    _series("device.cpu_pct", "gw1", "Dream Machine Pro",
+            [20, 21, 19, 22, 20, 21, 20, 19, 21, 85]),
+    _series("radio.tx_retries_pct", "ap1:2.4", "Living Room AP 2.4 GHz",
+            [4, 4.5, 4, 5, 4.2, 14, 14.5, 13.8, 15, 14.2, 14, 15.1]),
+    _series("device.mem_pct", "sw1", "Rack Switch",
+            [70, 72, 74, 76, 78, 80, 82, 84, 86, 88]),
+    _series("site.health_score", None, "Home",
+            [80, 79, 78, 77, 76, 74, 73, 72, 70, 69, 68, 66]),
+])
+
+
 SCENARIOS: list[Scenario] = [
     Scenario("demo_baseline"),
     Scenario("degraded_and_pending", _degraded_and_pending),
@@ -339,6 +367,7 @@ SCENARIOS: list[Scenario] = [
     Scenario("network_config_sins", _network_config_sins),
     Scenario("dhcp_pool_pressure", _dhcp_pool_pressure),
     Scenario("no_config_plane", _no_config_plane),
+    Scenario("metric_trends", None, _TREND_HISTORY),
 ]
 
 

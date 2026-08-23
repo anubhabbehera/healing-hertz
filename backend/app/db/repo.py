@@ -7,6 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.advisor.schema import AdvicePlan
+from app.analytics import subnets
+from app.analytics.timeseries import Point, Series
 from app.collectors.snapshot import Snapshot
 from app.rules import score_from_severities
 from app.rules.base import Finding, HistoricalRun, RunHistory, UnsupportedCheck
@@ -99,6 +101,24 @@ def _metric_rows(run_id: str, snapshot: Snapshot, score: int) -> list[MetricSnap
                     subject_id=f"{dev_id}:{port.idx}",
                     subject_name=f"{detail.name} port {port.idx}",
                     metric="port.speed_mbps", value=float(port.speed_mbps)))
+    # Address-pool occupancy is stored as a metric so it can be trended: a pool
+    # at 60% is fine, a pool that has climbed 3 points a week is a date.
+    if snapshot.config is not None:
+        client_ips = [c.ip_address for c in snapshot.clients]
+        for net in snapshot.config.networks:
+            ipv4 = net.ipv4_configuration
+            cidr = subnets.network_of(
+                ipv4.host_ip_address if ipv4 else None,
+                ipv4.prefix_length if ipv4 else None,
+            )
+            pressure = subnets.pool_pressure(
+                subnets.hosts_in(cidr, client_ips), subnets.usable_hosts(cidr)
+            )
+            if pressure is not None:
+                rows.append(MetricSnapshot(
+                    run_id=run_id, subject_type="network", subject_id=net.id,
+                    subject_name=net.name, metric="network.pool_pressure_pct",
+                    value=round(pressure * 100, 2)))
     if snapshot.wan is not None:
         rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
                                    subject_name="WAN", metric="wan.latency_ms",
@@ -322,6 +342,48 @@ async def compare_runs(session: AsyncSession, run_a: str, run_b: str) -> dict:
     }
 
 
+# How far back the trend read-model reaches. Series analysis wants many more
+# points than the run-to-run comparisons do -- a median and a slope over five
+# readings say very little -- but it still has to stay a bounded read.
+SERIES_RUNS = 200
+
+
+async def load_metric_series(session: AsyncSession, runs: int = SERIES_RUNS) -> list[Series]:
+    """Every stored metric over the last `runs` completed scans, oldest first.
+
+    One series per (metric, subject), which is the shape the trend statistics
+    take: they compare a subject against its own past, never against the site
+    average.
+    """
+    recent = (
+        select(ScanRun.id, ScanRun.started_at)
+        .where(ScanRun.status == "completed")
+        .order_by(ScanRun.started_at.desc())
+        .limit(runs)
+        .subquery()
+    )
+    result = await session.execute(
+        select(MetricSnapshot, recent.c.started_at)
+        .join(recent, MetricSnapshot.run_id == recent.c.id)
+        .order_by(recent.c.started_at.asc())
+    )
+
+    grouped: dict[tuple[str, str | None], Series] = {}
+    for snap, started_at in result.all():
+        key = (snap.metric, snap.subject_id)
+        series = grouped.get(key)
+        if series is None:
+            series = Series(
+                metric=snap.metric,
+                subject_id=snap.subject_id,
+                subject_name=snap.subject_name,
+                points=[],
+            )
+            grouped[key] = series
+        series.points.append(Point(at=_utc(started_at), value=snap.value))
+    return list(grouped.values())
+
+
 async def load_history(session: AsyncSession, n: int = 5) -> RunHistory:
     """Read-model of the last n completed runs for cross-run rules (newest first)."""
     runs = await session.execute(
@@ -348,7 +410,7 @@ async def load_history(session: AsyncSession, n: int = 5) -> RunHistory:
             site_metrics=site_metrics,
             finding_keys={(f.rule_id, f.subject_id) for f in run.findings},
         ))
-    return RunHistory(runs=history)
+    return RunHistory(runs=history, series=await load_metric_series(session))
 
 
 def _run_summary(run: ScanRun) -> dict:
