@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from app.advisor.llm import generate_advice
 from app.collectors.enrich import enrich_snapshot
@@ -18,6 +20,23 @@ logger = logging.getLogger(__name__)
 
 # One scan at a time; POST /api/scans returns 409 while held.
 scan_lock = asyncio.Lock()
+_active_run_id: str | None = None
+
+
+def active_run_id() -> str | None:
+    """The run currently executing here, so stale-run cleanup can skip it."""
+    return _active_run_id
+
+
+@asynccontextmanager
+async def scan_slot(run_id: str) -> AsyncIterator[None]:
+    global _active_run_id
+    async with scan_lock:
+        _active_run_id = run_id
+        try:
+            yield
+        finally:
+            _active_run_id = None
 
 
 async def run_scan(

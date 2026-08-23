@@ -29,6 +29,29 @@ async def create_run(session: AsyncSession, run_id: str, trigger: str = "manual"
     return run
 
 
+STALE_RUN_ERROR = "Interrupted — the server stopped before this scan finished"
+
+
+async def abandon_stale_runs(
+    session: AsyncSession, error: str = STALE_RUN_ERROR, exclude: set[str] | None = None
+) -> int:
+    """Fail every run still marked running.
+
+    A scan only lives in the process that started it, so any 'running' row left
+    behind by a crash or restart can never finish. Called at startup and from
+    the manual clear endpoint; returns how many rows were reset.
+    """
+    result = await session.execute(select(ScanRun).where(ScanRun.status == "running"))
+    stale = [r for r in result.scalars() if not exclude or r.id not in exclude]
+    for run in stale:
+        run.status = "failed"
+        run.error = error
+        run.finished_at = datetime.now(UTC)
+    if stale:
+        await session.commit()
+    return len(stale)
+
+
 async def mark_failed(session: AsyncSession, run_id: str, error: str) -> None:
     run = await session.get(ScanRun, run_id)
     if run:

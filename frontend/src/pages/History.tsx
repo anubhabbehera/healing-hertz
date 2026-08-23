@@ -1,11 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "../api/client";
 import RunDiff from "../components/RunDiff";
 
 export default function History() {
+  const queryClient = useQueryClient();
   const { data: runs } = useQuery({ queryKey: ["runs"], queryFn: api.runs });
   const [selected, setSelected] = useState<string[]>([]);
+
+  // A scan lives only in the server process that started it, so a row still
+  // marked running after a crash or restart will never move on its own.
+  const clearStale = useMutation({
+    mutationFn: api.clearStaleScans,
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
 
   const { data: diff } = useQuery({
     queryKey: ["compare", ...selected],
@@ -29,6 +37,20 @@ export default function History() {
     <div>
       <h1>Run history</h1>
       <p className="subtitle">Select two runs to compare findings.</p>
+
+      {runs.some((run) => run.status === "running") && (
+        <div className="callout">
+          Some runs are still marked <strong>running</strong>. If no scan is in
+          progress, they are leftovers from a restart and can be cleared.
+          <button
+            className="secondary"
+            onClick={() => clearStale.mutate()}
+            disabled={clearStale.isPending}
+          >
+            {clearStale.isPending ? "Clearing…" : "Clear stuck runs"}
+          </button>
+        </div>
+      )}
 
       <div className="card">
         <table className="data">

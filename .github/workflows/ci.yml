@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies (from lockfiles)
         run: make setup
 
-      - name: Lint (ruff + tsc)
+      - name: Lint (ruff + tsc + oxlint)
         run: make lint
 
       # The rule catalog is data, so a bad edit is not a syntax error anywhere.

@@ -54,5 +54,8 @@ export function useChartColors() {
              // Series identity, in this fixed order — see the --series-* block
              // in styles.css for how the four were chosen and validated.
              series: [v("--series-1"), v("--series-2"), v("--series-3"), v("--series-4")] };
+    // theme is not read here, it is the trigger: the CSS variables above only
+    // change when the theme does, so this has to recompute on that switch.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps, react/memo-dependencies
   }, [theme]);
 }

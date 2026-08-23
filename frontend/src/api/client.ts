@@ -53,6 +53,9 @@ export const api = {
   testConnection: () =>
     request<TestConnectionResult>("/api/settings/test-connection", { method: "POST" }),
   startScan: () => request<{ run_id: string }>("/api/scans", { method: "POST" }),
+  /** Fail runs stuck at "running" after a crash or restart. */
+  clearStaleScans: () =>
+    request<{ cleared: number }>("/api/scans/clear-stale", { method: "POST" }),
 
   dismissals: () => request<Dismissal[]>("/api/dismissals"),
   /** Acknowledge a finding as won't-fix; the backend re-scores stored runs. */

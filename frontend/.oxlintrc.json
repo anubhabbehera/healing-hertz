@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "import", "jsx-a11y"],
+  "env": { "browser": true, "es2022": true },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    // React 17+ automatic JSX transform: no React import is needed.
+    "react/react-in-jsx-scope": "off",
+    // Side-effect imports are how CSS and fonts get into the bundle.
+    "import/no-unassigned-import": "off",
+    // role="img" on an <svg> is the recommended pattern here, not a smell.
+    "jsx-a11y/prefer-tag-over-role": "warn",
+    // Also fires on empty <th> spacer cells, not just unlabelled controls.
+    "jsx-a11y/control-has-associated-label": "warn",
+    // Focusing the field the operator just opened is the point of that form.
+    "jsx-a11y/no-autofocus": "warn"
+  },
+  "ignorePatterns": ["dist", "node_modules"]
+}
