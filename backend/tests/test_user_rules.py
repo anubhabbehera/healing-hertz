@@ -165,7 +165,7 @@ def test_a_missing_rules_dir_is_not_fatal(tmp_path, monkeypatch):
     get_settings.cache_clear()
     load_catalog.cache_clear()
     try:
-        assert len(load_catalog().rules) == 35
+        assert len(load_catalog().rules) == 47
     finally:
         get_settings.cache_clear()
         load_catalog.cache_clear()

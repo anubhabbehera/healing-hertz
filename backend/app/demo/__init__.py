@@ -7,8 +7,10 @@ from app.unifi.models import (
     DeviceDetail,
     DeviceOverview,
     DeviceStats,
+    Network,
     PendingDevice,
     Site,
+    WifiBroadcast,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -42,6 +44,12 @@ class DemoUnifiClient:
 
     async def list_pending_devices(self) -> list[PendingDevice]:
         return [PendingDevice.model_validate(d) for d in _load("pending_devices.json")]
+
+    async def list_networks(self, site_id: str) -> list[Network]:
+        return [Network.model_validate(n) for n in _load("networks.json")]
+
+    async def list_wifi_broadcasts(self, site_id: str) -> list[WifiBroadcast]:
+        return [WifiBroadcast.model_validate(w) for w in _load("wifi.json")]
 
     async def aclose(self) -> None:
         return None

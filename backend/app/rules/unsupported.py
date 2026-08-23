@@ -122,14 +122,39 @@ _CHECKS: list[tuple[UnsupportedCheck, str | None]] = [
     ),
     (
         UnsupportedCheck(
+            rule_id="network.config_audit",
+            title="Network address space: subnet overlap, VLAN reuse, DHCP pool pressure",
+            reason=(
+                "The Integration API config plane (Network 10.x and later) is not "
+                "readable here, so configured networks cannot be inspected. It needs a "
+                "console running Network 10.x and an API key whose admin can read "
+                "settings."
+            ),
+        ),
+        "config",
+    ),
+    (
+        UnsupportedCheck(
+            rule_id="wifi.config_audit",
+            title="WiFi settings: encryption, band steering, roaming, basic rates",
+            reason=(
+                "The Integration API config plane (Network 10.x and later) is not "
+                "readable here, so broadcast WiFi settings cannot be audited. It needs a "
+                "console running Network 10.x and an API key whose admin can read "
+                "settings."
+            ),
+        ),
+        "config",
+    ),
+    (
+        UnsupportedCheck(
             rule_id="security.policy_audit",
             title="Firewall, UPnP, VLAN and port isolation policy",
             reason=(
-                "Firewall rules, UPnP state, port forwards, VLAN assignments and guest "
-                "isolation are not readable through the Integration API. Audit them in the "
-                "console: IoT and camera VLANs isolated from the trusted network, UPnP off "
-                "unless a specific application needs it, and no forgotten static port "
-                "forwards."
+                "Firewall rules, UPnP state and port forwards are not read by this "
+                "build yet. Audit them in the console: IoT and camera VLANs isolated from "
+                "the trusted network, UPnP off unless a specific application needs it, "
+                "and no forgotten static port forwards."
             ),
         ),
         None,

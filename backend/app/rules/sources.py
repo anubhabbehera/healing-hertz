@@ -17,6 +17,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
+from app.analytics import subnets
 from app.collectors.snapshot import Snapshot
 
 from .base import RunHistory
@@ -379,3 +380,130 @@ def _device_ports(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
                 subject_id=dev_id,
                 subject_name=detail.name,
             )
+
+
+# --- configuration plane ---------------------------------------------------
+
+_NETWORK_BINDINGS = {
+    "network_id", "network_name", "network_enabled", "network_vlan_id",
+    "network_management", "network_is_default", "network_isolation_enabled",
+    "network_internet_access_enabled", "network_dhcp_mode",
+    "network_cidr", "network_prefix_length", "network_usable_hosts",
+    "network_client_count", "network_pool_pressure",
+    "network_trusted_dhcp_servers",
+}
+
+
+@register(
+    "networks",
+    _NETWORK_BINDINGS,
+    doc=(
+        "Configured networks (VLANs) with their address space, joined to the "
+        "clients addressed inside it. Yields nothing when the config plane is "
+        "unreadable, which is how every rule over it stays quiet."
+    ),
+)
+def _networks(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    if snapshot.config is None:
+        return
+    client_ips = [c.ip_address for c in snapshot.clients]
+    for net in snapshot.config.networks:
+        ipv4 = net.ipv4_configuration
+        cidr = subnets.network_of(
+            ipv4.host_ip_address if ipv4 else None,
+            ipv4.prefix_length if ipv4 else None,
+        )
+        usable = subnets.usable_hosts(cidr)
+        clients = subnets.hosts_in(cidr, client_ips)
+        guarding = net.dhcp_guarding
+        yield Row(
+            vars={
+                "network_id": net.id,
+                "network_name": net.name,
+                "network_enabled": net.enabled,
+                "network_vlan_id": net.vlan_id,
+                "network_management": net.management,
+                "network_is_default": net.default,
+                "network_isolation_enabled": net.isolation_enabled,
+                "network_internet_access_enabled": net.internet_access_enabled,
+                "network_dhcp_mode": (
+                    ipv4.dhcp_configuration.mode
+                    if ipv4 and ipv4.dhcp_configuration else None
+                ),
+                "network_cidr": str(cidr) if cidr else None,
+                "network_prefix_length": cidr.prefixlen if cidr else None,
+                "network_usable_hosts": usable,
+                "network_client_count": clients,
+                "network_pool_pressure": subnets.pool_pressure(clients, usable),
+                "network_trusted_dhcp_servers": (
+                    len(guarding.trusted_dhcp_server_ip_addresses) if guarding else 0
+                ),
+            },
+            subject_type="site",
+            subject_id=net.id,
+            subject_name=net.name,
+        )
+
+
+_WIFI_BINDINGS = {
+    "wifi_id", "wifi_name", "wifi_enabled", "wifi_type", "wifi_security",
+    "wifi_encryption", "wifi_pmf_mode", "wifi_fast_roaming_enabled",
+    "wifi_hidden", "wifi_client_isolation_enabled", "wifi_band_steering_enabled",
+    "wifi_bss_transition_enabled", "wifi_mlo_enabled", "wifi_uapsd_enabled",
+    "wifi_bands", "wifi_band_count", "wifi_on_24", "wifi_on_5", "wifi_on_6",
+    "wifi_basic_rate_24_kbps", "wifi_basic_rate_5_kbps",
+    "wifi_mac_filter_action", "wifi_mac_filter_count",
+}
+
+
+@register(
+    "wifi_broadcasts",
+    _WIFI_BINDINGS,
+    doc=(
+        "Each broadcast WiFi network with its security and roaming settings, "
+        "from the Integration API config plane (Network 10.x and later)."
+    ),
+)
+def _wifi_broadcasts(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    if snapshot.config is None:
+        return
+    for wifi in snapshot.config.wifi:
+        security = wifi.security_configuration
+        bands = sorted(wifi.broadcasting_frequencies_ghz)
+        mac_filter = wifi.client_filtering_policy
+        yield Row(
+            vars={
+                "wifi_id": wifi.id,
+                "wifi_name": wifi.name,
+                "wifi_enabled": wifi.enabled,
+                "wifi_type": wifi.type,
+                "wifi_security": security.type if security else None,
+                "wifi_encryption": security.encryption if security else None,
+                "wifi_pmf_mode": security.pmf_mode if security else None,
+                "wifi_fast_roaming_enabled": (
+                    security.fast_roaming_enabled if security else None
+                ),
+                "wifi_hidden": wifi.hide_name,
+                "wifi_client_isolation_enabled": wifi.client_isolation_enabled,
+                "wifi_band_steering_enabled": wifi.band_steering_enabled,
+                "wifi_bss_transition_enabled": wifi.bss_transition_enabled,
+                "wifi_mlo_enabled": wifi.mlo_enabled,
+                "wifi_uapsd_enabled": wifi.uapsd_enabled,
+                # Rendered rather than raw: a template cannot format a list, and
+                # "2.4, 5" is what the prose wants to say.
+                "wifi_bands": ", ".join(f"{b:g}" for b in bands) or None,
+                "wifi_band_count": len(bands),
+                "wifi_on_24": 2.4 in bands,
+                "wifi_on_5": 5 in bands,
+                "wifi_on_6": 6 in bands,
+                "wifi_basic_rate_24_kbps": wifi.basic_data_rate_kbps.get("2.4"),
+                "wifi_basic_rate_5_kbps": wifi.basic_data_rate_kbps.get("5"),
+                "wifi_mac_filter_action": mac_filter.action if mac_filter else None,
+                "wifi_mac_filter_count": (
+                    len(mac_filter.mac_address_filter) if mac_filter else 0
+                ),
+            },
+            subject_type="site",
+            subject_id=wifi.id,
+            subject_name=wifi.name,
+        )

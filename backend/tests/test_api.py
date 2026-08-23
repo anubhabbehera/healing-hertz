@@ -82,9 +82,9 @@ async def test_list_rules(api):
     ids = {r["id"] for r in body["rules"]}
     assert "wifi.dfs_channel" in ids
     assert "wifi.weak_rssi_clients" in ids            # a not-checkable entry
-    assert body["counts"]["active"] == 35
-    assert body["counts"]["not_checkable"] == 10
-    assert len(body["sources"]) == 8
+    assert body["counts"]["active"] == 47
+    assert body["counts"]["not_checkable"] == 12
+    assert len(body["sources"]) == 10
     assert body["categories"]
 
 

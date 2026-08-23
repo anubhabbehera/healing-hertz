@@ -76,13 +76,17 @@ only ever names a binding.
 | `ap_radio_stats` | per-radio counters for APs | `device_id` `device_name` `radio_frequency_ghz` `radio_band` `tx_retries_pct` |
 | `clients` | connected clients | `client_id` `client_name` `client_mac` `client_ip` `client_type` `access_type` `access_authorized` |
 | `rf_clients` | per-client RF detail | `client_mac` `client_name` `client_ssid` `client_ap_mac` `signal_dbm` `tx_rate_kbps` `rx_rate_kbps` `channel` `band_ghz` |
+| `networks` | configured networks with their address space | `network_id` `network_name` `network_enabled` `network_vlan_id` `network_management` `network_is_default` `network_isolation_enabled` `network_internet_access_enabled` `network_dhcp_mode` `network_cidr` `network_prefix_length` `network_usable_hosts` `network_client_count` `network_pool_pressure` `network_trusted_dhcp_servers` |
+| `wifi_broadcasts` | each broadcast WiFi network's settings | `wifi_id` `wifi_name` `wifi_enabled` `wifi_type` `wifi_security` `wifi_encryption` `wifi_pmf_mode` `wifi_fast_roaming_enabled` `wifi_hidden` `wifi_client_isolation_enabled` `wifi_band_steering_enabled` `wifi_bss_transition_enabled` `wifi_mlo_enabled` `wifi_uapsd_enabled` `wifi_bands` `wifi_band_count` `wifi_on_24` `wifi_on_5` `wifi_on_6` `wifi_basic_rate_24_kbps` `wifi_basic_rate_5_kbps` `wifi_mac_filter_action` `wifi_mac_filter_count` |
 
 `app/rules/sources.py` is the authority; adding a binding there is cheap.
 
 Two things sources do for you:
 
 - **Missing integrations.** `rf_clients` yields nothing when the legacy
-  controller API isn't configured, so a rule over it needs no guard of its own.
+  controller API isn't configured, and `networks` / `wifi_broadcasts` yield
+  nothing when the console is too old for the config endpoints, so a rule over
+  either needs no guard of its own.
 - **Display fallbacks.** `name_or_model` is `name or model`. Templates do no
   logic, so fallbacks are bindings.
 

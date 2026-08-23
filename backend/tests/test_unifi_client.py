@@ -72,3 +72,69 @@ async def test_device_stats_404_returns_none(client):
 def test_self_hosted_prefix():
     c = UnifiClient("nvr.local", "k", port=8443, prefix="/integration")
     assert str(c._http.base_url).rstrip("/") == "https://nvr.local:8443/integration"
+
+
+# --- config plane ----------------------------------------------------------
+#
+# These endpoints arrived in Network 10.x, and a key made under a restricted
+# admin can be refused them outright. Either way the scan has to continue.
+
+
+def _page(items):
+    return httpx.Response(200, json={
+        "offset": 0, "limit": 200, "count": len(items),
+        "totalCount": len(items), "data": items,
+    })
+
+
+@respx.mock
+async def test_networks_are_fetched_in_detail_form(client):
+    respx.get(f"{BASE}/v1/sites/s1/networks").mock(
+        return_value=_page([{"id": "n1", "name": "Default"}])
+    )
+    respx.get(f"{BASE}/v1/sites/s1/networks/n1").mock(return_value=httpx.Response(200, json={
+        "id": "n1", "name": "Default", "vlanId": 1,
+        "ipv4Configuration": {"hostIpAddress": "192.168.1.1", "prefixLength": 24},
+    }))
+    networks = await client.list_networks("s1")
+    assert networks[0].vlan_id == 1
+    assert networks[0].ipv4_configuration.prefix_length == 24
+
+
+@respx.mock
+async def test_a_network_whose_detail_fails_falls_back_to_the_overview(client):
+    respx.get(f"{BASE}/v1/sites/s1/networks").mock(
+        return_value=_page([{"id": "n1", "name": "Default", "vlanId": 7}])
+    )
+    respx.get(f"{BASE}/v1/sites/s1/networks/n1").mock(return_value=httpx.Response(500))
+    networks = await client.list_networks("s1")
+    assert [(n.id, n.vlan_id) for n in networks] == [("n1", 7)]
+
+
+@respx.mock
+@pytest.mark.parametrize("status", [403, 404])
+async def test_config_endpoints_absent_or_forbidden_yield_nothing(client, status):
+    respx.get(f"{BASE}/v1/sites/s1/networks").mock(return_value=httpx.Response(status))
+    respx.get(f"{BASE}/v1/sites/s1/wifi/broadcasts").mock(return_value=httpx.Response(status))
+    assert await client.list_networks("s1") == []
+    assert await client.list_wifi_broadcasts("s1") == []
+
+
+@respx.mock
+async def test_wifi_broadcasts_parse_their_settings(client):
+    respx.get(f"{BASE}/v1/sites/s1/wifi/broadcasts").mock(
+        return_value=_page([{"id": "w1", "name": "Home"}])
+    )
+    respx.get(f"{BASE}/v1/sites/s1/wifi/broadcasts/w1").mock(
+        return_value=httpx.Response(200, json={
+            "id": "w1", "name": "Home", "enabled": True,
+            "securityConfiguration": {"type": "WPA3_PERSONAL", "pmfMode": "REQUIRED"},
+            "broadcastingFrequenciesGHz": [2.4, 5],
+            "basicDataRateKbpsByFrequencyGHz": {"2.4": 6000, "5": 6000},
+            "bandSteeringEnabled": True,
+        })
+    )
+    wifi = await client.list_wifi_broadcasts("s1")
+    assert wifi[0].security_configuration.type == "WPA3_PERSONAL"
+    assert wifi[0].broadcasting_frequencies_ghz == [2.4, 5]
+    assert wifi[0].basic_data_rate_kbps["2.4"] == 6000

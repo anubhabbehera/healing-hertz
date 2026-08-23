@@ -21,7 +21,7 @@ from app.integrations.legacy_unifi import ClientRF, RfSnapshot
 from app.integrations.nextdns import DnsSnapshot
 from app.integrations.wan_probe import WanProbeResult
 from app.rules.base import HistoricalRun, RunHistory
-from app.unifi.models import PendingDevice, Radio
+from app.unifi.models import PendingDevice, Radio, WifiClientFiltering
 
 # Fixed so the golden file is reproducible. Rules only ever read *differences*
 # between run timestamps, never the absolute value, so any epoch works.
@@ -252,6 +252,63 @@ _DNS_HISTORY = RunHistory(runs=[
 ])
 
 
+def _wifi_config_sins(s: Snapshot) -> None:
+    """A config plane with the settings this catalog exists to catch.
+
+    The demo baseline is a tidy site on purpose -- a fixture that trips every
+    rule teaches nothing about which rule fired. The sins live here instead.
+    """
+    by_id = {w.id: w for w in s.config.wifi}
+    guest = by_id["wl3"]
+    guest.security_configuration.type = "OPEN"
+    guest.security_configuration.encryption = None
+    guest.broadcasting_frequencies_ghz = [2.4, 5]
+    guest.band_steering_enabled = False
+    guest.basic_data_rate_kbps = {"2.4": 5500, "5": 6000}
+
+    iot = by_id["wl2"]
+    iot.hide_name = True
+    iot.bss_transition_enabled = False
+    iot.basic_data_rate_kbps = {"2.4": 1000}
+
+    by_id["wl4"].client_filtering_policy = WifiClientFiltering(
+        action="ALLOW",
+        macAddressFilter=["aa:00:00:00:00:04", "aa:00:00:00:00:0b"],
+    )
+
+
+def _network_config_sins(s: Snapshot) -> None:
+    """Address space that collides with itself, and a subnet with no room."""
+    by_id = {n.id: n for n in s.config.networks}
+    lab = by_id["net4"]
+    lab.ipv4_configuration.host_ip_address = "192.168.1.129"  # inside Default's /24
+    lab.ipv4_configuration.prefix_length = 25
+    lab.vlan_id = 30  # already Guest's tag
+    by_id["net2"].ipv4_configuration.prefix_length = 29
+
+
+def _dhcp_pool_pressure(s: Snapshot) -> None:
+    """Squeeze the default network until the addresses in use fill it.
+
+    The demo site is a /24 with ten clients, which no threshold will ever trip.
+    Narrowing it to a /29 around the addresses those clients already hold is the
+    smallest change that produces a genuinely full pool.
+    """
+    net = next(n for n in s.config.networks if n.id == "net1")
+    net.ipv4_configuration.host_ip_address = "192.168.1.104"
+    net.ipv4_configuration.prefix_length = 29  # .105-.110 assignable
+    for client, ip in zip(
+        [c for c in s.clients if c.type == "WIRED"],
+        ["192.168.1.108", "192.168.1.109", "192.168.1.110"],
+    ):
+        client.ip_address = ip
+
+
+def _no_config_plane(s: Snapshot) -> None:
+    """A console too old for the config endpoints, or a key refused them."""
+    s.config = None
+
+
 SCENARIOS: list[Scenario] = [
     Scenario("demo_baseline"),
     Scenario("degraded_and_pending", _degraded_and_pending),
@@ -278,6 +335,10 @@ SCENARIOS: list[Scenario] = [
     Scenario("wan_healthy_stays_quiet", _wan_healthy),
     Scenario("dns_spike", _dns_bad, _DNS_HISTORY),
     Scenario("all_enrichments_healthy", _dns_healthy),
+    Scenario("wifi_config_sins", _wifi_config_sins),
+    Scenario("network_config_sins", _network_config_sins),
+    Scenario("dhcp_pool_pressure", _dhcp_pool_pressure),
+    Scenario("no_config_plane", _no_config_plane),
 ]
 
 

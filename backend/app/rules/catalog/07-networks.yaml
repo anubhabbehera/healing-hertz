@@ -1,0 +1,117 @@
+# Configured networks: address space, VLAN tags and DHCP.
+#
+# Everything here reads the Integration API config plane, which arrived in
+# Network 10.x. On an older console, or with a key whose admin cannot read it,
+# the `networks` source yields nothing and every rule below stays quiet — see
+# app/rules/unsupported.py for what the operator is told instead.
+
+rules:
+  - id: network.dhcp_pool_pressure
+    kind: declarative
+    category: capacity
+    emits:
+      # Clients counted are the ones currently addressed inside the subnet, so
+      # this is occupancy rather than lease-table depth: it undercounts leases
+      # held by devices that are off right now. That makes it a floor, and a
+      # floor above 80% is already worth acting on.
+      - source: networks
+        where:
+          all:
+            - [network_enabled, eq, true]
+            - [network_dhcp_mode, eq, SERVER]
+            - [network_pool_pressure, gte, 0.8]
+        severity:
+          base: medium
+          escalate:
+            - when: [network_pool_pressure, gte, 0.95]
+              to: high
+        subject: site
+        title: >-
+          {network_name} is using {network_client_count} of {network_usable_hosts}
+          addresses
+        summary: >-
+          {network_cidr} has {network_usable_hosts} assignable addresses and
+          {network_client_count} are in use right now. A pool that fills stops handing
+          out leases, and the clients that fail to renew simply drop off the network.
+        recommendation: >-
+          Widen the subnet (a /24 gives 254 addresses) or shorten the DHCP lease time so
+          addresses from departed devices come back sooner.
+        evidence:
+          network: {raw: network_name}
+          cidr: {raw: network_cidr}
+          vlanId: {raw: network_vlan_id}
+          usableHosts: {raw: network_usable_hosts}
+          clients: {raw: network_client_count}
+
+  - id: network.tiny_subnet
+    kind: declarative
+    category: capacity
+    emits:
+      # A /29 or smaller holds at most six clients. That is deliberate for a
+      # point-to-point link and a mistake almost everywhere else, so this is
+      # informational: it reports the ceiling rather than claiming a fault.
+      - source: networks
+        where:
+          all:
+            - [network_enabled, eq, true]
+            - [network_dhcp_mode, eq, SERVER]
+            - [network_usable_hosts, lte, 6]
+        severity: low
+        subject: site
+        title: "{network_name} can only address {network_usable_hosts} clients"
+        summary: >-
+          {network_cidr} is a /{network_prefix_length}, which leaves
+          {network_usable_hosts} assignable addresses on a network that hands out DHCP
+          leases.
+        recommendation: >-
+          Confirm this ceiling is intentional. If the network is meant to grow, widen
+          the prefix now — renumbering later means re-addressing every static client.
+        evidence:
+          network: {raw: network_name}
+          cidr: {raw: network_cidr}
+          usableHosts: {raw: network_usable_hosts}
+          clients: {raw: network_client_count}
+
+  # Pairwise comparisons: a source row is one network, so no predicate over a
+  # single row can see a collision with another. See app/rules/networks.py.
+  - id: network.subnet_overlap
+    kind: python
+    impl: app.rules.networks:SubnetOverlap
+    category: wired
+    provides: [network_a, cidr_a, network_b, cidr_b]
+    emits:
+      - severity: high
+        title: "{network_a} and {network_b} share address space"
+        summary: >-
+          {network_a} ({cidr_a}) contains {network_b} ({cidr_b}). An address inside the
+          shared range belongs to both networks, so which routing and firewall rules
+          apply to it is decided by evaluation order rather than by design.
+        recommendation: >-
+          Renumber one of the two networks onto its own range. If the containment is
+          deliberate — carving a smaller block out of a larger one — confirm the firewall
+          rules for both still say what you mean, then dismiss this finding.
+        evidence:
+          networkA: {raw: network_a}
+          cidrA: {raw: cidr_a}
+          networkB: {raw: network_b}
+          cidrB: {raw: cidr_b}
+
+  - id: network.vlan_id_reuse
+    kind: python
+    impl: app.rules.networks:DuplicateVlanId
+    category: wired
+    provides: [vlan_id, networks, network_count]
+    emits:
+      - severity: high
+        title: "VLAN {vlan_id} is configured on {network_count} networks"
+        summary: >-
+          {networks} all carry VLAN id {vlan_id}. The tag is what a switch forwards on,
+          so these are one broadcast domain under several names, and isolation set on
+          one of them is not isolation the others get.
+        recommendation: >-
+          Give each network its own VLAN id, or merge the duplicates into a single
+          network definition.
+        evidence:
+          vlanId: {raw: vlan_id}
+          networks: {raw: networks}
+          networkCount: {raw: network_count}

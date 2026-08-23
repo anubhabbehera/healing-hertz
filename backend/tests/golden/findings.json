@@ -15,7 +15,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -249,6 +251,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -313,7 +347,9 @@
       "wifi.high_retries",
       "wired.poe_limited",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -530,6 +566,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -595,7 +663,9 @@
       "device.unsupported",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -845,6 +915,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -912,6 +1014,8 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only",
       "device.recent_reboot"
     ],
     "findings": [
@@ -1192,6 +1296,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -1257,7 +1393,9 @@
       "device.stale_uptime",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -1506,6 +1644,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -1572,6 +1742,8 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only",
       "device.recent_reboot"
     ],
     "findings": [
@@ -1837,6 +2009,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -1902,7 +2106,9 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.narrow_5_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -2153,6 +2359,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -2217,7 +2455,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -2451,6 +2691,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -2516,7 +2788,9 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.legacy_radio_standard",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -2766,6 +3040,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -2831,7 +3137,9 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.legacy_radio_standard",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -3081,6 +3389,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -3146,7 +3486,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -3396,6 +3738,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -3461,7 +3835,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -3711,6 +4087,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -3774,7 +4182,9 @@
       "wifi.high_retries",
       "wired.poe_limited",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -3985,6 +4395,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -4050,7 +4492,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -4301,6 +4745,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -4365,7 +4841,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -4599,6 +5077,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -4664,7 +5174,9 @@
       "site.gateway_saturation",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -4915,6 +5427,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -4979,6 +5523,8 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only",
       "clients.none_on_ap"
     ],
     "findings": [
@@ -5212,6 +5758,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -5278,7 +5856,9 @@
       "clients.excessive_roaming",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -5548,6 +6128,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -5610,7 +6222,9 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
-      "clients.slow_phy_rate"
+      "clients.slow_phy_rate",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -5919,6 +6533,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -5984,7 +6630,9 @@
       "clients.slow_phy_rate",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -6333,6 +6981,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -6397,7 +7077,9 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
-      "clients.slow_phy_rate"
+      "clients.slow_phy_rate",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -6735,6 +7417,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -6796,7 +7510,9 @@
       "wan.latency_worsening",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -7077,6 +7793,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -7140,7 +7888,9 @@
       "wired.poe_limited",
       "firmware.version_drift",
       "wifi.wide_24_width",
-      "clients.unauthorized_guests"
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -7374,6 +8124,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -7440,7 +8222,9 @@
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
-      "dns.anomalies"
+      "dns.anomalies",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
     ],
     "findings": [
       {
@@ -7742,6 +8526,38 @@
         "subject_name": "Office AP"
       },
       {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
         "rule_id": "wired.poe_limited",
         "severity": "medium",
         "category": "wired",
@@ -7790,6 +8606,1569 @@
     ]
   },
   "all_enrichments_healthy": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "security.policy_audit",
+      "wifi.auto_optimize",
+      "wifi.radio_config_audit"
+    ]
+  },
+  "wifi_config_sins": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "wifi.open_network",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "wifi.legacy_basic_rate",
+      "wifi.legacy_basic_rate",
+      "wifi.ssid_count_24",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only",
+      "wifi.band_steering_off",
+      "wifi.roaming_assist_off",
+      "wifi.hidden_ssid",
+      "wifi.mac_filtering"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.band_steering_off",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Guest broadcasts on both bands without band steering",
+        "summary": "Guest is on 2.4, 5 GHz with band steering off. Clients pick a band on signal strength alone, and 2.4 GHz carries further, so dual-band devices settle on the slower, more congested band and stay there.",
+        "evidence": {
+          "ssid": "Guest",
+          "bands": "2.4, 5"
+        },
+        "recommendation": "Enable band steering on this network so 5 GHz-capable clients are pushed to 5 GHz.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.hidden_ssid",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT hides its name",
+        "summary": "Home-IoT suppresses its SSID in beacons. The name is still carried in every client's probe requests, so it is not hidden from anyone scanning; meanwhile clients configured for it probe for it constantly, which slows roaming and leaks the name wherever those devices travel.",
+        "evidence": {
+          "ssid": "Home-IoT"
+        },
+        "recommendation": "Broadcast the SSID and rely on the passphrase for access control.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.legacy_basic_rate",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Guest still advertises 5500 kbps as a basic rate",
+        "summary": "On 2.4 GHz, Guest sends management frames at 5500 kbps. Beacons at that rate take airtime away from every other network on the channel, and the low rate is also what lets a distant client cling to this AP instead of roaming.",
+        "evidence": {
+          "ssid": "Guest",
+          "basicRateKbps24": 5500,
+          "bands": "2.4, 5"
+        },
+        "recommendation": "Raise the minimum data rate to 6 Mbps (12 Mbps if no 802.11b-era client needs the network). Check for legacy IoT devices first \u2014 anything 802.11b-only will stop associating.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.legacy_basic_rate",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Home-IoT still advertises 1000 kbps as a basic rate",
+        "summary": "On 2.4 GHz, Home-IoT sends management frames at 1000 kbps. Beacons at that rate take airtime away from every other network on the channel, and the low rate is also what lets a distant client cling to this AP instead of roaming.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "basicRateKbps24": 1000,
+          "bands": "2.4"
+        },
+        "recommendation": "Raise the minimum data rate to 6 Mbps (12 Mbps if no 802.11b-era client needs the network). Check for legacy IoT devices first \u2014 anything 802.11b-only will stop associating.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.mac_filtering",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras filters 2 MAC addresses (ALLOW)",
+        "summary": "MAC addresses travel unencrypted in every frame and are trivially cloned, so this list is a maintenance burden rather than a security control \u2014 and modern clients randomise their MAC per network, which is what silently breaks an allow-list.",
+        "evidence": {
+          "ssid": "Cameras",
+          "action": "ALLOW",
+          "entries": 2
+        },
+        "recommendation": "Keep the list only if it is an operational convenience. For access control, use a separate SSID with its own passphrase, or 802.1X.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.open_network",
+        "severity": "high",
+        "category": "wifi",
+        "title": "Guest broadcasts with no encryption",
+        "summary": "Guest is an open network on 2.4, 5 GHz. Every frame on it is readable by anyone in range, including the traffic of clients that think they are on a private link.",
+        "evidence": {
+          "ssid": "Guest",
+          "security": "OPEN",
+          "bands": "2.4, 5"
+        },
+        "recommendation": "Set WPA2/WPA3 with a passphrase. If it has to stay passphrase-free for guests, switch it to Enhanced Open (OWE), which encrypts without one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.roaming_assist_off",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT has BSS transition (802.11v) disabled",
+        "summary": "Home-IoT cannot suggest a better AP to a client, so a device walking away from one AP holds on until the link is barely usable rather than moving to the nearer one.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "fastRoaming": false
+        },
+        "recommendation": "Enable BSS transition on this network. Pair it with fast roaming (802.11r) if the client mix tolerates it.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.ssid_count_24",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "4 SSIDs broadcast on 2.4 GHz",
+        "summary": "Every SSID on a band is a separate BSS, and each one beacons roughly ten times a second per AP regardless of how many clients it has. 4 of them multiplies that overhead across every AP on the channel, on the band that has the least room to spare.",
+        "evidence": {
+          "ssidCount": 4,
+          "ssids": [
+            {
+              "ssid": "Cameras",
+              "security": "WPA2_PERSONAL",
+              "bands": "2.4"
+            },
+            {
+              "ssid": "Guest",
+              "security": "OPEN",
+              "bands": "2.4, 5"
+            },
+            {
+              "ssid": "Home",
+              "security": "WPA2_WPA3_PERSONAL",
+              "bands": "2.4, 5"
+            },
+            {
+              "ssid": "Home-IoT",
+              "security": "WPA2_PERSONAL",
+              "bands": "2.4"
+            }
+          ]
+        },
+        "recommendation": "Fold SSIDs together where the difference is only a VLAN \u2014 one network with per-device VLAN assignment costs one BSS instead of several. Restrict the ones that remain to the bands that need them.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "security.policy_audit",
+      "wan.latency_loss",
+      "wifi.auto_optimize",
+      "wifi.band_steering_ineffective",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
+    ]
+  },
+  "network_config_sins": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "network.subnet_overlap",
+      "network.vlan_id_reuse",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "network.tiny_subnet",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "network.subnet_overlap",
+        "severity": "high",
+        "category": "wired",
+        "title": "Default and Lab share address space",
+        "summary": "Default (192.168.1.0/24) contains Lab (192.168.1.128/25). An address inside the shared range belongs to both networks, so which routing and firewall rules apply to it is decided by evaluation order rather than by design.",
+        "evidence": {
+          "networkA": "Default",
+          "cidrA": "192.168.1.0/24",
+          "networkB": "Lab",
+          "cidrB": "192.168.1.128/25"
+        },
+        "recommendation": "Renumber one of the two networks onto its own range. If the containment is deliberate \u2014 carving a smaller block out of a larger one \u2014 confirm the firewall rules for both still say what you mean, then dismiss this finding.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "network.tiny_subnet",
+        "severity": "low",
+        "category": "capacity",
+        "title": "IoT can only address 6 clients",
+        "summary": "192.168.20.0/29 is a /29, which leaves 6 assignable addresses on a network that hands out DHCP leases.",
+        "evidence": {
+          "network": "IoT",
+          "cidr": "192.168.20.0/29",
+          "usableHosts": 6,
+          "clients": 0
+        },
+        "recommendation": "Confirm this ceiling is intentional. If the network is meant to grow, widen the prefix now \u2014 renumbering later means re-addressing every static client.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "network.vlan_id_reuse",
+        "severity": "high",
+        "category": "wired",
+        "title": "VLAN 30 is configured on 2 networks",
+        "summary": "Guest, Lab all carry VLAN id 30. The tag is what a switch forwards on, so these are one broadcast domain under several names, and isolation set on one of them is not isolation the others get.",
+        "evidence": {
+          "vlanId": 30,
+          "networks": "Guest, Lab",
+          "networkCount": 2
+        },
+        "recommendation": "Give each network its own VLAN id, or merge the duplicates into a single network definition.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "security.policy_audit",
+      "wan.latency_loss",
+      "wifi.auto_optimize",
+      "wifi.band_steering_ineffective",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
+    ]
+  },
+  "dhcp_pool_pressure": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "network.dhcp_pool_pressure",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "network.tiny_subnet",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "network.dhcp_pool_pressure",
+        "severity": "high",
+        "category": "capacity",
+        "title": "Default is using 7 of 6 addresses",
+        "summary": "192.168.1.104/29 has 6 assignable addresses and 7 are in use right now. A pool that fills stops handing out leases, and the clients that fail to renew simply drop off the network.",
+        "evidence": {
+          "network": "Default",
+          "cidr": "192.168.1.104/29",
+          "vlanId": 1,
+          "usableHosts": 6,
+          "clients": 7
+        },
+        "recommendation": "Widen the subnet (a /24 gives 254 addresses) or shorten the DHCP lease time so addresses from departed devices come back sooner.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "network.tiny_subnet",
+        "severity": "low",
+        "category": "capacity",
+        "title": "Default can only address 6 clients",
+        "summary": "192.168.1.104/29 is a /29, which leaves 6 assignable addresses on a network that hands out DHCP leases.",
+        "evidence": {
+          "network": "Default",
+          "cidr": "192.168.1.104/29",
+          "usableHosts": 6,
+          "clients": 7
+        },
+        "recommendation": "Confirm this ceiling is intentional. If the network is meant to grow, widen the prefix now \u2014 renumbering later means re-addressing every static client.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "security.policy_audit",
+      "wan.latency_loss",
+      "wifi.auto_optimize",
+      "wifi.band_steering_ineffective",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
+    ]
+  },
+  "no_config_plane": {
     "order": [
       "device.offline",
       "device.high_cpu",
@@ -8075,9 +10454,18 @@
       }
     ],
     "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "network.config_audit",
       "security.policy_audit",
+      "wan.latency_loss",
       "wifi.auto_optimize",
-      "wifi.radio_config_audit"
+      "wifi.band_steering_ineffective",
+      "wifi.config_audit",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
     ]
   }
 }
