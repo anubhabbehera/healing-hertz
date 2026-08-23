@@ -196,3 +196,50 @@ async def test_reload_picks_up_a_file_written_after_startup(api, tmp_path, monke
     finally:
         get_settings.cache_clear()
         load_catalog.cache_clear()
+
+
+# --- stale run cleanup -----------------------------------------------------
+
+
+async def _seed_running_run(run_id: str) -> None:
+    from app.db import repo
+    from app.db.engine import get_session_factory
+
+    async with get_session_factory()() as session:
+        await repo.create_run(session, run_id)
+
+
+async def test_clear_stale_marks_orphaned_runs_failed(api):
+    await _seed_running_run("stale0000001")
+
+    body = (await api.post("/api/scans/clear-stale")).json()
+    assert body["cleared"] == 1
+
+    status = (await api.get("/api/scans/stale0000001")).json()
+    assert status["status"] == "failed"
+    assert status["error"]
+
+    # Nothing left to clear on a second press.
+    assert (await api.post("/api/scans/clear-stale")).json()["cleared"] == 0
+
+
+async def test_clear_stale_leaves_the_running_scan_alone(api, monkeypatch):
+    await _seed_running_run("live00000001")
+    await _seed_running_run("stale0000002")
+    monkeypatch.setattr("app.api.routes_scan.active_run_id", lambda: "live00000001")
+
+    assert (await api.post("/api/scans/clear-stale")).json()["cleared"] == 1
+    assert (await api.get("/api/scans/live00000001")).json()["status"] == "running"
+    assert (await api.get("/api/scans/stale0000002")).json()["status"] == "failed"
+
+
+async def test_startup_clears_runs_left_over_from_a_restart(db):
+    await _seed_running_run("crashed00001")
+
+    app = create_app()
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            status = (await client.get("/api/scans/crashed00001")).json()
+    assert status["status"] == "failed"
+    assert "Interrupted" in status["error"]

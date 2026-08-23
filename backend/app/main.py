@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,12 +12,21 @@ from app.api import (
     routes_scan,
     routes_settings,
 )
-from app.db.engine import dispose, init_db
+from app.db import repo
+from app.db.engine import dispose, get_session_factory, init_db
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    # Scans only exist in the process that started them, so any run still marked
+    # running belongs to a previous life of this server and will never finish.
+    async with get_session_factory()() as session:
+        abandoned = await repo.abandon_stale_runs(session)
+    if abandoned:
+        logger.info("Marked %d stale running scan(s) as failed on startup", abandoned)
     yield
     await dispose()
 

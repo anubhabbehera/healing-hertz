@@ -67,11 +67,14 @@ export default function AddRule({ data, editing, onDone }: {
 
   const files = useQuery({ queryKey: ["ruleFiles"], queryFn: api.ruleFiles });
 
-  // Pressing Edit on a rule loads its file into the editor.
+  // Pressing Edit on a rule loads its file into the editor. The file arrives
+  // from a query, so seeding the editor from it is exactly the external-system
+  // sync an effect is for; there is no render-time value to derive it from.
   useEffect(() => {
     if (!editing) return;
     const file = files.data?.files.find((f) => f.name === editing);
     if (file) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setFilename(file.name);
       setPasted(file.content);
     }

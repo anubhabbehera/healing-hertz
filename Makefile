@@ -52,10 +52,11 @@ test:
 coverage:
 	cd $(BACKEND) && uv run pytest -q --cov=app --cov-report=xml --cov-report=term-missing
 
-## lint: ruff (backend) and TypeScript typecheck (frontend)
+## lint: ruff (backend), TypeScript typecheck and oxlint (frontend)
 lint:
 	cd $(BACKEND) && uv run ruff check app tests
 	cd $(FRONTEND) && npx tsc -b --noEmit
+	cd $(FRONTEND) && npm run lint
 
 ## validate-rules: check the rule catalog loads (no scan, no network)
 validate-rules:

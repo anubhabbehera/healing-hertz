@@ -1094,6 +1094,7 @@ input:disabled { opacity: 0.5; }
   background: var(--critical-soft);
   border-color: color-mix(in srgb, var(--critical) 30%, transparent);
 }
+.callout button { margin-top: 10px; }
 
 .muted { color: var(--ink-muted); }
 .kv { display: grid; grid-template-columns: 240px 1fr; row-gap: 9px; font-size: 13.5px; }

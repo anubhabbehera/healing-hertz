@@ -10,7 +10,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.config import get_settings
 from app.db import repo
-from app.scan.orchestrator import run_scan, scan_lock
+from app.scan.orchestrator import active_run_id, run_scan, scan_lock, scan_slot
 from app.scan.progress import create_progress, get_progress
 
 from .deps import get_session, make_unifi_client
@@ -39,13 +39,29 @@ async def start_scan(session: AsyncSession = Depends(get_session)) -> dict:
     client = make_unifi_client(settings)
 
     async def _run() -> None:
-        async with scan_lock:
+        async with scan_slot(run_id):
             await run_scan(run_id, client, settings, progress)
 
     task = asyncio.create_task(_run())
     _tasks.add(task)
     task.add_done_callback(_tasks.discard)
     return {"run_id": run_id}
+
+
+@router.post("/clear-stale")
+async def clear_stale(session: AsyncSession = Depends(get_session)) -> dict:
+    """Fail runs stuck at 'running' — leftovers from a crash or restart.
+
+    The scan actually executing here (if any) is left alone; everything else
+    marked running has no task behind it and would sit there forever.
+    """
+    in_flight = active_run_id()
+    cleared = await repo.abandon_stale_runs(
+        session,
+        error="Cleared — this scan was no longer running",
+        exclude={in_flight} if in_flight else None,
+    )
+    return {"cleared": cleared}
 
 
 @router.get("/{run_id}")
