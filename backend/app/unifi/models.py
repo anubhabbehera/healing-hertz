@@ -227,3 +227,18 @@ class WifiBroadcast(UnifiModel):
     client_filtering_policy: WifiClientFiltering | None = Field(
         None, alias="clientFilteringPolicy"
     )
+
+
+class SwitchStackUnit(UnifiModel):
+    id: int | None = None
+    mac_address: str = Field("", alias="macAddress")
+    # ACTIVE_CONTROLLER | BACKUP_CONTROLLER | MEMBER
+    role: str | None = None
+    order: int | None = None
+
+
+class SwitchStack(UnifiModel):
+    id: str
+    device_id: str | None = Field(None, alias="deviceId")
+    name: str = ""
+    units: list[SwitchStackUnit] = Field(default_factory=list)

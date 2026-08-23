@@ -11,7 +11,7 @@ DEMO_DB     := $(BACKEND)/healing_hertz.demo.db
 export VERSION REVISION BUILD_DATE
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev demo stop restart test coverage lint validate-rules fmt \
+.PHONY: help setup dev demo demo-seed stop restart test coverage lint validate-rules fmt \
         build audit check docker-build docker-up docker-down docker-logs \
         clean clean-demo
 
@@ -97,6 +97,11 @@ docker-logs:
 	docker compose logs -f
 
 # ------------------------------------------------------------------ chores ---
+
+## demo-seed: fill the demo database with 24 scans of history (trends need it)
+demo-seed:
+	cd $(BACKEND) && DEMO_MODE=true DB_PATH=./healing_hertz.demo.db \
+		uv run python -m app.demo.seed
 
 ## clean-demo: delete the demo database only
 clean-demo:

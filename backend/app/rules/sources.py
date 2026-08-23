@@ -18,7 +18,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
-from app.analytics import subnets, timeseries
+from app.analytics import capacity, metrics, subnets, timeseries, topology
 from app.collectors.snapshot import Snapshot
 
 from .base import RunHistory
@@ -545,6 +545,41 @@ _TREND_BINDINGS = {
 }
 
 
+def _with_current_scan(snapshot: Snapshot, history: RunHistory) -> list[timeseries.Series]:
+    """Stored history with this scan's own readings appended.
+
+    Metrics are written to the database after the rules have run, so the
+    history a rule is handed stops one scan short. Judging the newest reading
+    is most of the point of having a baseline, so it is added here rather than
+    left for the next scan to notice.
+    """
+    at = snapshot.collected_at
+    live = {(r.metric, r.subject_id): r for r in metrics.readings(snapshot)}
+    merged: list[timeseries.Series] = []
+    for series in history.series:
+        reading = live.pop((series.metric, series.subject_id), None)
+        points = list(series.points)
+        if reading is not None:
+            points.append(timeseries.Point(at=at, value=reading.value))
+        merged.append(timeseries.Series(
+            metric=series.metric,
+            subject_id=series.subject_id,
+            subject_name=reading.subject_name if reading else series.subject_name,
+            points=points,
+        ))
+    # Anything measured for the first time this scan: one point, no statistics,
+    # and every rule requires a sample count it cannot yet meet.
+    merged.extend(
+        timeseries.Series(
+            metric=reading.metric, subject_id=reading.subject_id,
+            subject_name=reading.subject_name,
+            points=[timeseries.Point(at=at, value=reading.value)],
+        )
+        for reading in live.values()
+    )
+    return merged
+
+
 @register(
     "metric_trends",
     _TREND_BINDINGS,
@@ -555,7 +590,7 @@ _TREND_BINDINGS = {
     ),
 )
 def _metric_trends(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
-    for series in history.series:
+    for series in _with_current_scan(snapshot, history):
         values = series.values
         latest = series.latest
         if latest is None:
@@ -606,4 +641,162 @@ def _metric_trends(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
             ),
             subject_id=series.subject_id,
             subject_name=series.subject_name,
+        )
+
+
+# --- topology and wired capacity -------------------------------------------
+
+
+def _topology(snapshot: Snapshot) -> topology.Topology:
+    """The uplink tree for this snapshot, built from the device details."""
+    by_id = {d.id: d for d in snapshot.devices}
+    return topology.build([
+        topology.Link(
+            device_id=dev_id,
+            name=detail.name or detail.model or dev_id,
+            uplink_id=detail.uplink.device_id if detail.uplink else None,
+            model=detail.model,
+            kind=topology.device_kind(by_id[dev_id], detail) if dev_id in by_id else "other",
+        )
+        for dev_id, detail in snapshot.device_details.items()
+    ])
+
+
+_TOPOLOGY_BINDINGS = {
+    "device_id", "device_name", "device_model", "device_kind",
+    "uplink_name", "uplink_depth", "is_root", "in_uplink_cycle",
+    "downstream_devices", "downstream_aps", "downstream_names",
+}
+
+
+@register(
+    "device_topology",
+    _TOPOLOGY_BINDINGS,
+    doc=(
+        "Every device with its place in the uplink tree: how many hops from the "
+        "gateway it sits, and what loses its path if it stops."
+    ),
+)
+def _device_topology(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    tree = _topology(snapshot)
+    for dev_id, link in tree.links.items():
+        downstream = tree.descendants(dev_id)
+        uplink = tree.links.get(link.uplink_id) if link.uplink_id else None
+        yield Row(
+            vars={
+                "device_id": dev_id,
+                "device_name": link.name,
+                "device_model": link.model,
+                "device_kind": link.kind,
+                "uplink_name": uplink.name if uplink else None,
+                "uplink_depth": tree.depth(dev_id),
+                "is_root": dev_id in tree.roots,
+                "in_uplink_cycle": dev_id in tree.cyclic,
+                "downstream_devices": len(downstream),
+                "downstream_aps": sum(
+                    1 for d in downstream if tree.links[d].kind == "access_point"
+                ),
+                # Rendered here because a template cannot join a list, and the
+                # names are what makes a blast radius mean something.
+                "downstream_names": ", ".join(
+                    sorted(tree.links[d].name for d in downstream)
+                ) or None,
+            },
+            subject_type="device",
+            subject_id=dev_id,
+            subject_name=link.name,
+        )
+
+
+_SWITCH_CAPACITY_BINDINGS = {
+    "device_id", "device_name", "device_model",
+    "uplink_speed_mbps", "downstream_speed_mbps", "oversubscription_ratio",
+    "active_ports", "poe_powered_ports", "poe_demand_w", "poe_budget_w",
+    "poe_utilization",
+}
+
+
+@register(
+    "switch_capacity",
+    _SWITCH_CAPACITY_BINDINGS,
+    doc=(
+        "Per switching device: link speed behind the uplink against the uplink "
+        "itself, and committed PoE against the model's published budget. The "
+        "PoE bindings are null for a model whose budget is not known."
+    ),
+)
+def _switch_capacity(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    tree = _topology(snapshot)
+    for dev_id, detail in snapshot.device_details.items():
+        link = tree.links.get(dev_id)
+        if link is None or link.kind not in ("switch", "gateway"):
+            continue
+        up_ports = [p for p in detail.interfaces.ports if p.state == "UP"]
+        # The uplink is the fastest connected port: the API does not say which
+        # port faces the parent, and on a correctly wired switch the widest
+        # link is the one that does.
+        uplink_mbps = max((p.speed_mbps or 0 for p in up_ports), default=0)
+        downstream_mbps = sum(p.speed_mbps or 0 for p in up_ports) - uplink_mbps
+        over = capacity.oversubscription(uplink_mbps, downstream_mbps)
+        # Only ports actually delivering power count. A PoE-capable port with
+        # nothing attached reports enabled with its state DOWN, and counting
+        # those would have every populated switch claiming several times its
+        # own budget.
+        poe = capacity.poe_load(
+            [
+                (p.poe.standard, p.poe.type, p.poe.state in ("UP", "LIMITED"))
+                for p in detail.interfaces.ports if p.poe is not None
+            ],
+            detail.model,
+        )
+        yield Row(
+            vars={
+                "device_id": dev_id,
+                "device_name": link.name,
+                "device_model": detail.model,
+                "uplink_speed_mbps": over.uplink_mbps,
+                "downstream_speed_mbps": over.downstream_mbps,
+                "oversubscription_ratio": over.ratio,
+                "active_ports": len(up_ports),
+                "poe_powered_ports": poe.powered_ports,
+                "poe_demand_w": poe.demand_w,
+                "poe_budget_w": poe.budget_w,
+                "poe_utilization": poe.utilization,
+            },
+            subject_type="device",
+            subject_id=dev_id,
+            subject_name=link.name,
+        )
+
+
+_STACK_BINDINGS = {
+    "stack_id", "stack_name", "stack_unit_count",
+    "stack_active_controllers", "stack_backup_controllers",
+}
+
+
+@register(
+    "switch_stacks",
+    _STACK_BINDINGS,
+    doc=(
+        "Configured switch stacks and the role each member holds. Yields "
+        "nothing when the config plane is unreadable or nothing is stacked."
+    ),
+)
+def _switch_stacks(snapshot: Snapshot, history: RunHistory) -> Iterator[Row]:
+    if snapshot.config is None:
+        return
+    for stack in snapshot.config.switch_stacks:
+        roles = [u.role for u in stack.units]
+        yield Row(
+            vars={
+                "stack_id": stack.id,
+                "stack_name": stack.name or stack.id,
+                "stack_unit_count": len(stack.units),
+                "stack_active_controllers": roles.count("ACTIVE_CONTROLLER"),
+                "stack_backup_controllers": roles.count("BACKUP_CONTROLLER"),
+            },
+            subject_type="device",
+            subject_id=stack.device_id or stack.id,
+            subject_name=stack.name or stack.id,
         )

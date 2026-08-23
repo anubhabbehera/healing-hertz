@@ -7,12 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.advisor.schema import AdvicePlan
-from app.analytics import subnets
+from app.analytics import metrics
 from app.analytics.timeseries import Point, Series
+from app.analytics.topology import device_kind
 from app.collectors.snapshot import Snapshot
 from app.rules import score_from_severities
 from app.rules.base import Finding, HistoricalRun, RunHistory, UnsupportedCheck
-from app.unifi.models import DeviceDetail, DeviceOverview
 
 from .models import Dismissal, FindingRow, MetricSnapshot, ScanRun, SuggestionRow
 
@@ -64,95 +64,26 @@ async def mark_failed(session: AsyncSession, run_id: str, error: str) -> None:
 
 
 def _metric_rows(run_id: str, snapshot: Snapshot, score: int) -> list[MetricSnapshot]:
+    """This run's readings as storable rows.
+
+    The readings themselves are defined once in app/analytics/metrics.py, so
+    what a rule sees mid-scan and what the database keeps afterwards cannot
+    drift apart. The health score is the exception: it is computed from the
+    findings, which is after the point those readings are taken.
+    """
     rows = [
         MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                       subject_name=snapshot.site.name, metric="site.health_score", value=score),
-        MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                       subject_name=snapshot.site.name, metric="site.client_count",
-                       value=len(snapshot.clients)),
-        MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                       subject_name=snapshot.site.name, metric="site.device_online_count",
-                       value=sum(1 for d in snapshot.devices if d.state == "ONLINE")),
+                       subject_name=snapshot.site.name, metric="site.health_score",
+                       value=float(score)),
     ]
-    for dev_id, stats in snapshot.device_stats.items():
-        detail = snapshot.device_details.get(dev_id)
-        name = detail.name if detail else dev_id
-        for metric, value in [
-            ("device.cpu_pct", stats.cpu_utilization_pct),
-            ("device.mem_pct", stats.memory_utilization_pct),
-            ("device.uptime_sec", stats.uptime_sec),
-        ]:
-            if value is not None:
-                rows.append(MetricSnapshot(run_id=run_id, subject_type="device",
-                                           subject_id=dev_id, subject_name=name,
-                                           metric=metric, value=float(value)))
-        for radio in stats.interfaces.radios:
-            if radio.tx_retries_pct is not None:
-                rows.append(MetricSnapshot(
-                    run_id=run_id, subject_type="radio",
-                    subject_id=f"{dev_id}:{radio.frequency_ghz}",
-                    subject_name=f"{name} {radio.frequency_ghz} GHz",
-                    metric="radio.tx_retries_pct", value=radio.tx_retries_pct))
-    for dev_id, detail in snapshot.device_details.items():
-        for port in detail.interfaces.ports:
-            if port.state == "UP" and port.speed_mbps is not None:
-                rows.append(MetricSnapshot(
-                    run_id=run_id, subject_type="port",
-                    subject_id=f"{dev_id}:{port.idx}",
-                    subject_name=f"{detail.name} port {port.idx}",
-                    metric="port.speed_mbps", value=float(port.speed_mbps)))
-    # Address-pool occupancy is stored as a metric so it can be trended: a pool
-    # at 60% is fine, a pool that has climbed 3 points a week is a date.
-    if snapshot.config is not None:
-        client_ips = [c.ip_address for c in snapshot.clients]
-        for net in snapshot.config.networks:
-            ipv4 = net.ipv4_configuration
-            cidr = subnets.network_of(
-                ipv4.host_ip_address if ipv4 else None,
-                ipv4.prefix_length if ipv4 else None,
-            )
-            pressure = subnets.pool_pressure(
-                subnets.hosts_in(cidr, client_ips), subnets.usable_hosts(cidr)
-            )
-            if pressure is not None:
-                rows.append(MetricSnapshot(
-                    run_id=run_id, subject_type="network", subject_id=net.id,
-                    subject_name=net.name, metric="network.pool_pressure_pct",
-                    value=round(pressure * 100, 2)))
-    if snapshot.wan is not None:
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="WAN", metric="wan.latency_ms",
-                                   value=snapshot.wan.latency_ms))
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="WAN", metric="wan.loss_pct",
-                                   value=snapshot.wan.loss_pct))
-    if snapshot.dns is not None:
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="DNS", metric="dns.blocked_pct",
-                                   value=round(snapshot.dns.blocked_pct, 2)))
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="DNS", metric="dns.queries_24h",
-                                   value=float(snapshot.dns.queries)))
+    rows.extend(
+        MetricSnapshot(
+            run_id=run_id, subject_type=r.subject_type, subject_id=r.subject_id,
+            subject_name=r.subject_name, metric=r.metric, value=r.value,
+        )
+        for r in metrics.readings(snapshot)
+    )
     return rows
-
-
-def _device_kind(overview: DeviceOverview, detail: DeviceDetail | None) -> str:
-    """Coarse hardware class, from whichever feature shape the API returned."""
-    if detail is not None and detail.features is not None:
-        if detail.features.gateway is not None:
-            return "gateway"
-        if detail.features.access_point is not None:
-            return "access_point"
-        if detail.features.switching is not None:
-            return "switch"
-    features = set(overview.features)
-    if "gateway" in features:
-        return "gateway"
-    if "accessPoint" in features:
-        return "access_point"
-    if "switching" in features:
-        return "switch"
-    return "other"
 
 
 def _device_rows(snapshot: Snapshot) -> list[dict]:
@@ -175,7 +106,7 @@ def _device_rows(snapshot: Snapshot) -> list[dict]:
             "model": dev.model,
             "mac": dev.mac_address,
             "ip": dev.ip_address,
-            "kind": _device_kind(dev, detail),
+            "kind": device_kind(dev, detail),
             "state": dev.state,
             "supported": dev.supported,
             "firmware_version": dev.firmware_version,

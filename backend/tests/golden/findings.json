@@ -13,6 +13,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -127,6 +128,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -346,6 +365,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
       "wifi.wpa2_only",
@@ -484,6 +504,24 @@
         "subject_type": "device",
         "subject_id": "sw2",
         "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -660,6 +698,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "device.unsupported",
       "firmware.version_drift",
       "wifi.wide_24_width",
@@ -791,6 +830,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -1011,6 +1068,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -1172,6 +1230,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -1390,6 +1466,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "device.stale_uptime",
       "firmware.version_drift",
       "wifi.wide_24_width",
@@ -1520,6 +1597,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -1739,6 +1834,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -1885,6 +1981,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -2103,6 +2217,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.narrow_5_width",
@@ -2218,6 +2333,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -2453,6 +2586,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -2567,6 +2701,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -2785,6 +2937,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.legacy_radio_standard",
@@ -2900,6 +3053,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -3134,6 +3305,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.legacy_radio_standard",
@@ -3249,6 +3421,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -3484,11 +3674,13 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
       "wifi.wpa2_only",
-      "wifi.wpa2_only"
+      "wifi.wpa2_only",
+      "topology.deep_uplink_chain"
     ],
     "findings": [
       {
@@ -3598,6 +3790,40 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "topology.deep_uplink_chain",
+        "severity": "low",
+        "category": "capacity",
+        "title": "Patio AP is 4 hops from the gateway",
+        "summary": "Patio AP reaches the gateway through 4 devices, the last of them Living Room AP. Every hop is another device whose failure, reboot or firmware upgrade takes this one with it.",
+        "evidence": {
+          "device": "Patio AP",
+          "depth": 4,
+          "uplink": "Living Room AP"
+        },
+        "recommendation": "Shorten the chain where the cabling allows \u2014 a direct run to a switch nearer the gateway removes several dependencies at once.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -3833,11 +4059,14 @@
       "wifi.dfs_channel",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.uplink_cycle",
+      "topology.uplink_cycle",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
       "wifi.wpa2_only",
-      "wifi.wpa2_only"
+      "wifi.wpa2_only",
+      "topology.blast_radius"
     ],
     "findings": [
       {
@@ -3947,6 +4176,56 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "low",
+        "category": "capacity",
+        "title": "Rack Switch carries 3 devices (2 of them APs)",
+        "summary": "Garage AP, Office AP, Office Switch all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 2 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 3,
+          "downstreamAps": 2,
+          "downstream": "Garage AP, Office AP, Office Switch"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "topology.uplink_cycle",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Living Room AP reports an uplink path that loops",
+        "summary": "Following Living Room AP's uplink never arrives at the gateway \u2014 the chain returns to a device it already passed through. Mesh APs that each adopt the other as their uplink are the usual cause, and while traffic still flows, the path it takes is not the one the console is showing.",
+        "evidence": {
+          "device": "Living Room AP",
+          "uplink": "Patio AP",
+          "kind": "access_point"
+        },
+        "recommendation": "Check the uplink each of these APs is using. Pinning one of them to a wired uplink, or to a specific parent AP, resolves the loop.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "topology.uplink_cycle",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Patio AP reports an uplink path that loops",
+        "summary": "Following Patio AP's uplink never arrives at the gateway \u2014 the chain returns to a device it already passed through. Mesh APs that each adopt the other as their uplink are the usual cause, and while traffic still flows, the path it takes is not the one the console is showing.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplink": "Living Room AP",
+          "kind": "access_point"
+        },
+        "recommendation": "Check the uplink each of these APs is using. Pinning one of them to a wired uplink, or to a specific parent AP, resolves the loop.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -4181,6 +4460,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
       "wifi.wpa2_only",
@@ -4271,6 +4551,24 @@
         "subject_type": "device",
         "subject_id": "sw2",
         "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -4490,6 +4788,7 @@
       "wifi.high_retries",
       "wifi.retries_worsening",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -4604,6 +4903,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -4839,6 +5156,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -4953,6 +5271,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -5172,6 +5508,7 @@
       "wifi.high_retries",
       "wired.poe_limited",
       "site.gateway_saturation",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -5303,6 +5640,24 @@
         "subject_type": "device",
         "subject_id": "gw1",
         "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -5521,6 +5876,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "wifi.wpa2_only",
@@ -5634,6 +5990,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -5854,6 +6228,7 @@
       "wifi.high_retries",
       "wired.poe_limited",
       "clients.excessive_roaming",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -5984,6 +6359,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -6219,6 +6612,7 @@
       "wired.poe_limited",
       "capacity.ap_client_load",
       "wifi.band_steering_ineffective",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -6370,6 +6764,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -6628,6 +7040,7 @@
       "wifi.mesh_uplink",
       "wired.poe_limited",
       "clients.slow_phy_rate",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -6784,6 +7197,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wan.latency_loss",
@@ -7074,6 +7505,7 @@
       "wired.poe_limited",
       "wan.latency_loss",
       "wan.latency_loss",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -7225,6 +7657,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wan.latency_loss",
@@ -7508,6 +7958,7 @@
       "wifi.high_retries",
       "wired.poe_limited",
       "wan.latency_worsening",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -7622,6 +8073,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wan.latency_loss",
@@ -7886,6 +8355,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -8000,6 +8470,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -8219,6 +8707,7 @@
       "wifi.high_retries",
       "wired.poe_limited",
       "dns.anomalies",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -8402,6 +8891,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -8619,6 +9126,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -8733,6 +9241,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -8948,6 +9474,7 @@
       "wifi.legacy_basic_rate",
       "wifi.legacy_basic_rate",
       "wifi.ssid_count_24",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -9066,6 +9593,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -9430,6 +9975,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -9595,6 +10141,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -9814,6 +10378,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -9964,6 +10529,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -10182,6 +10765,7 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests"
@@ -10294,6 +10878,24 @@
         "subject_type": "site",
         "subject_id": null,
         "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "wifi.bad_24_channel",
@@ -10460,6 +11062,7 @@
       "dns.anomalies",
       "network.config_audit",
       "security.policy_audit",
+      "topology.stack_redundancy",
       "wan.latency_loss",
       "wifi.auto_optimize",
       "wifi.band_steering_ineffective",
@@ -10474,8 +11077,6 @@
       "device.high_cpu",
       "wired.uplink_negotiation",
       "trend.metric_anomaly",
-      "trend.approaching_limit",
-      "trend.approaching_limit",
       "firmware.update_available",
       "firmware.update_available",
       "wifi.bad_24_channel",
@@ -10485,8 +11086,12 @@
       "wifi.mesh_uplink",
       "wifi.high_retries",
       "wired.poe_limited",
+      "trend.metric_anomaly",
+      "trend.metric_anomaly",
       "trend.sustained_shift",
       "trend.sustained_shift",
+      "trend.approaching_limit",
+      "topology.blast_radius",
       "firmware.version_drift",
       "wifi.wide_24_width",
       "clients.unauthorized_guests",
@@ -10604,37 +11209,36 @@
         "subject_name": null
       },
       {
-        "rule_id": "trend.approaching_limit",
-        "severity": "high",
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
         "category": "capacity",
-        "title": "Living Room AP 2.4 GHz TX retries reaches 20 in about 4.5 days",
-        "summary": "TX retries for Living Room AP 2.4 GHz is at 15.1 and rising about 1.08 per day across 12 scans. Held to that trend it reaches 20 in roughly 4.5 days.",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
         "evidence": {
-          "metric": "radio.tx_retries_pct",
-          "subject": "Living Room AP 2.4 GHz",
-          "latest": 15.1,
-          "slopePerDay": 1.0799999999999998,
-          "target": 20.0,
-          "daysToTarget": 4.537037037037038
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
         },
-        "recommendation": "Deal with the cause while there is still headroom \u2014 the trend is what makes this actionable now rather than at the point it becomes an outage.",
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
         "subject_type": "device",
-        "subject_id": "ap1:2.4",
-        "subject_name": "Living Room AP 2.4 GHz"
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
       },
       {
         "rule_id": "trend.approaching_limit",
-        "severity": "high",
+        "severity": "medium",
         "category": "capacity",
-        "title": "Rack Switch memory reaches 90 in about 1.0 days",
-        "summary": "memory for Rack Switch is at 88.0 and rising about 2.00 per day across 10 scans. Held to that trend it reaches 90 in roughly 1.0 days.",
+        "title": "Rack Switch memory reaches 90 in about 22.8 days",
+        "summary": "memory for Rack Switch is at 44.5 and rising about 2.00 per day across 11 scans. Held to that trend it reaches 90 in roughly 22.8 days.",
         "evidence": {
           "metric": "device.mem_pct",
           "subject": "Rack Switch",
-          "latest": 88,
+          "latest": 44.5,
           "slopePerDay": 2.0,
           "target": 90.0,
-          "daysToTarget": 1.0
+          "daysToTarget": 22.75
         },
         "recommendation": "Deal with the cause while there is still headroom \u2014 the trend is what makes this actionable now rather than at the point it becomes an outage.",
         "subject_type": "device",
@@ -10660,17 +11264,36 @@
       },
       {
         "rule_id": "trend.metric_anomaly",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Office AP 2.4 GHz TX retries is 22.4, well outside its normal",
+        "summary": "TX retries for Office AP 2.4 GHz normally sits around 14.0; this scan read 22.4, which is 5.0 robust standard deviations away over 13 scans. The comparison is against this subject's own history, not against other devices, so it is unusual for this one specifically.",
+        "evidence": {
+          "metric": "radio.tx_retries_pct",
+          "subject": "Office AP 2.4 GHz",
+          "latest": 22.4,
+          "median": 14,
+          "zscore": 4.9854347826086975,
+          "samples": 13
+        },
+        "recommendation": "Check what changed around this scan \u2014 a new client, a firmware update, a config change. If the new level is the intended one, the baseline catches up on its own after a few more scans.",
+        "subject_type": "device",
+        "subject_id": "ap1:2.4",
+        "subject_name": "Office AP 2.4 GHz"
+      },
+      {
+        "rule_id": "trend.metric_anomaly",
         "severity": "high",
         "category": "capacity",
-        "title": "Dream Machine Pro CPU is 85.0, well outside its normal",
-        "summary": "CPU for Dream Machine Pro normally sits around 20.5; this scan read 85.0, which is 43.8 robust standard deviations away over 10 scans. The comparison is against this subject's own history, not against other devices, so it is unusual for this one specifically.",
+        "title": "Dream Machine Pro CPU is 93.4, well outside its normal",
+        "summary": "CPU for Dream Machine Pro normally sits around 21.0; this scan read 93.4, which is 98.3 robust standard deviations away over 11 scans. The comparison is against this subject's own history, not against other devices, so it is unusual for this one specifically.",
         "evidence": {
           "metric": "device.cpu_pct",
           "subject": "Dream Machine Pro",
-          "latest": 85,
-          "median": 20.5,
-          "zscore": 43.8425,
-          "samples": 10
+          "latest": 93.4,
+          "median": 21,
+          "zscore": 98.3421,
+          "samples": 11
         },
         "recommendation": "Check what changed around this scan \u2014 a new client, a firmware update, a config change. If the new level is the intended one, the baseline catches up on its own after a few more scans.",
         "subject_type": "device",
@@ -10678,42 +11301,1171 @@
         "subject_name": "Dream Machine Pro"
       },
       {
+        "rule_id": "trend.metric_anomaly",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch memory is 44.5, well outside its normal",
+        "summary": "memory for Rack Switch normally sits around 78.0; this scan read 44.5, which is 4.7 robust standard deviations away over 11 scans. The comparison is against this subject's own history, not against other devices, so it is unusual for this one specifically.",
+        "evidence": {
+          "metric": "device.mem_pct",
+          "subject": "Rack Switch",
+          "latest": 44.5,
+          "median": 78,
+          "zscore": -4.65405,
+          "samples": 11
+        },
+        "recommendation": "Check what changed around this scan \u2014 a new client, a firmware update, a config change. If the new level is the intended one, the baseline catches up on its own after a few more scans.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
         "rule_id": "trend.sustained_shift",
         "severity": "medium",
         "category": "capacity",
-        "title": "Living Room AP 2.4 GHz TX retries stepped up around 2026-01-09 12:00 UTC",
-        "summary": "TX retries for Living Room AP 2.4 GHz moved from about 4.2 to about 14.2 and stayed there \u2014 a level change starting around 2026-01-09 12:00 UTC, not a spike that recovered.",
+        "title": "Office AP 2.4 GHz TX retries stepped up around 2026-01-09 12:00 UTC",
+        "summary": "TX retries for Office AP 2.4 GHz moved from about 4.2 to about 14.3 and stayed there \u2014 a level change starting around 2026-01-09 12:00 UTC, not a spike that recovered.",
         "evidence": {
           "metric": "radio.tx_retries_pct",
-          "subject": "Living Room AP 2.4 GHz",
+          "subject": "Office AP 2.4 GHz",
           "changedAt": "2026-01-09 12:00 UTC",
           "before": 4.2,
-          "after": 14.2,
-          "samples": 12
+          "after": 14.35,
+          "samples": 13
         },
         "recommendation": "Look at what happened at that time rather than at what is happening now: a firmware upgrade, a device added, a channel or config change. The current reading is the new normal, so a spot check will look fine.",
         "subject_type": "device",
         "subject_id": "ap1:2.4",
-        "subject_name": "Living Room AP 2.4 GHz"
+        "subject_name": "Office AP 2.4 GHz"
       },
       {
         "rule_id": "trend.sustained_shift",
         "severity": "medium",
         "category": "capacity",
         "title": "Rack Switch memory stepped up around 2026-01-12 12:00 UTC",
-        "summary": "memory for Rack Switch moved from about 75.0 to about 85.0 and stayed there \u2014 a level change starting around 2026-01-12 12:00 UTC, not a spike that recovered.",
+        "summary": "memory for Rack Switch moved from about 75.0 to about 84.0 and stayed there \u2014 a level change starting around 2026-01-12 12:00 UTC, not a spike that recovered.",
         "evidence": {
           "metric": "device.mem_pct",
           "subject": "Rack Switch",
           "changedAt": "2026-01-12 12:00 UTC",
           "before": 75.0,
-          "after": 85.0,
-          "samples": 10
+          "after": 84,
+          "samples": 11
         },
         "recommendation": "Look at what happened at that time rather than at what is happening now: a firmware upgrade, a device added, a channel or config change. The current reading is the new normal, so a spot check will look fine.",
         "subject_type": "device",
         "subject_id": "sw1",
         "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "security.policy_audit",
+      "wan.latency_loss",
+      "wifi.auto_optimize",
+      "wifi.band_steering_ineffective",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
+    ]
+  },
+  "wired_capacity_strain": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "capacity.poe_budget",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "topology.blast_radius",
+      "capacity.switch_oversubscribed",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
+    ],
+    "findings": [
+      {
+        "rule_id": "capacity.poe_budget",
+        "severity": "high",
+        "category": "capacity",
+        "title": "Rack Switch PoE is committed to 150 W of a 95 W budget",
+        "summary": "5 powered ports on a USW-24-PoE can claim 150 W between them against a published budget of 95 W. A switch that runs out of PoE budget stops powering its lowest-priority port, which reads as a device randomly dropping off.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "poweredPorts": 5,
+          "demandW": 150.0,
+          "budgetW": 95.0
+        },
+        "recommendation": "Move a high-draw device to another switch or a PoE injector before adding anything else here. Ports set to a higher standard than the attached device needs reserve budget they never use \u2014 pinning those to the right class frees it.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "capacity.switch_oversubscribed",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch has 20000 Mbps behind a 1000 Mbps uplink",
+        "summary": "21 active ports total 20000 Mbps of link speed behind an uplink of 1000 Mbps \u2014 20:1. That is fine while the devices take turns and a hard ceiling when they do not, which is what a backup window or a camera fleet looks like.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "uplinkMbps": 1000,
+          "downstreamMbps": 20000,
+          "ratio": 20.0,
+          "activePorts": 21
+        },
+        "recommendation": "Move the heaviest talkers onto the switch nearest the gateway, or give this switch a faster uplink (an SFP+ port where it has one, or a LAG across two ports).",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.mesh_uplink",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Patio AP is wirelessly meshed via Living Room AP",
+        "summary": "Patio AP uplinks through Living Room AP over the air. A meshed AP splits its radio time between serving clients and relaying, roughly halving throughput per hop.",
+        "evidence": {
+          "device": "Patio AP",
+          "uplinkDevice": "Living Room AP",
+          "wirelessHops": 1
+        },
+        "recommendation": "Run Ethernet to this AP if at all possible. If it must stay meshed, keep it within one hop of a wired AP and make sure both radios see each other well above -65 dBm.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "security.policy_audit",
+      "wan.latency_loss",
+      "wifi.auto_optimize",
+      "wifi.band_steering_ineffective",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
+    ]
+  },
+  "deep_uplink_chain": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "topology.blast_radius",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only",
+      "topology.deep_uplink_chain"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "topology.deep_uplink_chain",
+        "severity": "low",
+        "category": "capacity",
+        "title": "Patio AP is 4 hops from the gateway",
+        "summary": "Patio AP reaches the gateway through 4 devices, the last of them Office Switch. Every hop is another device whose failure, reboot or firmware upgrade takes this one with it.",
+        "evidence": {
+          "device": "Patio AP",
+          "depth": 4,
+          "uplink": "Office Switch"
+        },
+        "recommendation": "Shorten the chain where the cabling allows \u2014 a direct run to a switch nearer the gateway removes several dependencies at once.",
+        "subject_type": "device",
+        "subject_id": "ap4",
+        "subject_name": "Patio AP"
+      },
+      {
+        "rule_id": "wifi.bad_24_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz on channel 3",
+        "summary": "Office AP uses 2.4 GHz channel 3; only channels 1, 6 and 11 are non-overlapping, so this channel interferes with two channel groups at once.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 3,
+          "widthMHz": 40
+        },
+        "recommendation": "Set the 2.4 GHz radio to channel 1, 6 or 11 (pick the least used by neighbors).",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 2.4 GHz channel 6",
+        "summary": "APs Living Room AP, Patio AP all broadcast on 2.4 GHz channel 6; co-channel contention reduces airtime for every client.",
+        "evidence": {
+          "channel": 6,
+          "aps": [
+            "Living Room AP",
+            "Patio AP"
+          ]
+        },
+        "recommendation": "Spread these APs across channels 1, 6 and 11.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.channel_overlap",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "2 APs share 5 GHz channel 149 at wide width",
+        "summary": "APs Living Room AP, Patio AP share 5 GHz channel 149 with 80 MHz+ width; wide overlapping channels amplify co-channel interference.",
+        "evidence": {
+          "channel": 149,
+          "aps": [
+            {
+              "ap": "Living Room AP",
+              "widthMHz": 80
+            },
+            {
+              "ap": "Patio AP",
+              "widthMHz": 80
+            }
+          ]
+        },
+        "recommendation": "Assign distinct 5 GHz channels (e.g. 36/52/100/149) or reduce channel width to 40 MHz in dense deployments.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.dfs_channel",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "Office AP 5 GHz on DFS channel 100",
+        "summary": "Office AP broadcasts on channel 100, which requires radar detection. A radar event silences the radio for 30 minutes and every client on it is disconnected.",
+        "evidence": {
+          "device": "Office AP",
+          "channel": 100,
+          "widthMHz": 80
+        },
+        "recommendation": "Move to a non-DFS channel (36-48 or 149-165) unless the band is too congested to avoid DFS. If channels are auto-assigned, pin this radio manually \u2014 automatic selection keeps returning to DFS.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.high_retries",
+        "severity": "medium",
+        "category": "wifi",
+        "title": "High TX retries on Office AP 2.4 GHz (22%)",
+        "summary": "22.4% of transmissions on Office AP's 2.4 GHz radio are retries \u2014 a sign of interference, distant clients, or co-channel contention.",
+        "evidence": {
+          "device": "Office AP",
+          "frequencyGHz": 2.4,
+          "txRetriesPct": 22.4
+        },
+        "recommendation": "Fix the channel plan first (overlap/width findings), then check for non-WiFi interferers near this AP and consider raising minimum data rates.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wide_24_width",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Office AP 2.4 GHz width is 40 MHz",
+        "summary": "40 MHz on 2.4 GHz consumes most of the band and almost always increases interference more than it adds throughput.",
+        "evidence": {
+          "device": "Office AP",
+          "widthMHz": 40,
+          "channel": 3
+        },
+        "recommendation": "Set 2.4 GHz channel width to 20 MHz.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Cameras is WPA2-only",
+        "summary": "Cameras accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Cameras",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wifi.wpa2_only",
+        "severity": "low",
+        "category": "wifi",
+        "title": "Home-IoT is WPA2-only",
+        "summary": "Home-IoT accepts WPA2 alone. WPA3 closes the offline dictionary attack that WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients working while newer ones negotiate WPA3.",
+        "evidence": {
+          "ssid": "Home-IoT",
+          "security": "WPA2_PERSONAL",
+          "pmfMode": "OPTIONAL"
+        },
+        "recommendation": "Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients that cannot handle the management-frame protection WPA3 requires; if any break, keep them on a separate WPA2 network rather than reverting this one.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "wired.poe_limited",
+        "severity": "medium",
+        "category": "wired",
+        "title": "PoE limited on Rack Switch port 5",
+        "summary": "Port 5 on Rack Switch is delivering limited PoE \u2014 the attached device may be underpowered, causing instability or reduced performance.",
+        "evidence": {
+          "device": "Rack Switch",
+          "port": 5,
+          "poeStandard": "802.3at",
+          "poeState": "LIMITED"
+        },
+        "recommendation": "Check the switch's total PoE budget and the attached device's power class; move high-draw devices to a port/switch with headroom or use a PoE+ injector.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "wired.uplink_negotiation",
+        "severity": "high",
+        "category": "wired",
+        "title": "Office AP port 1 linked at 100 Mbps (capable of 1000)",
+        "summary": "Port 1 on Office AP negotiated only 100 Mbps on a faster-capable link \u2014 the classic signature of a damaged cable or bad termination (a failed wire pair forces 100 Mbps).",
+        "evidence": {
+          "device": "Office AP",
+          "port": 1,
+          "speedMbps": 100,
+          "maxSpeedMbps": 1000,
+          "connector": "RJ45"
+        },
+        "recommendation": "Re-terminate or replace the cable on this port, then confirm it renegotiates at full speed. Also check for a forced-speed setting.",
+        "subject_type": "device",
+        "subject_id": "ap1",
+        "subject_name": "Office AP"
+      }
+    ],
+    "unsupported": [
+      "capacity.ap_client_load",
+      "clients.excessive_roaming",
+      "clients.slow_phy_rate",
+      "dns.anomalies",
+      "security.policy_audit",
+      "wan.latency_loss",
+      "wifi.auto_optimize",
+      "wifi.band_steering_ineffective",
+      "wifi.radio_config_audit",
+      "wifi.weak_rssi_clients"
+    ]
+  },
+  "stack_without_backup": {
+    "order": [
+      "device.offline",
+      "device.high_cpu",
+      "wired.uplink_negotiation",
+      "firmware.update_available",
+      "firmware.update_available",
+      "wifi.bad_24_channel",
+      "wifi.channel_overlap",
+      "wifi.channel_overlap",
+      "wifi.dfs_channel",
+      "wifi.mesh_uplink",
+      "wifi.high_retries",
+      "wired.poe_limited",
+      "topology.blast_radius",
+      "topology.stack_without_backup",
+      "firmware.version_drift",
+      "wifi.wide_24_width",
+      "clients.unauthorized_guests",
+      "wifi.wpa2_only",
+      "wifi.wpa2_only"
+    ],
+    "findings": [
+      {
+        "rule_id": "clients.unauthorized_guests",
+        "severity": "low",
+        "category": "clients",
+        "title": "1 guest client(s) stuck unauthorized",
+        "summary": "Guest clients are connected but not authorized through the portal \u2014 they hold an association without network access.",
+        "evidence": {
+          "clients": [
+            {
+              "name": "Guest Phone",
+              "mac": "aa:00:00:00:00:06",
+              "ip": "192.168.20.50"
+            }
+          ]
+        },
+        "recommendation": "Check the guest portal flow (captive portal reachability, voucher validity); authorize or disconnect these clients.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "device.high_cpu",
+        "severity": "high",
+        "category": "device_health",
+        "title": "High CPU on Dream Machine Pro (93%)",
+        "summary": "Dream Machine Pro is running at 93.4% CPU, which can cause latency and dropped features.",
+        "evidence": {
+          "device": "Dream Machine Pro",
+          "cpuUtilizationPct": 93.4,
+          "loadAverage5Min": 2.9
+        },
+        "recommendation": "Identify heavy features (IDS/IPS, DPI, smart queues) and disable or right-size them; check for runaway processes after a firmware update, or upgrade the gateway if sustained at high WAN throughput.",
+        "subject_type": "device",
+        "subject_id": "gw1",
+        "subject_name": "Dream Machine Pro"
+      },
+      {
+        "rule_id": "device.offline",
+        "severity": "critical",
+        "category": "device_health",
+        "title": "Garage AP is offline",
+        "summary": "Device Garage AP (UAP-AC-Lite) is not reachable by the controller.",
+        "evidence": {
+          "device": "Garage AP",
+          "model": "UAP-AC-Lite",
+          "mac": "74:ac:b9:00:00:06",
+          "state": "OFFLINE"
+        },
+        "recommendation": "Check power and PoE on the device's switch port, verify the uplink cable, and power-cycle the device. If it stays offline, factory-reset and re-adopt.",
+        "subject_type": "device",
+        "subject_id": "ap3",
+        "subject_name": "Garage AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Living Room AP",
+        "summary": "Living Room AP is on 6.6.50 with an update available.",
+        "evidence": {
+          "device": "Living Room AP",
+          "model": "U6-Lite",
+          "currentFirmware": "6.6.50"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "ap2",
+        "subject_name": "Living Room AP"
+      },
+      {
+        "rule_id": "firmware.update_available",
+        "severity": "medium",
+        "category": "firmware",
+        "title": "Firmware update available for Office Switch",
+        "summary": "Office Switch is on 6.6.10 with an update available.",
+        "evidence": {
+          "device": "Office Switch",
+          "model": "USW-Lite-8-PoE",
+          "currentFirmware": "6.6.10"
+        },
+        "recommendation": "Review the release notes and update during a maintenance window. Keep all APs on the same firmware to avoid roaming quirks.",
+        "subject_type": "device",
+        "subject_id": "sw2",
+        "subject_name": "Office Switch"
+      },
+      {
+        "rule_id": "firmware.version_drift",
+        "severity": "low",
+        "category": "firmware",
+        "title": "Access points run 2 different firmware versions",
+        "summary": "Roaming, band steering and fast-transition behaviour are negotiated between APs. When they run different firmware those features can behave inconsistently, producing dropouts that look like RF problems.",
+        "evidence": {
+          "versions": {
+            "6.6.55": [
+              "Office AP",
+              "Patio AP"
+            ],
+            "6.6.50": [
+              "Living Room AP"
+            ]
+          },
+          "newest": "6.6.55"
+        },
+        "recommendation": "Bring every AP to the same version (currently 6.6.55) in one maintenance window rather than updating them piecemeal.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
+      },
+      {
+        "rule_id": "topology.blast_radius",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Rack Switch carries 5 devices (4 of them APs)",
+        "summary": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP all reach the rest of the network through Rack Switch. It is not faulty \u2014 this is what its failure would cost: 4 access points go dark with it, and with them every client they serve.",
+        "evidence": {
+          "device": "Rack Switch",
+          "model": "USW-24-PoE",
+          "downstreamDevices": 5,
+          "downstreamAps": 4,
+          "downstream": "Garage AP, Living Room AP, Office AP, Office Switch, Patio AP"
+        },
+        "recommendation": "Keep this one on a UPS ahead of anything else, and treat its firmware upgrades as maintenance windows rather than routine. Where the hardware supports it, a second uplink to a different switch removes the dependency.",
+        "subject_type": "device",
+        "subject_id": "sw1",
+        "subject_name": "Rack Switch"
+      },
+      {
+        "rule_id": "topology.stack_without_backup",
+        "severity": "medium",
+        "category": "capacity",
+        "title": "Stack Rack Stack has no backup controller",
+        "summary": "Rack Stack runs 2 units with 1 active controller and no backup. If the controller unit fails the stack has nothing to fail over to, so the whole stack goes with it rather than just that unit.",
+        "evidence": {
+          "stack": "Rack Stack",
+          "units": 2,
+          "activeControllers": 1,
+          "backupControllers": 0
+        },
+        "recommendation": "Assign a backup controller role to one of the member units in the stack settings.",
+        "subject_type": "site",
+        "subject_id": null,
+        "subject_name": null
       },
       {
         "rule_id": "wifi.bad_24_channel",

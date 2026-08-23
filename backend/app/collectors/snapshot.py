@@ -17,6 +17,7 @@ from app.unifi.models import (
     Network,
     PendingDevice,
     Site,
+    SwitchStack,
     WifiBroadcast,
 )
 
@@ -37,6 +38,7 @@ class ConfigSnapshot:
 
     networks: list[Network] = field(default_factory=list)
     wifi: list[WifiBroadcast] = field(default_factory=list)
+    switch_stacks: list[SwitchStack] = field(default_factory=list)
 
 
 @dataclass
@@ -104,9 +106,13 @@ async def collect_snapshot(
     await emit("Reading site configuration")
     networks = await client.list_networks(site.id)
     wifi = await client.list_wifi_broadcasts(site.id)
+    stacks = await client.list_switch_stacks(site.id)
     # Both empty means the config plane is unreadable on this console, not that
     # the site has no networks -- every site has at least one.
-    config = ConfigSnapshot(networks=networks, wifi=wifi) if (networks or wifi) else None
+    config = (
+        ConfigSnapshot(networks=networks, wifi=wifi, switch_stacks=stacks)
+        if (networks or wifi) else None
+    )
 
     return Snapshot(
         collected_at=datetime.now(UTC),

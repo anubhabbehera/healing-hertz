@@ -22,7 +22,15 @@ from app.integrations.legacy_unifi import ClientRF, RfSnapshot
 from app.integrations.nextdns import DnsSnapshot
 from app.integrations.wan_probe import WanProbeResult
 from app.rules.base import HistoricalRun, RunHistory
-from app.unifi.models import PendingDevice, Radio, WifiClientFiltering
+from app.unifi.models import (
+    PendingDevice,
+    Port,
+    PortPoe,
+    Radio,
+    SwitchStack,
+    SwitchStackUnit,
+    WifiClientFiltering,
+)
 
 # Fixed so the golden file is reproducible. Rules only ever read *differences*
 # between run timestamps, never the absolute value, so any epoch works.
@@ -288,6 +296,46 @@ def _network_config_sins(s: Snapshot) -> None:
     by_id["net2"].ipv4_configuration.prefix_length = 29
 
 
+def _wired_capacity_strain(s: Snapshot) -> None:
+    """A switch asked to carry and to power more than it comfortably can.
+
+    The demo rack switch reports three active ports; a real one is full. Filling
+    it is what puts the uplink ratio and the PoE budget into the range the rules
+    are about.
+    """
+    sw1 = s.device_details["sw1"]
+    sw1.interfaces.ports.extend(
+        Port(
+            idx=idx, state="UP", connector="RJ45", maxSpeedMbps=1000, speedMbps=1000,
+            # Every port is PoE-capable; only the first three are powering
+            # anything, which is the distinction the budget arithmetic turns on.
+            poe=PortPoe(
+                standard="802.3at", type=2, enabled=True,
+                state="UP" if idx < 9 else "DOWN",
+            ),
+        )
+        for idx in range(6, 24)
+    )
+
+
+def _deep_uplink_chain(s: Snapshot) -> None:
+    """Four hops from the gateway: gw1 -> sw1 -> ap1 -> sw2 -> ap4."""
+    s.device_details["sw2"].uplink.device_id = "ap1"
+    s.device_details["ap4"].uplink.device_id = "sw2"
+
+
+def _stack_without_backup(s: Snapshot) -> None:
+    s.config.switch_stacks.append(SwitchStack(
+        id="stack1", deviceId="sw1", name="Rack Stack",
+        units=[
+            SwitchStackUnit(id=1, macAddress="74:ac:b9:00:00:02",
+                            role="ACTIVE_CONTROLLER", order=1),
+            SwitchStackUnit(id=2, macAddress="74:ac:b9:00:00:03",
+                            role="MEMBER", order=2),
+        ],
+    ))
+
+
 def _dhcp_pool_pressure(s: Snapshot) -> None:
     """Squeeze the default network until the addresses in use fill it.
 
@@ -368,6 +416,9 @@ SCENARIOS: list[Scenario] = [
     Scenario("dhcp_pool_pressure", _dhcp_pool_pressure),
     Scenario("no_config_plane", _no_config_plane),
     Scenario("metric_trends", None, _TREND_HISTORY),
+    Scenario("wired_capacity_strain", _wired_capacity_strain),
+    Scenario("deep_uplink_chain", _deep_uplink_chain),
+    Scenario("stack_without_backup", _stack_without_backup),
 ]
 
 

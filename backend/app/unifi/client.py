@@ -15,6 +15,7 @@ from .models import (
     Network,
     PendingDevice,
     Site,
+    SwitchStack,
     WifiBroadcast,
 )
 
@@ -32,6 +33,7 @@ class UnifiClientProtocol(Protocol):
     async def list_pending_devices(self) -> list[PendingDevice]: ...
     async def list_networks(self, site_id: str) -> list[Network]: ...
     async def list_wifi_broadcasts(self, site_id: str) -> list[WifiBroadcast]: ...
+    async def list_switch_stacks(self, site_id: str) -> list[SwitchStack]: ...
     async def aclose(self) -> None: ...
 
 
@@ -154,6 +156,12 @@ class UnifiClient:
         overviews = await self._optional_page(f"/v1/sites/{site_id}/wifi/broadcasts")
         details = await self._details(f"/v1/sites/{site_id}/wifi/broadcasts", overviews)
         return [WifiBroadcast.model_validate(w) for w in details]
+
+    async def list_switch_stacks(self, site_id: str) -> list[SwitchStack]:
+        # The list form already carries the units and their roles, which is all
+        # a redundancy check needs, so there is no detail fetch here.
+        raw = await self._optional_page(f"/v1/sites/{site_id}/switching/switch-stacks")
+        return [SwitchStack.model_validate(s) for s in raw]
 
     async def _optional_page(self, path: str) -> list[dict]:
         """Paginate a path that may not exist on this Network version."""

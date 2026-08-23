@@ -1,0 +1,192 @@
+# How the site is wired, and what each link is carrying.
+#
+# The uplink tree comes from what each device reports about its own uplink, so
+# these rules work on any console — unlike the switch-stack rule at the end,
+# which needs the Integration API config plane.
+
+rules:
+  - id: topology.blast_radius
+    kind: declarative
+    category: capacity
+    emits:
+      # The gateway is excluded: everything is behind it by definition, so
+      # saying so is not information. A switch or an AP carrying other devices
+      # is the useful case — it is a single point of failure that looks like
+      # ordinary hardware until it stops.
+      - source: device_topology
+        where:
+          all:
+            - [device_kind, ne, gateway]
+            - [downstream_devices, gte, 3]
+            - [downstream_aps, gte, 1]
+        severity:
+          base: low
+          escalate:
+            - when: [downstream_aps, gte, 4]
+              to: medium
+        title: >-
+          {device_name} carries {downstream_devices} devices ({downstream_aps} of them
+          APs)
+        summary: >-
+          {downstream_names} all reach the rest of the network through
+          {device_name}. It is not faulty — this is what its failure would cost:
+          {downstream_aps} access points go dark with it, and with them every client
+          they serve.
+        recommendation: >-
+          Keep this one on a UPS ahead of anything else, and treat its firmware
+          upgrades as maintenance windows rather than routine. Where the hardware
+          supports it, a second uplink to a different switch removes the dependency.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          downstreamDevices: {raw: downstream_devices}
+          downstreamAps: {raw: downstream_aps}
+          downstream: {raw: downstream_names}
+
+  - id: topology.deep_uplink_chain
+    kind: declarative
+    category: capacity
+    emits:
+      # Hops from the gateway. Each one adds a device that has to be up, and on
+      # wireless hops it also halves the throughput available to everything
+      # further out.
+      - source: device_topology
+        where: [uplink_depth, gte, 4]
+        severity: low
+        title: "{device_name} is {uplink_depth} hops from the gateway"
+        summary: >-
+          {device_name} reaches the gateway through {uplink_depth} devices, the last of
+          them {uplink_name}. Every hop is another device whose failure, reboot or
+          firmware upgrade takes this one with it.
+        recommendation: >-
+          Shorten the chain where the cabling allows — a direct run to a switch nearer
+          the gateway removes several dependencies at once.
+        evidence:
+          device: {raw: device_name}
+          depth: {raw: uplink_depth}
+          uplink: {raw: uplink_name}
+
+  - id: topology.uplink_cycle
+    kind: declarative
+    category: capacity
+    emits:
+      # A device whose uplink chain never reaches the gateway. Physically this
+      # is usually two mesh APs each reporting the other as its uplink, and it
+      # means the console's own topology view is wrong too.
+      - source: device_topology
+        where: [in_uplink_cycle, eq, true]
+        severity: medium
+        title: "{device_name} reports an uplink path that loops"
+        summary: >-
+          Following {device_name}'s uplink never arrives at the gateway — the chain
+          returns to a device it already passed through. Mesh APs that each adopt the
+          other as their uplink are the usual cause, and while traffic still flows, the
+          path it takes is not the one the console is showing.
+        recommendation: >-
+          Check the uplink each of these APs is using. Pinning one of them to a wired
+          uplink, or to a specific parent AP, resolves the loop.
+        evidence:
+          device: {raw: device_name}
+          uplink: {raw: uplink_name}
+          kind: {raw: device_kind}
+
+  - id: capacity.switch_oversubscribed
+    kind: declarative
+    category: capacity
+    emits:
+      # Link speed behind the uplink, per unit of uplink. Some oversubscription
+      # is the design — switches assume not everything transmits at once — so
+      # this only speaks up when the ratio is large enough that the assumption
+      # is doing real work.
+      - source: switch_capacity
+        where:
+          all:
+            - [oversubscription_ratio, gte, 8]
+            - [uplink_speed_mbps, gt, 0]
+        severity:
+          base: low
+          escalate:
+            - when: [oversubscription_ratio, gte, 16]
+              to: medium
+        title: >-
+          {device_name} has {downstream_speed_mbps} Mbps behind a
+          {uplink_speed_mbps} Mbps uplink
+        summary: >-
+          {active_ports} active ports total {downstream_speed_mbps} Mbps of link speed
+          behind an uplink of {uplink_speed_mbps} Mbps — {oversubscription_ratio:.0f}:1.
+          That is fine while the devices take turns and a hard ceiling when they do not,
+          which is what a backup window or a camera fleet looks like.
+        recommendation: >-
+          Move the heaviest talkers onto the switch nearest the gateway, or give this
+          switch a faster uplink (an SFP+ port where it has one, or a LAG across two
+          ports).
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          uplinkMbps: {raw: uplink_speed_mbps}
+          downstreamMbps: {raw: downstream_speed_mbps}
+          ratio: {raw: oversubscription_ratio}
+          activePorts: {raw: active_ports}
+
+  - id: capacity.poe_budget
+    kind: declarative
+    category: capacity
+    emits:
+      # Demand is the worst case each powered port is entitled to at its class,
+      # not what it is drawing: the API reports the class, never the watts. That
+      # is the right number for "can this switch power one more camera".
+      - source: switch_capacity
+        where:
+          all:
+            - [poe_budget_w, is_not_null]
+            - [poe_utilization, gte, 0.8]
+        severity:
+          base: medium
+          escalate:
+            - when: [poe_utilization, gte, 0.95]
+              to: high
+        title: >-
+          {device_name} PoE is committed to {poe_demand_w:.0f} W of a
+          {poe_budget_w:.0f} W budget
+        summary: >-
+          {poe_powered_ports} powered ports on a {device_model} can claim
+          {poe_demand_w:.0f} W between them against a published budget of
+          {poe_budget_w:.0f} W. A switch that runs out of PoE budget stops powering its
+          lowest-priority port, which reads as a device randomly dropping off.
+        recommendation: >-
+          Move a high-draw device to another switch or a PoE injector before adding
+          anything else here. Ports set to a higher standard than the attached device
+          needs reserve budget they never use — pinning those to the right class frees
+          it.
+        evidence:
+          device: {raw: device_name}
+          model: {raw: device_model}
+          poweredPorts: {raw: poe_powered_ports}
+          demandW: {raw: poe_demand_w}
+          budgetW: {raw: poe_budget_w}
+
+  - id: topology.stack_without_backup
+    kind: declarative
+    category: capacity
+    emits:
+      - source: switch_stacks
+        where:
+          all:
+            - [stack_unit_count, gte, 2]
+            - [stack_backup_controllers, eq, 0]
+        severity: medium
+        subject: site
+        title: "Stack {stack_name} has no backup controller"
+        summary: >-
+          {stack_name} runs {stack_unit_count} units with
+          {stack_active_controllers} active controller and no backup. If the controller
+          unit fails the stack has nothing to fail over to, so the whole stack goes with
+          it rather than just that unit.
+        recommendation: >-
+          Assign a backup controller role to one of the member units in the stack
+          settings.
+        evidence:
+          stack: {raw: stack_name}
+          units: {raw: stack_unit_count}
+          activeControllers: {raw: stack_active_controllers}
+          backupControllers: {raw: stack_backup_controllers}

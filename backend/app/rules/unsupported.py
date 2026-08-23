@@ -148,6 +148,19 @@ _CHECKS: list[tuple[UnsupportedCheck, str | None]] = [
     ),
     (
         UnsupportedCheck(
+            rule_id="topology.stack_redundancy",
+            title="Switch stack redundancy (controller and backup roles)",
+            reason=(
+                "Stack membership comes from the Integration API config plane "
+                "(Network 10.x and later), which is not readable here. Nothing is "
+                "stacked on a console that cannot report stacks, so this check simply "
+                "does not apply to most sites."
+            ),
+        ),
+        "config",
+    ),
+    (
+        UnsupportedCheck(
             rule_id="security.policy_audit",
             title="Firewall, UPnP, VLAN and port isolation policy",
             reason=(

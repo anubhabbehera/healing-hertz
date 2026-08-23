@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.analytics import subnets, timeseries
+from app.analytics import capacity, subnets, timeseries, topology
 
 BASE = datetime(2026, 1, 15, 12, tzinfo=UTC)
 
@@ -225,3 +225,106 @@ def test_cusum_ignores_a_spike_with_no_readings_behind_it():
 ])
 def test_cusum_stays_quiet_without_a_real_change(values):
     assert timeseries.cusum_changepoint(points(values)) is None
+
+
+# --- topology --------------------------------------------------------------
+
+
+def links(*pairs):
+    """(device_id, uplink_id) pairs as Links, named after their id."""
+    return [
+        topology.Link(device_id=d, name=d.upper(), uplink_id=u, kind=kind)
+        for d, u, kind in pairs
+    ]
+
+
+SITE = links(
+    ("gw", None, "gateway"),
+    ("sw1", "gw", "switch"),
+    ("sw2", "sw1", "switch"),
+    ("ap1", "sw1", "access_point"),
+    ("ap2", "sw2", "access_point"),
+)
+
+
+def test_depth_counts_uplink_hops_from_the_root():
+    tree = topology.build(SITE)
+    assert tree.roots == ["gw"]
+    assert [tree.depth(d) for d in ("gw", "sw1", "sw2", "ap2")] == [0, 1, 2, 3]
+
+
+def test_descendants_are_everything_that_loses_its_path():
+    tree = topology.build(SITE)
+    assert tree.descendants("sw1") == {"sw2", "ap1", "ap2"}
+    assert tree.descendants("sw2") == {"ap2"}
+    assert tree.descendants("ap2") == set()
+
+
+def test_a_device_whose_uplink_is_not_adopted_here_is_a_root():
+    tree = topology.build(links(("sw1", "missing", "switch")))
+    assert tree.roots == ["sw1"]
+    assert tree.depth("sw1") == 0
+
+
+def test_a_reported_uplink_cycle_terminates_instead_of_hanging():
+    tree = topology.build(links(
+        ("gw", None, "gateway"),
+        ("ap1", "ap2", "access_point"),
+        ("ap2", "ap1", "access_point"),
+    ))
+    assert tree.cyclic == {"ap1", "ap2"}
+    assert tree.depth("ap1") is None
+    assert tree.depth("gw") == 0
+    # The walk still terminates, and reports what it saw before looping.
+    assert set(tree.path_to_root("ap1")) == {"ap1", "ap2"}
+
+
+def test_blast_radius_ranks_the_widest_first_and_counts_aps():
+    radius = topology.blast_radius(topology.build(SITE))
+    assert [b.device_id for b in radius] == ["gw", "sw1", "sw2"]
+    sw1 = next(b for b in radius if b.device_id == "sw1")
+    assert (sw1.downstream, sw1.downstream_aps) == (3, 2)
+    assert sw1.downstream_names == ["AP1", "AP2", "SW2"]
+
+
+# --- wired capacity --------------------------------------------------------
+
+
+@pytest.mark.parametrize("standard,poe_type,watts", [
+    ("802.3af", None, 15.4),
+    ("802.3at", 2, 30.0),
+    ("802.3bt", 3, 60.0),
+    ("802.3bt", 4, 90.0),
+    # Type absent, or a shape the console spells differently.
+    ("802.3bt", None, 60.0),
+    ("802.3AT", 99, 30.0),
+])
+def test_port_poe_watts_reads_the_class(standard, poe_type, watts):
+    assert capacity.port_poe_watts(standard, poe_type, powering=True) == watts
+
+
+def test_a_port_powering_nothing_is_entitled_to_nothing():
+    assert capacity.port_poe_watts("802.3bt", 4, powering=False) == 0.0
+    assert capacity.port_poe_watts(None, None, powering=True) == 0.0
+
+
+def test_poe_load_sums_only_the_ports_delivering_power():
+    load = capacity.poe_load(
+        [("802.3at", 2, True), ("802.3at", 2, True), ("802.3at", 2, False)],
+        "USW-24-PoE",
+    )
+    assert (load.powered_ports, load.demand_w, load.budget_w) == (2, 60.0, 95.0)
+    assert load.utilization == pytest.approx(60 / 95)
+
+
+def test_an_unknown_model_yields_no_budget_and_so_no_utilization():
+    load = capacity.poe_load([("802.3at", 2, True)], "USW-Something-New")
+    assert load.budget_w is None and load.utilization is None
+    assert load.demand_w == 30.0
+
+
+def test_oversubscription_is_downstream_over_uplink():
+    assert capacity.oversubscription(1000, 20000).ratio == 20.0
+    # No uplink speed is no ratio, rather than a division by zero.
+    assert capacity.oversubscription(0, 20000).ratio is None
+    assert capacity.oversubscription(None, 20000).ratio is None

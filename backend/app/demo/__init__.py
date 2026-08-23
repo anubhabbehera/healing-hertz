@@ -10,6 +10,7 @@ from app.unifi.models import (
     Network,
     PendingDevice,
     Site,
+    SwitchStack,
     WifiBroadcast,
 )
 
@@ -50,6 +51,9 @@ class DemoUnifiClient:
 
     async def list_wifi_broadcasts(self, site_id: str) -> list[WifiBroadcast]:
         return [WifiBroadcast.model_validate(w) for w in _load("wifi.json")]
+
+    async def list_switch_stacks(self, site_id: str) -> list[SwitchStack]:
+        return [SwitchStack.model_validate(s) for s in _load("switch_stacks.json")]
 
     async def aclose(self) -> None:
         return None
