@@ -93,8 +93,15 @@ function stripLeadingH1(markdown) {
   return markdown.replace(/^#\s+.*\n+/, "");
 }
 
-/** YAML frontmatter values are quoted, so any quote in a title has to escape. */
-const quote = (value) => `"${value.replace(/"/g, '\\"')}"`;
+/**
+ * Quote a value for YAML frontmatter.
+ *
+ * JSON.stringify rather than escaping quotes by hand: escaping `"` alone leaves
+ * the backslash unescaped, so a value ending in one closes the string early and
+ * the next character escapes the closing quote instead. YAML's double-quoted
+ * scalars accept JSON's escapes, so this is both correct and complete.
+ */
+const quote = (value) => JSON.stringify(value);
 
 async function main() {
   // Wipe generated pages first so a renamed or removed source file cannot leave
