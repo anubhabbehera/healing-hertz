@@ -1,0 +1,86 @@
+---
+// The wiki shell. Markup mirrors frontend/src/App.tsx:26-40 so the topbar,
+// brand and nav pick up the app's own rules rather than re-implementing them —
+// which is also what makes Synth apply: its shadows key off these class names.
+import "@fontsource-variable/outfit";
+import "../../../frontend/src/styles.css";
+import "../styles/wiki.css";
+
+const REPO = "https://github.com/anubhabbehera/healing-hertz";
+
+interface Props {
+  frontmatter: { title: string; nav: string; source: string };
+}
+
+const { frontmatter } = Astro.props;
+
+/** Join a path onto the configured base without doubling or dropping slashes. */
+const url = (path: string) =>
+  `${import.meta.env.BASE_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+
+const NAV = [
+  { href: url("/"), label: "Overview" },
+  { href: url("/rules/"), label: "Rules" },
+  { href: url("/contributing/"), label: "Contributing" },
+  { href: url("/security/"), label: "Security" },
+];
+
+// Trailing slashes vary between the dev server and the built output, so
+// compare both sides normalised.
+const path = Astro.url.pathname.replace(/\/$/, "");
+const isCurrent = (href: string) => href.replace(/\/$/, "") === path;
+---
+
+<html lang="en" data-theme="synth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{frontmatter.title} — healing-hertz</title>
+    <meta
+      name="description"
+      content="Documentation for healing-hertz, a read-only health check for UniFi networks."
+    />
+    <!-- Synth is dark-only by design, so the browser is told outright rather
+         than left to guess from prefers-color-scheme. -->
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href={url("/wordmark-dark.svg")} type="image/svg+xml" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href={url("/")} aria-label="healing hertz — home">
+        <img class="brandmark" src={url("/wordmark-dark.svg")} alt="healing hertz" />
+      </a>
+      <nav>
+        {
+          NAV.map((item) => (
+            <a
+              href={item.href}
+              class={isCurrent(item.href) ? "active" : undefined}
+              aria-current={isCurrent(item.href) ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+      <div class="topbar-right">
+        <a class="chip" href={REPO}>GitHub</a>
+      </div>
+    </header>
+
+    <div class="content">
+      <h1 class="wiki-title">{frontmatter.title}</h1>
+      <article class="card prose">
+        <slot />
+      </article>
+      <footer class="wiki-foot">
+        <a href={`${REPO}/blob/main/${frontmatter.source}`}>
+          Edit <code>{frontmatter.source}</code> on GitHub
+        </a>
+        <span>
+          This page is generated from that file — change it there, not here.
+        </span>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -36,6 +36,21 @@ updates:
         applies-to: security-updates
         patterns: ["*"]
 
+  # The documentation site. Separate from /frontend because they share no
+  # lockfile — the site only borrows the app's stylesheet, not its dependencies.
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      site-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      site-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
   # Keeps the SHA-pinned actions in .github/workflows current. All bundled
   # into one PR — three separate action bumps is pure noise.
   - package-ecosystem: github-actions

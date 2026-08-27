@@ -95,3 +95,34 @@ jobs:
       # a visible signal, not block an unrelated PR from merging.
       - name: Scan dependencies for known CVEs
         run: make audit
+
+  site:
+    name: wiki build
+    runs-on: ubuntu-latest
+    env:
+      ASTRO_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies (from lockfile)
+        run: npm ci
+        working-directory: site
+
+      # Builds the wiki without deploying it. The deploy itself lives in
+      # pages.yml and only runs on main; this is here so a change that breaks
+      # the site — a renamed doc, a link sync-docs.mjs can no longer resolve —
+      # fails on the pull request instead of after merge.
+      #
+      # Deliberately not a required check, for the same reason as the audit
+      # job: the required check stays `lint & test`.
+      - name: Build wiki
+        run: npm run build
+        working-directory: site

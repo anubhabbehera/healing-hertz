@@ -7,6 +7,9 @@
 [![codecov](https://codecov.io/gh/anubhabbehera/healing-hertz/branch/main/graph/badge.svg)](https://codecov.io/gh/anubhabbehera/healing-hertz)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
+📖 **[Read the docs](https://anubhabbehera.github.io/healing-hertz/)** — this README, the rule-writing
+guide and the security policy, rendered in the tool's own theme.
+
 **A health check for your [UniFi](https://ui.com/) network.** Point it at your UniFi
 console, press one button, and get a plain-language report of what's wrong and what to
 do about it.
