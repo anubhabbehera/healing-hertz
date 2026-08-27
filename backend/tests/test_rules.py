@@ -189,3 +189,54 @@ async def test_disabled_radio_channel_zero_not_flagged(snapshot):
 
     payload = build_payload(findings, snapshot, RunHistory())
     assert "ch0 " not in payload and "channel 0" not in payload
+
+
+# --- configuration plane ---------------------------------------------------
+
+
+async def test_config_rules_fire_on_the_demo_config(snapshot):
+    findings, _ = run_rules(snapshot)
+    ids = rule_ids(findings)
+    assert "wifi.wpa2_only" in ids            # Home-IoT and Cameras
+    # A tidy demo config: none of these are true of it.
+    assert "wifi.open_network" not in ids
+    assert "wifi.hidden_ssid" not in ids
+    assert "network.subnet_overlap" not in ids
+    assert "network.vlan_id_reuse" not in ids
+
+
+async def test_every_config_rule_stays_quiet_without_the_config_plane(snapshot):
+    with_config, _ = run_rules(snapshot)
+    snapshot.config = None
+    without_config, unsupported = run_rules(snapshot)
+
+    config_rules = rule_ids(with_config) - rule_ids(without_config)
+    assert "wifi.wpa2_only" in config_rules
+    assert not rule_ids(without_config) & config_rules
+    # ... and the operator is told why rather than left with a silent gap.
+    assert {"network.config_audit", "wifi.config_audit"} <= {u.rule_id for u in unsupported}
+
+
+async def test_subnet_overlap_names_the_wider_network_first(snapshot):
+    lab = next(n for n in snapshot.config.networks if n.name == "Lab")
+    lab.ipv4_configuration.host_ip_address = "192.168.1.129"
+    lab.ipv4_configuration.prefix_length = 25
+
+    findings, _ = run_rules(snapshot)
+    overlap = next(f for f in findings if f.rule_id == "network.subnet_overlap")
+    assert overlap.evidence["networkA"] == "Default"
+    assert overlap.evidence["cidrB"] == "192.168.1.128/25"
+
+
+async def test_dhcp_pool_pressure_escalates_when_the_pool_is_nearly_full(snapshot):
+    net = next(n for n in snapshot.config.networks if n.name == "Guest")
+    # .105-.110 assignable, and six clients moved into it.
+    net.ipv4_configuration.host_ip_address = "192.168.1.104"
+    net.ipv4_configuration.prefix_length = 29
+    for client, last in zip(snapshot.clients, range(105, 111)):
+        client.ip_address = f"192.168.1.{last}"
+
+    findings, _ = run_rules(snapshot)
+    pressure = next(f for f in findings if f.rule_id == "network.dhcp_pool_pressure")
+    assert pressure.severity == Severity.HIGH
+    assert pressure.evidence["usableHosts"] == 6

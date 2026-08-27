@@ -1,0 +1,34 @@
+[
+  {
+    "id": "wl1", "name": "Home", "enabled": true, "type": "STANDARD",
+    "securityConfiguration": {"type": "WPA2_WPA3_PERSONAL", "pmfMode": "OPTIONAL", "fastRoamingEnabled": true},
+    "hideName": false, "clientIsolationEnabled": false, "bandSteeringEnabled": true,
+    "bssTransitionEnabled": true, "mloEnabled": false, "uapsdEnabled": true,
+    "broadcastingFrequenciesGHz": [2.4, 5],
+    "basicDataRateKbpsByFrequencyGHz": {"2.4": 6000, "5": 6000}
+  },
+  {
+    "id": "wl2", "name": "Home-IoT", "enabled": true, "type": "IOT_OPTIMIZED",
+    "securityConfiguration": {"type": "WPA2_PERSONAL", "pmfMode": "OPTIONAL", "fastRoamingEnabled": false},
+    "hideName": false, "clientIsolationEnabled": false, "bandSteeringEnabled": false,
+    "bssTransitionEnabled": true, "mloEnabled": false, "uapsdEnabled": true,
+    "broadcastingFrequenciesGHz": [2.4],
+    "basicDataRateKbpsByFrequencyGHz": {"2.4": 6000}
+  },
+  {
+    "id": "wl3", "name": "Guest", "enabled": true, "type": "STANDARD",
+    "securityConfiguration": {"type": "WPA2_WPA3_PERSONAL", "pmfMode": "OPTIONAL", "fastRoamingEnabled": false},
+    "hideName": false, "clientIsolationEnabled": true, "bandSteeringEnabled": true,
+    "bssTransitionEnabled": true, "mloEnabled": false, "uapsdEnabled": true,
+    "broadcastingFrequenciesGHz": [5],
+    "basicDataRateKbpsByFrequencyGHz": {"5": 6000}
+  },
+  {
+    "id": "wl4", "name": "Cameras", "enabled": true, "type": "STANDARD",
+    "securityConfiguration": {"type": "WPA2_PERSONAL", "pmfMode": "OPTIONAL", "fastRoamingEnabled": false},
+    "hideName": false, "clientIsolationEnabled": true, "bandSteeringEnabled": false,
+    "bssTransitionEnabled": true, "mloEnabled": false, "uapsdEnabled": true,
+    "broadcastingFrequenciesGHz": [2.4],
+    "basicDataRateKbpsByFrequencyGHz": {"2.4": 6000}
+  }
+]

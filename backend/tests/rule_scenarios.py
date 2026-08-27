@@ -16,12 +16,21 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
+from app.analytics.timeseries import Point, Series
 from app.collectors.snapshot import Snapshot, collect_snapshot
 from app.integrations.legacy_unifi import ClientRF, RfSnapshot
 from app.integrations.nextdns import DnsSnapshot
 from app.integrations.wan_probe import WanProbeResult
 from app.rules.base import HistoricalRun, RunHistory
-from app.unifi.models import PendingDevice, Radio
+from app.unifi.models import (
+    PendingDevice,
+    Port,
+    PortPoe,
+    Radio,
+    SwitchStack,
+    SwitchStackUnit,
+    WifiClientFiltering,
+)
 
 # Fixed so the golden file is reproducible. Rules only ever read *differences*
 # between run timestamps, never the absolute value, so any epoch works.
@@ -252,6 +261,130 @@ _DNS_HISTORY = RunHistory(runs=[
 ])
 
 
+def _wifi_config_sins(s: Snapshot) -> None:
+    """A config plane with the settings this catalog exists to catch.
+
+    The demo baseline is a tidy site on purpose -- a fixture that trips every
+    rule teaches nothing about which rule fired. The sins live here instead.
+    """
+    by_id = {w.id: w for w in s.config.wifi}
+    guest = by_id["wl3"]
+    guest.security_configuration.type = "OPEN"
+    guest.security_configuration.encryption = None
+    guest.broadcasting_frequencies_ghz = [2.4, 5]
+    guest.band_steering_enabled = False
+    guest.basic_data_rate_kbps = {"2.4": 5500, "5": 6000}
+
+    iot = by_id["wl2"]
+    iot.hide_name = True
+    iot.bss_transition_enabled = False
+    iot.basic_data_rate_kbps = {"2.4": 1000}
+
+    by_id["wl4"].client_filtering_policy = WifiClientFiltering(
+        action="ALLOW",
+        macAddressFilter=["aa:00:00:00:00:04", "aa:00:00:00:00:0b"],
+    )
+
+
+def _network_config_sins(s: Snapshot) -> None:
+    """Address space that collides with itself, and a subnet with no room."""
+    by_id = {n.id: n for n in s.config.networks}
+    lab = by_id["net4"]
+    lab.ipv4_configuration.host_ip_address = "192.168.1.129"  # inside Default's /24
+    lab.ipv4_configuration.prefix_length = 25
+    lab.vlan_id = 30  # already Guest's tag
+    by_id["net2"].ipv4_configuration.prefix_length = 29
+
+
+def _wired_capacity_strain(s: Snapshot) -> None:
+    """A switch asked to carry and to power more than it comfortably can.
+
+    The demo rack switch reports three active ports; a real one is full. Filling
+    it is what puts the uplink ratio and the PoE budget into the range the rules
+    are about.
+    """
+    sw1 = s.device_details["sw1"]
+    sw1.interfaces.ports.extend(
+        Port(
+            idx=idx, state="UP", connector="RJ45", maxSpeedMbps=1000, speedMbps=1000,
+            # Every port is PoE-capable; only the first three are powering
+            # anything, which is the distinction the budget arithmetic turns on.
+            poe=PortPoe(
+                standard="802.3at", type=2, enabled=True,
+                state="UP" if idx < 9 else "DOWN",
+            ),
+        )
+        for idx in range(6, 24)
+    )
+
+
+def _deep_uplink_chain(s: Snapshot) -> None:
+    """Four hops from the gateway: gw1 -> sw1 -> ap1 -> sw2 -> ap4."""
+    s.device_details["sw2"].uplink.device_id = "ap1"
+    s.device_details["ap4"].uplink.device_id = "sw2"
+
+
+def _stack_without_backup(s: Snapshot) -> None:
+    s.config.switch_stacks.append(SwitchStack(
+        id="stack1", deviceId="sw1", name="Rack Stack",
+        units=[
+            SwitchStackUnit(id=1, macAddress="74:ac:b9:00:00:02",
+                            role="ACTIVE_CONTROLLER", order=1),
+            SwitchStackUnit(id=2, macAddress="74:ac:b9:00:00:03",
+                            role="MEMBER", order=2),
+        ],
+    ))
+
+
+def _dhcp_pool_pressure(s: Snapshot) -> None:
+    """Squeeze the default network until the addresses in use fill it.
+
+    The demo site is a /24 with ten clients, which no threshold will ever trip.
+    Narrowing it to a /29 around the addresses those clients already hold is the
+    smallest change that produces a genuinely full pool.
+    """
+    net = next(n for n in s.config.networks if n.id == "net1")
+    net.ipv4_configuration.host_ip_address = "192.168.1.104"
+    net.ipv4_configuration.prefix_length = 29  # .105-.110 assignable
+    for client, ip in zip(
+        [c for c in s.clients if c.type == "WIRED"],
+        ["192.168.1.108", "192.168.1.109", "192.168.1.110"],
+    ):
+        client.ip_address = ip
+
+
+def _no_config_plane(s: Snapshot) -> None:
+    """A console too old for the config endpoints, or a key refused them."""
+    s.config = None
+
+
+def _series(metric: str, subject_id: str | None, name: str, values: list[float]) -> Series:
+    """A metric series ending at BASE_TIME, one scan a day, oldest first."""
+    last = len(values) - 1
+    return Series(
+        metric=metric, subject_id=subject_id, subject_name=name,
+        points=[
+            Point(at=BASE_TIME - timedelta(days=last - i), value=value)
+            for i, value in enumerate(values)
+        ],
+    )
+
+
+# One history covering all four shapes the trend rules look for: a spike that
+# has no history behind it, a step that held, a climb with a ceiling ahead of
+# it, and a slow decline.
+_TREND_HISTORY = RunHistory(series=[
+    _series("device.cpu_pct", "gw1", "Dream Machine Pro",
+            [20, 21, 19, 22, 20, 21, 20, 19, 21, 85]),
+    _series("radio.tx_retries_pct", "ap1:2.4", "Living Room AP 2.4 GHz",
+            [4, 4.5, 4, 5, 4.2, 14, 14.5, 13.8, 15, 14.2, 14, 15.1]),
+    _series("device.mem_pct", "sw1", "Rack Switch",
+            [70, 72, 74, 76, 78, 80, 82, 84, 86, 88]),
+    _series("site.health_score", None, "Home",
+            [80, 79, 78, 77, 76, 74, 73, 72, 70, 69, 68, 66]),
+])
+
+
 SCENARIOS: list[Scenario] = [
     Scenario("demo_baseline"),
     Scenario("degraded_and_pending", _degraded_and_pending),
@@ -278,6 +411,14 @@ SCENARIOS: list[Scenario] = [
     Scenario("wan_healthy_stays_quiet", _wan_healthy),
     Scenario("dns_spike", _dns_bad, _DNS_HISTORY),
     Scenario("all_enrichments_healthy", _dns_healthy),
+    Scenario("wifi_config_sins", _wifi_config_sins),
+    Scenario("network_config_sins", _network_config_sins),
+    Scenario("dhcp_pool_pressure", _dhcp_pool_pressure),
+    Scenario("no_config_plane", _no_config_plane),
+    Scenario("metric_trends", None, _TREND_HISTORY),
+    Scenario("wired_capacity_strain", _wired_capacity_strain),
+    Scenario("deep_uplink_chain", _deep_uplink_chain),
+    Scenario("stack_without_backup", _stack_without_backup),
 ]
 
 

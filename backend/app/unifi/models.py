@@ -149,3 +149,96 @@ class PendingDevice(UnifiModel):
     mac_address: str = Field("", alias="macAddress")
     name: str = ""
     model: str = ""
+
+
+# --- configuration plane ---------------------------------------------------
+#
+# Networks and WiFi broadcasts are configuration, not telemetry: they change
+# when an operator changes them, not between scans. Network 10.x exposes them
+# read-only, which is what makes a config audit possible without a local admin.
+
+
+class NetworkDhcp(UnifiModel):
+    mode: str | None = None  # SERVER | RELAY
+
+
+class NetworkIpv4(UnifiModel):
+    auto_scale_enabled: bool | None = Field(None, alias="autoScaleEnabled")
+    host_ip_address: str | None = Field(None, alias="hostIpAddress")
+    prefix_length: int | None = Field(None, alias="prefixLength")
+    dhcp_configuration: NetworkDhcp | None = Field(None, alias="dhcpConfiguration")
+
+
+class NetworkDhcpGuarding(UnifiModel):
+    trusted_dhcp_server_ip_addresses: list[str] = Field(
+        default_factory=list, alias="trustedDhcpServerIpAddresses"
+    )
+
+
+class Network(UnifiModel):
+    id: str
+    name: str = ""
+    enabled: bool = True
+    management: str | None = None  # UNMANAGED | GATEWAY | SWITCH
+    vlan_id: int | None = Field(None, alias="vlanId")
+    default: bool = False
+    # Only the gateway/switch-managed variants carry these; an unmanaged
+    # network leaves them null, which every rule over them treats as "unknown".
+    isolation_enabled: bool | None = Field(None, alias="isolationEnabled")
+    internet_access_enabled: bool | None = Field(None, alias="internetAccessEnabled")
+    ipv4_configuration: NetworkIpv4 | None = Field(None, alias="ipv4Configuration")
+    dhcp_guarding: NetworkDhcpGuarding | None = Field(None, alias="dhcpGuarding")
+
+
+class WifiSecurity(UnifiModel):
+    # OPEN | WPA2_PERSONAL | WPA3_PERSONAL | WPA2_WPA3_PERSONAL | *_ENTERPRISE
+    type: str | None = None
+    # Only on an OPEN network: ENHANCED_OPEN(_WITH_TRANSITION) is OWE, which is
+    # encrypted despite the type saying open.
+    encryption: str | None = None
+    pmf_mode: str | None = Field(None, alias="pmfMode")
+    fast_roaming_enabled: bool | None = Field(None, alias="fastRoamingEnabled")
+
+
+class WifiClientFiltering(UnifiModel):
+    action: str | None = None  # ALLOW | BLOCK
+    mac_address_filter: list[str] = Field(default_factory=list, alias="macAddressFilter")
+
+
+class WifiBroadcast(UnifiModel):
+    id: str
+    name: str = ""
+    enabled: bool = True
+    type: str | None = None  # STANDARD | IOT_OPTIMIZED
+    security_configuration: WifiSecurity | None = Field(None, alias="securityConfiguration")
+    hide_name: bool | None = Field(None, alias="hideName")
+    client_isolation_enabled: bool | None = Field(None, alias="clientIsolationEnabled")
+    band_steering_enabled: bool | None = Field(None, alias="bandSteeringEnabled")
+    bss_transition_enabled: bool | None = Field(None, alias="bssTransitionEnabled")
+    mlo_enabled: bool | None = Field(None, alias="mloEnabled")
+    uapsd_enabled: bool | None = Field(None, alias="uapsdEnabled")
+    broadcasting_frequencies_ghz: list[float] = Field(
+        default_factory=list, alias="broadcastingFrequenciesGHz"
+    )
+    # Keyed by band as a string, exactly as the API sends it ("2.4", "5").
+    basic_data_rate_kbps: dict[str, int] = Field(
+        default_factory=dict, alias="basicDataRateKbpsByFrequencyGHz"
+    )
+    client_filtering_policy: WifiClientFiltering | None = Field(
+        None, alias="clientFilteringPolicy"
+    )
+
+
+class SwitchStackUnit(UnifiModel):
+    id: int | None = None
+    mac_address: str = Field("", alias="macAddress")
+    # ACTIVE_CONTROLLER | BACKUP_CONTROLLER | MEMBER
+    role: str | None = None
+    order: int | None = None
+
+
+class SwitchStack(UnifiModel):
+    id: str
+    device_id: str | None = Field(None, alias="deviceId")
+    name: str = ""
+    units: list[SwitchStackUnit] = Field(default_factory=list)

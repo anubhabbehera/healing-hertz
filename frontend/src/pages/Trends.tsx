@@ -25,6 +25,8 @@ const METRICS: Metric[] = [
     hint: "a climb that never falls back is the interesting shape" },
   { id: "radio.tx_retries_pct", label: "Radio TX retries", perSubject: true, unit: "%",
     hint: "per radio; rising retries mean a degrading RF environment" },
+  { id: "network.pool_pressure_pct", label: "Address pool use", perSubject: true, unit: "%",
+    hint: "clients addressed inside each network, against what its prefix allows" },
 ];
 
 /** Which lines a widget draws.

@@ -5,15 +5,18 @@ from typing import Any, Protocol
 
 import httpx
 
-from .errors import UnifiAuthError, UnifiConnectionError, UnifiRateLimited
+from .errors import UnifiAuthError, UnifiConnectionError, UnifiError, UnifiRateLimited
 from .models import (
     AppInfo,
     ClientOverview,
     DeviceDetail,
     DeviceOverview,
     DeviceStats,
+    Network,
     PendingDevice,
     Site,
+    SwitchStack,
+    WifiBroadcast,
 )
 
 MAX_PAGE_SIZE = 200
@@ -28,6 +31,9 @@ class UnifiClientProtocol(Protocol):
     async def get_device_stats(self, site_id: str, device_id: str) -> DeviceStats | None: ...
     async def list_clients(self, site_id: str) -> list[ClientOverview]: ...
     async def list_pending_devices(self) -> list[PendingDevice]: ...
+    async def list_networks(self, site_id: str) -> list[Network]: ...
+    async def list_wifi_broadcasts(self, site_id: str) -> list[WifiBroadcast]: ...
+    async def list_switch_stacks(self, site_id: str) -> list[SwitchStack]: ...
     async def aclose(self) -> None: ...
 
 
@@ -132,3 +138,58 @@ class UnifiClient:
                 return []
             raise
         return [PendingDevice.model_validate(d) for d in raw]
+
+    # --- configuration plane ------------------------------------------------
+    #
+    # The list forms of these return a slim overview; the per-id form carries
+    # the settings an audit is actually about (DHCP mode, PMF, band steering).
+    # Both are 404 on Network versions older than the endpoint, and a key made
+    # under a restricted admin can 403 on them, so a missing config plane has to
+    # read as "not checkable" rather than as a failed scan.
+
+    async def list_networks(self, site_id: str) -> list[Network]:
+        overviews = await self._optional_page(f"/v1/sites/{site_id}/networks")
+        details = await self._details(f"/v1/sites/{site_id}/networks", overviews)
+        return [Network.model_validate(n) for n in details]
+
+    async def list_wifi_broadcasts(self, site_id: str) -> list[WifiBroadcast]:
+        overviews = await self._optional_page(f"/v1/sites/{site_id}/wifi/broadcasts")
+        details = await self._details(f"/v1/sites/{site_id}/wifi/broadcasts", overviews)
+        return [WifiBroadcast.model_validate(w) for w in details]
+
+    async def list_switch_stacks(self, site_id: str) -> list[SwitchStack]:
+        # The list form already carries the units and their roles, which is all
+        # a redundancy check needs, so there is no detail fetch here.
+        raw = await self._optional_page(f"/v1/sites/{site_id}/switching/switch-stacks")
+        return [SwitchStack.model_validate(s) for s in raw]
+
+    async def _optional_page(self, path: str) -> list[dict]:
+        """Paginate a path that may not exist on this Network version."""
+        try:
+            return await self._paginate(path)
+        except UnifiAuthError:
+            # A read-only key can be refused a config endpoint outright. That is
+            # a configuration answer, not an outage: report nothing and let the
+            # unsupported-checks list explain it.
+            return []
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code in (403, 404):
+                return []
+            raise
+
+    async def _details(self, base: str, overviews: list[dict]) -> list[dict]:
+        """Fetch the detail form of each item, falling back to the overview.
+
+        The overview is a strict subset of the detail, so an item whose detail
+        is unreachable still yields everything the list gave us.
+        """
+        out: list[dict] = []
+        for item in overviews:
+            item_id = item.get("id")
+            if not item_id:
+                continue
+            try:
+                out.append(await self._get(f"{base}/{item_id}"))
+            except (UnifiError, httpx.HTTPStatusError):
+                out.append(item)
+        return out

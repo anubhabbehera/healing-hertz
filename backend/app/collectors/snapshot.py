@@ -14,13 +14,31 @@ from app.unifi.models import (
     DeviceDetail,
     DeviceOverview,
     DeviceStats,
+    Network,
     PendingDevice,
     Site,
+    SwitchStack,
+    WifiBroadcast,
 )
 
 ProgressFn = Callable[[str], Awaitable[None]]
 
 DETAIL_CONCURRENCY = 5
+
+
+@dataclass
+class ConfigSnapshot:
+    """The site's configuration as the Integration API reports it.
+
+    Separate from the telemetry above because it can be absent: the endpoints
+    arrived in Network 10.x, and a key made under a restricted admin may be
+    refused them. None means "not readable here", which the unsupported-checks
+    list turns into an explanation rather than a silent gap.
+    """
+
+    networks: list[Network] = field(default_factory=list)
+    wifi: list[WifiBroadcast] = field(default_factory=list)
+    switch_stacks: list[SwitchStack] = field(default_factory=list)
 
 
 @dataclass
@@ -33,6 +51,7 @@ class Snapshot:
     device_stats: dict[str, DeviceStats] = field(default_factory=dict)
     clients: list[ClientOverview] = field(default_factory=list)
     pending_devices: list[PendingDevice] = field(default_factory=list)
+    config: ConfigSnapshot | None = None
     # Optional enrichments (None = the integration is not configured/available)
     rf: RfSnapshot | None = None
     dns: DnsSnapshot | None = None
@@ -84,6 +103,17 @@ async def collect_snapshot(
     await emit("Checking pending devices")
     pending = await client.list_pending_devices()
 
+    await emit("Reading site configuration")
+    networks = await client.list_networks(site.id)
+    wifi = await client.list_wifi_broadcasts(site.id)
+    stacks = await client.list_switch_stacks(site.id)
+    # Both empty means the config plane is unreadable on this console, not that
+    # the site has no networks -- every site has at least one.
+    config = (
+        ConfigSnapshot(networks=networks, wifi=wifi, switch_stacks=stacks)
+        if (networks or wifi) else None
+    )
+
     return Snapshot(
         collected_at=datetime.now(UTC),
         application_version=info.application_version,
@@ -93,4 +123,5 @@ async def collect_snapshot(
         device_stats=stats,
         clients=clients,
         pending_devices=pending,
+        config=config,
     )

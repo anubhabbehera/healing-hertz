@@ -226,8 +226,13 @@ frontend/dist/
 # never something the repository should carry.
 icon-cache/
 
-# Local scratch — screenshots, notes, anything not meant for the repo.
+# Local scratch — screenshots, notes, planning docs, anything not meant for
+# the repo.
 .local/
+
+# Agent tooling state. A global ignore already covers settings.local.json; this
+# covers whatever else lands in here, which is local configuration either way.
+.claude/
 
 # macOS
 .DS_Store

@@ -7,10 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.advisor.schema import AdvicePlan
+from app.analytics import metrics
+from app.analytics.timeseries import Point, Series
+from app.analytics.topology import device_kind
 from app.collectors.snapshot import Snapshot
 from app.rules import score_from_severities
 from app.rules.base import Finding, HistoricalRun, RunHistory, UnsupportedCheck
-from app.unifi.models import DeviceDetail, DeviceOverview
 
 from .models import Dismissal, FindingRow, MetricSnapshot, ScanRun, SuggestionRow
 
@@ -62,77 +64,26 @@ async def mark_failed(session: AsyncSession, run_id: str, error: str) -> None:
 
 
 def _metric_rows(run_id: str, snapshot: Snapshot, score: int) -> list[MetricSnapshot]:
+    """This run's readings as storable rows.
+
+    The readings themselves are defined once in app/analytics/metrics.py, so
+    what a rule sees mid-scan and what the database keeps afterwards cannot
+    drift apart. The health score is the exception: it is computed from the
+    findings, which is after the point those readings are taken.
+    """
     rows = [
         MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                       subject_name=snapshot.site.name, metric="site.health_score", value=score),
-        MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                       subject_name=snapshot.site.name, metric="site.client_count",
-                       value=len(snapshot.clients)),
-        MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                       subject_name=snapshot.site.name, metric="site.device_online_count",
-                       value=sum(1 for d in snapshot.devices if d.state == "ONLINE")),
+                       subject_name=snapshot.site.name, metric="site.health_score",
+                       value=float(score)),
     ]
-    for dev_id, stats in snapshot.device_stats.items():
-        detail = snapshot.device_details.get(dev_id)
-        name = detail.name if detail else dev_id
-        for metric, value in [
-            ("device.cpu_pct", stats.cpu_utilization_pct),
-            ("device.mem_pct", stats.memory_utilization_pct),
-            ("device.uptime_sec", stats.uptime_sec),
-        ]:
-            if value is not None:
-                rows.append(MetricSnapshot(run_id=run_id, subject_type="device",
-                                           subject_id=dev_id, subject_name=name,
-                                           metric=metric, value=float(value)))
-        for radio in stats.interfaces.radios:
-            if radio.tx_retries_pct is not None:
-                rows.append(MetricSnapshot(
-                    run_id=run_id, subject_type="radio",
-                    subject_id=f"{dev_id}:{radio.frequency_ghz}",
-                    subject_name=f"{name} {radio.frequency_ghz} GHz",
-                    metric="radio.tx_retries_pct", value=radio.tx_retries_pct))
-    for dev_id, detail in snapshot.device_details.items():
-        for port in detail.interfaces.ports:
-            if port.state == "UP" and port.speed_mbps is not None:
-                rows.append(MetricSnapshot(
-                    run_id=run_id, subject_type="port",
-                    subject_id=f"{dev_id}:{port.idx}",
-                    subject_name=f"{detail.name} port {port.idx}",
-                    metric="port.speed_mbps", value=float(port.speed_mbps)))
-    if snapshot.wan is not None:
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="WAN", metric="wan.latency_ms",
-                                   value=snapshot.wan.latency_ms))
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="WAN", metric="wan.loss_pct",
-                                   value=snapshot.wan.loss_pct))
-    if snapshot.dns is not None:
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="DNS", metric="dns.blocked_pct",
-                                   value=round(snapshot.dns.blocked_pct, 2)))
-        rows.append(MetricSnapshot(run_id=run_id, subject_type="site", subject_id=None,
-                                   subject_name="DNS", metric="dns.queries_24h",
-                                   value=float(snapshot.dns.queries)))
+    rows.extend(
+        MetricSnapshot(
+            run_id=run_id, subject_type=r.subject_type, subject_id=r.subject_id,
+            subject_name=r.subject_name, metric=r.metric, value=r.value,
+        )
+        for r in metrics.readings(snapshot)
+    )
     return rows
-
-
-def _device_kind(overview: DeviceOverview, detail: DeviceDetail | None) -> str:
-    """Coarse hardware class, from whichever feature shape the API returned."""
-    if detail is not None and detail.features is not None:
-        if detail.features.gateway is not None:
-            return "gateway"
-        if detail.features.access_point is not None:
-            return "access_point"
-        if detail.features.switching is not None:
-            return "switch"
-    features = set(overview.features)
-    if "gateway" in features:
-        return "gateway"
-    if "accessPoint" in features:
-        return "access_point"
-    if "switching" in features:
-        return "switch"
-    return "other"
 
 
 def _device_rows(snapshot: Snapshot) -> list[dict]:
@@ -155,7 +106,7 @@ def _device_rows(snapshot: Snapshot) -> list[dict]:
             "model": dev.model,
             "mac": dev.mac_address,
             "ip": dev.ip_address,
-            "kind": _device_kind(dev, detail),
+            "kind": device_kind(dev, detail),
             "state": dev.state,
             "supported": dev.supported,
             "firmware_version": dev.firmware_version,
@@ -322,6 +273,48 @@ async def compare_runs(session: AsyncSession, run_a: str, run_b: str) -> dict:
     }
 
 
+# How far back the trend read-model reaches. Series analysis wants many more
+# points than the run-to-run comparisons do -- a median and a slope over five
+# readings say very little -- but it still has to stay a bounded read.
+SERIES_RUNS = 200
+
+
+async def load_metric_series(session: AsyncSession, runs: int = SERIES_RUNS) -> list[Series]:
+    """Every stored metric over the last `runs` completed scans, oldest first.
+
+    One series per (metric, subject), which is the shape the trend statistics
+    take: they compare a subject against its own past, never against the site
+    average.
+    """
+    recent = (
+        select(ScanRun.id, ScanRun.started_at)
+        .where(ScanRun.status == "completed")
+        .order_by(ScanRun.started_at.desc())
+        .limit(runs)
+        .subquery()
+    )
+    result = await session.execute(
+        select(MetricSnapshot, recent.c.started_at)
+        .join(recent, MetricSnapshot.run_id == recent.c.id)
+        .order_by(recent.c.started_at.asc())
+    )
+
+    grouped: dict[tuple[str, str | None], Series] = {}
+    for snap, started_at in result.all():
+        key = (snap.metric, snap.subject_id)
+        series = grouped.get(key)
+        if series is None:
+            series = Series(
+                metric=snap.metric,
+                subject_id=snap.subject_id,
+                subject_name=snap.subject_name,
+                points=[],
+            )
+            grouped[key] = series
+        series.points.append(Point(at=_utc(started_at), value=snap.value))
+    return list(grouped.values())
+
+
 async def load_history(session: AsyncSession, n: int = 5) -> RunHistory:
     """Read-model of the last n completed runs for cross-run rules (newest first)."""
     runs = await session.execute(
@@ -348,7 +341,7 @@ async def load_history(session: AsyncSession, n: int = 5) -> RunHistory:
             site_metrics=site_metrics,
             finding_keys={(f.rule_id, f.subject_id) for f in run.findings},
         ))
-    return RunHistory(runs=history)
+    return RunHistory(runs=history, series=await load_metric_series(session))
 
 
 def _run_summary(run: ScanRun) -> dict:

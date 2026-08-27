@@ -85,7 +85,7 @@ def test_catalog_declares_every_rule_exactly_once():
     from app.rules.loader import load_catalog
 
     ids = [r.id for r in load_catalog().rules]
-    assert len(ids) == len(set(ids)) == 35
+    assert len(ids) == len(set(ids)) == 57
 
 
 def test_catalog_entry_rejects_unknown_field():

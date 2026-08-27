@@ -1,0 +1,225 @@
+# Broadcast WiFi settings: security, roaming and the rates a network insists on.
+#
+# These read configuration, not measurements, so they are stable between scans:
+# a finding here stays until someone changes the setting. Like 07-networks.yaml,
+# every rule needs the Integration API config plane and stays quiet without it.
+
+rules:
+  - id: wifi.open_network
+    kind: declarative
+    category: wifi
+    emits:
+      # OPEN with an `encryption` value is OWE (Enhanced Open), which is
+      # encrypted without a passphrase — genuinely open means both are absent.
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_security, eq, OPEN]
+            - [wifi_encryption, is_null]
+        severity: high
+        subject: site
+        title: "{wifi_name} broadcasts with no encryption"
+        summary: >-
+          {wifi_name} is an open network on {wifi_bands} GHz. Every frame on it is
+          readable by anyone in range, including the traffic of clients that think they
+          are on a private link.
+        recommendation: >-
+          Set WPA2/WPA3 with a passphrase. If it has to stay passphrase-free for guests,
+          switch it to Enhanced Open (OWE), which encrypts without one.
+        evidence:
+          ssid: {raw: wifi_name}
+          security: {raw: wifi_security}
+          bands: {raw: wifi_bands}
+
+  - id: wifi.wpa2_only
+    kind: declarative
+    category: wifi
+    emits:
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_security, in, [WPA2_PERSONAL, WPA2_ENTERPRISE]]
+        severity: low
+        subject: site
+        title: "{wifi_name} is WPA2-only"
+        summary: >-
+          {wifi_name} accepts WPA2 alone. WPA3 closes the offline dictionary attack that
+          WPA2's handshake allows, and the WPA2/WPA3 transition mode keeps older clients
+          working while newer ones negotiate WPA3.
+        recommendation: >-
+          Move this network to WPA2/WPA3 transition mode. Watch for older IoT clients
+          that cannot handle the management-frame protection WPA3 requires; if any
+          break, keep them on a separate WPA2 network rather than reverting this one.
+        evidence:
+          ssid: {raw: wifi_name}
+          security: {raw: wifi_security}
+          pmfMode: {raw: wifi_pmf_mode}
+
+  - id: wifi.legacy_basic_rate
+    kind: declarative
+    category: wifi
+    emits:
+      # The basic rate is the rate management frames go out at. At 1 Mbps a
+      # beacon occupies roughly 3.3% of the channel per BSS, before any data
+      # moves; at 6 Mbps it is about a fifth of that.
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_on_24, eq, true]
+            - [wifi_basic_rate_24_kbps, lte, 5500]
+        severity: medium
+        subject: site
+        title: >-
+          {wifi_name} still advertises {wifi_basic_rate_24_kbps} kbps as a basic rate
+        summary: >-
+          On 2.4 GHz, {wifi_name} sends management frames at
+          {wifi_basic_rate_24_kbps} kbps. Beacons at that rate take airtime away from
+          every other network on the channel, and the low rate is also what lets a
+          distant client cling to this AP instead of roaming.
+        recommendation: >-
+          Raise the minimum data rate to 6 Mbps (12 Mbps if no 802.11b-era client needs
+          the network). Check for legacy IoT devices first — anything 802.11b-only will
+          stop associating.
+        evidence:
+          ssid: {raw: wifi_name}
+          basicRateKbps24: {raw: wifi_basic_rate_24_kbps}
+          bands: {raw: wifi_bands}
+
+  - id: wifi.band_steering_off
+    kind: declarative
+    category: wifi
+    emits:
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_on_24, eq, true]
+            - [wifi_on_5, eq, true]
+            - [wifi_band_steering_enabled, eq, false]
+        severity: low
+        subject: site
+        title: "{wifi_name} broadcasts on both bands without band steering"
+        summary: >-
+          {wifi_name} is on {wifi_bands} GHz with band steering off. Clients pick a band
+          on signal strength alone, and 2.4 GHz carries further, so dual-band devices
+          settle on the slower, more congested band and stay there.
+        recommendation: >-
+          Enable band steering on this network so 5 GHz-capable clients are pushed to
+          5 GHz.
+        evidence:
+          ssid: {raw: wifi_name}
+          bands: {raw: wifi_bands}
+
+  - id: wifi.roaming_assist_off
+    kind: declarative
+    category: wifi
+    emits:
+      # 802.11v BSS transition management is what lets an AP suggest a better
+      # one. Without it a client only leaves when its current AP becomes
+      # unusable, which is the "sticky client" complaint.
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_bss_transition_enabled, eq, false]
+        severity: low
+        subject: site
+        title: "{wifi_name} has BSS transition (802.11v) disabled"
+        summary: >-
+          {wifi_name} cannot suggest a better AP to a client, so a device walking away
+          from one AP holds on until the link is barely usable rather than moving to the
+          nearer one.
+        recommendation: >-
+          Enable BSS transition on this network. Pair it with fast roaming (802.11r) if
+          the client mix tolerates it.
+        evidence:
+          ssid: {raw: wifi_name}
+          fastRoaming: {raw: wifi_fast_roaming_enabled}
+
+  - id: wifi.hidden_ssid
+    kind: declarative
+    category: wifi
+    emits:
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_hidden, eq, true]
+        severity: low
+        subject: site
+        title: "{wifi_name} hides its name"
+        summary: >-
+          {wifi_name} suppresses its SSID in beacons. The name is still carried in every
+          client's probe requests, so it is not hidden from anyone scanning; meanwhile
+          clients configured for it probe for it constantly, which slows roaming and
+          leaks the name wherever those devices travel.
+        recommendation: >-
+          Broadcast the SSID and rely on the passphrase for access control.
+        evidence:
+          ssid: {raw: wifi_name}
+
+  - id: wifi.mac_filtering
+    kind: declarative
+    category: wifi
+    emits:
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_mac_filter_action, is_not_null]
+            - [wifi_mac_filter_count, gte, 1]
+        severity: low
+        subject: site
+        title: >-
+          {wifi_name} filters {wifi_mac_filter_count} MAC addresses
+          ({wifi_mac_filter_action})
+        summary: >-
+          MAC addresses travel unencrypted in every frame and are trivially cloned, so
+          this list is a maintenance burden rather than a security control — and modern
+          clients randomise their MAC per network, which is what silently breaks an
+          allow-list.
+        recommendation: >-
+          Keep the list only if it is an operational convenience. For access control,
+          use a separate SSID with its own passphrase, or 802.1X.
+        evidence:
+          ssid: {raw: wifi_name}
+          action: {raw: wifi_mac_filter_action}
+          entries: {raw: wifi_mac_filter_count}
+
+  - id: wifi.ssid_count_24
+    kind: declarative
+    category: wifi
+    emits:
+      # Each SSID on a band is its own BSS, and each BSS beacons about ten times
+      # a second whether or not anything is connected to it. The cost is paid on
+      # the channel, by every network sharing it.
+      - source: wifi_broadcasts
+        where:
+          all:
+            - [wifi_enabled, eq, true]
+            - [wifi_on_24, eq, true]
+        aggregate:
+          into: site
+          min_matches: 4
+          compute:
+            ssid_count: {op: count}
+        severity: medium
+        title: "{ssid_count} SSIDs broadcast on 2.4 GHz"
+        summary: >-
+          Every SSID on a band is a separate BSS, and each one beacons roughly ten times
+          a second per AP regardless of how many clients it has. {ssid_count} of them
+          multiplies that overhead across every AP on the channel, on the band that has
+          the least room to spare.
+        recommendation: >-
+          Fold SSIDs together where the difference is only a VLAN — one network with
+          per-device VLAN assignment costs one BSS instead of several. Restrict the ones
+          that remain to the bands that need them.
+        evidence:
+          ssidCount: {raw: ssid_count}
+          ssids:
+            op: top
+            sort_by: wifi_name
+            project: {ssid: wifi_name, security: wifi_security, bands: wifi_bands}
