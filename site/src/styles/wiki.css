@@ -1,0 +1,286 @@
+/* Long-form prose in Synth.
+
+   The app has no running text — its largest block of type is a finding's
+   description — so styles.css has no prose scale to inherit. Everything here is
+   built from Synth's own tokens rather than invented: the type ramp is
+   --ink/--ink-secondary/--ink-muted, corners are --neu-radius-sm, and anything
+   recessed uses --neu-pit.
+
+   The one design rule this file has to honour is the nesting rule from the
+   Synth file itself, quoted in styles.css:251 — a block inside a card is a
+   *well*, not a second raised surface. Code blocks, tables and quotes are
+   therefore all pits. Get this wrong and the page reads as stacked stickers,
+   which is the usual tell of a neumorphic theme applied by palette alone.
+
+   Selectors that override a rule in styles.css are written with the
+   [data-theme] prefix so they win on specificity rather than on import order. */
+
+/* ---------- page furniture ---------- */
+
+.content {
+  max-width: 860px; /* a measure for reading, not the app's 1240px dashboard */
+}
+
+.wiki-title {
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.01em;
+  margin: 8px 0 20px;
+  color: var(--ink);
+}
+
+.topbar-right .chip {
+  font-size: 12px;
+  padding: 6px 14px;
+  color: var(--ink-secondary);
+}
+.topbar-right .chip:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.wiki-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 22px;
+  padding: 0 4px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.wiki-foot code {
+  font-size: 11.5px;
+  padding: 1px 5px;
+}
+
+/* ---------- prose ---------- */
+
+.prose {
+  padding: 28px 32px 32px;
+  font-size: 15px;
+  line-height: 1.68;
+  color: var(--ink-secondary);
+}
+
+/* Headings step up to --ink so they separate from body copy by weight *and*
+   lightness; the ramp is the theme's, not a new one. */
+:root[data-theme="synth"] .prose h2,
+:root[data-theme="synth"] .prose h3,
+:root[data-theme="synth"] .prose h4 {
+  color: var(--ink);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+:root[data-theme="synth"] .prose h2 {
+  font-size: 21px;
+  line-height: 28px;
+  margin: 34px 0 12px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(0, 0, 0, 0.35); /* the softened hairline, styles.css:349 */
+}
+:root[data-theme="synth"] .prose h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+:root[data-theme="synth"] .prose h3 {
+  font-size: 16.5px;
+  line-height: 24px;
+  margin: 26px 0 8px;
+}
+:root[data-theme="synth"] .prose h4 {
+  font-size: 14px;
+  line-height: 22px;
+  margin: 20px 0 6px;
+  color: var(--ink-secondary);
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 14px;
+}
+.prose ul,
+.prose ol {
+  padding-left: 22px;
+}
+.prose li {
+  margin-bottom: 5px;
+}
+.prose li::marker {
+  color: var(--ink-muted);
+}
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.prose a {
+  color: var(--blue);
+  text-decoration-color: color-mix(in srgb, var(--blue) 40%, transparent);
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
+}
+.prose a:hover {
+  text-decoration-color: var(--blue);
+}
+
+/* Anchor links land under a 58px sticky topbar; without this the heading you
+   jumped to sits behind it. */
+.prose :is(h2, h3, h4) {
+  scroll-margin-top: 76px;
+}
+
+/* ---------- recessed blocks: the nesting rule ---------- */
+
+/* The fill comes from --astro-code-background at the foot of this file, because
+   Astro writes background-color inline on the <pre> and inline wins. */
+:root[data-theme="synth"] .prose pre {
+  border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+  padding: 16px 18px;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+/* Inline code already gets its background and radius from styles.css:363; only
+   the padding and size are missing. Inside a pre it must give both back. */
+.prose code {
+  padding: 2px 6px;
+  font-size: 13px;
+}
+.prose pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+:root[data-theme="synth"] .prose blockquote {
+  margin: 0 0 16px;
+  padding: 12px 18px;
+  background: var(--bg);
+  border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+  color: var(--ink-muted);
+}
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* Tables are wells too, and they scroll rather than widening the page. */
+:root[data-theme="synth"] .prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0 0 16px;
+  padding: 4px;
+  background: var(--bg);
+  border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+  font-size: 13.5px;
+}
+.prose th,
+.prose td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  vertical-align: top;
+}
+.prose th {
+  color: var(--ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.prose tr:last-child td {
+  border-bottom: 0;
+}
+.prose tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.04); /* matches styles.css:356 */
+}
+
+/* Synth's divider is a shadowed gradient rather than a line (styles.css:349). */
+.prose hr {
+  height: 1px;
+  border: 0;
+  margin: 28px 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border) 20%,
+    var(--border) 80%,
+    transparent
+  );
+}
+
+/* Screenshots are dark UI on a dark page, so without an edge they float. The
+   nesting rule settles what that edge is: sat inside a card, an image is a
+   well, framed by the pit's padding rather than by a border. */
+:root[data-theme="synth"] .prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 6px;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+}
+
+/* Alt text doubles as the caption — the figure explains itself to someone
+   reading the markdown on github.com, and to a screen reader here. */
+.prose p > img + em,
+.prose img + br + em {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+}
+
+/* ---------- syntax highlighting ---------- */
+
+/* Shiki's css-variables theme resolves every token through these. Astro renames
+   them `--astro-code-*` (not the upstream `--shiki-*`), and it writes the
+   background and foreground as an *inline* style on the <pre> — so these are
+   not decoration, they are the only way to colour highlighted code. Setting
+   --astro-code-background is also how the pre gets the pit's fill: a rule in
+   this file would lose to the inline declaration, a variable feeds it.
+
+   The values are Synth's own validated text colours, so highlighted code
+   inherits the contrast work already done for the palette. */
+:root[data-theme="synth"] {
+  --astro-code-background: var(--bg);
+  --astro-code-foreground: var(--ink-secondary);
+  --astro-code-token-comment: var(--ink-muted);
+  --astro-code-token-keyword: var(--accent);
+  --astro-code-token-string: var(--good);
+  --astro-code-token-string-expression: var(--good);
+  --astro-code-token-constant: var(--medium);
+  --astro-code-token-function: var(--low);
+  --astro-code-token-parameter: var(--ink-secondary);
+  --astro-code-token-punctuation: var(--ink-muted);
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 720px) {
+  .topbar {
+    gap: 14px;
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+  .topbar nav {
+    gap: 16px;
+  }
+  .content {
+    padding: 18px 14px 48px;
+  }
+  .prose {
+    padding: 20px 18px 24px;
+    font-size: 14.5px;
+  }
+  .wiki-title {
+    font-size: 25px;
+    line-height: 31px;
+  }
+}

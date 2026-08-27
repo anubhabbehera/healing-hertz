@@ -69,6 +69,35 @@ async def test_settings_masked(api):
     assert "unifi_api_key" not in settings
 
 
+async def test_test_connection_hides_unexpected_error_detail(api, monkeypatch):
+    """An unexpected failure must not put the exception's text in the response.
+
+    The typed UniFi errors are allowed through — their messages are composed
+    from a status code and an API path. Anything else is unbounded and could
+    carry a path, a config value or a credential, so only the exception's type
+    is named and the detail goes to the log.
+    """
+    secret = "sk-should-never-be-returned"
+
+    class Exploder:
+        async def get_info(self):
+            raise RuntimeError(f"boom, key={secret}")
+
+        async def aclose(self):
+            return None
+
+    monkeypatch.setattr(
+        "app.api.routes_settings.make_unifi_client", lambda: Exploder()
+    )
+
+    body = (await api.post("/api/settings/test-connection")).json()
+    assert body["ok"] is False
+    assert secret not in body["error"]
+    assert "boom" not in body["error"]
+    # Still useful: the failure type is named so the UI can say something.
+    assert "RuntimeError" in body["error"]
+
+
 # --- rules catalog ---------------------------------------------------------
 
 # The same example the loader tests use, so endpoint and loader stay pinned to

@@ -11,16 +11,34 @@
 console, press one button, and get a plain-language report of what's wrong and what to
 do about it.
 
-Most UniFi dashboards tell you *what* your network is doing. healing-hertz tells you
-what's **wrong with it** — the access point on a bad channel, the cable that's quietly
-running at a tenth of its speed, the device that keeps rebooting — and gives you the
-steps to fix each one.
-
 It never changes anything on your network. It only reads.
 
 ---
 
-## What it checks
+## Who this is for
+
+**You run UniFi.** A gateway or console — Dream Machine, UDM Pro/SE, UDR, Cloud Key,
+UCG — or a UniFi Network Server you host yourself, with Ubiquiti access points and
+switches behind it. You'll need **UniFi Network 9.0 or newer**, which is what exposes
+the API this reads from.
+
+You don't need a large network. A gateway and one access point is enough to be worth
+scanning; the checks that need more hardware simply don't fire.
+
+**You care about your DNS.** Optional, and there's more here if you do:
+
+| Your setup | What you get |
+|---|---|
+| **[NextDNS](https://nextdns.io/)** as your resolver | A DNS layer on top of the network checks — malware and phishing domains your devices tried to reach, and unusual spikes in blocked traffic. Set `NEXTDNS_API_KEY` and `NEXTDNS_PROFILE_ID`; see [Optional extras](#optional-extras). |
+| **Self-hosted DNS** — Pi-hole, AdGuard Home, Technitium, Blocky | **Not supported yet — planned.** Nothing reads from these today. If you run one, the network and WiFi checks all still work; you just won't get the DNS layer. |
+| Neither | Everything else works unchanged. Internet latency and packet loss are still measured directly during each scan. |
+
+## What it does
+
+Most UniFi dashboards tell you *what* your network is doing. healing-hertz tells you
+what's **wrong with it** — the access point on a bad channel, the cable that's quietly
+running at a tenth of its speed, the device that keeps rebooting — and gives you the
+steps to fix each one.
 
 Every scan looks for problems across your whole site and rates each one from
 **critical** down to **info**:
@@ -60,33 +78,147 @@ to reach.
 Each finding comes with the **evidence** behind it — the actual channel, the actual
 CPU percentage — so you can judge it yourself rather than taking the tool's word.
 
-### Adding your own checks
+### What it looks like
 
-Every check is a YAML entry in a rule catalog, not code — so you can add your own
-without forking. Point `RULES_DIR` at a directory of rule files and they load
-alongside the built-in ones:
+![The dashboard after a scan: health score, device and client counts, the open findings, and firmware state across the fleet](docs/screenshots/dashboard.png)
 
-```yaml
-- id: custom.spare_port
-  kind: declarative
-  category: wired
-  emits:
-    - source: device_ports
-      where: [port_state, eq, DOWN]
-      severity: info
-      title: "{device_name} port {port_idx} is down"
-      summary: "Port {port_idx} on {device_name} has no link."
-      recommendation: "Nothing to do if the port is deliberately unused."
+The **dashboard** opens on the health score and what moved it since last time, then the
+open findings and the firmware state of every device.
+
+![The findings list, each row tagged critical through info and naming the device it concerns](docs/screenshots/findings.png)
+
+**Findings** are the detail: every problem, graded, naming the device it concerns.
+Expand one for the evidence behind it. Checks the Integration API can't answer are
+collected at the bottom rather than quietly omitted.
+
+![Trends over time, charting health score and per-device metrics across successive scans](docs/screenshots/trends.png)
+
+**Trends** are what you can't get from UniFi itself — each metric judged against its own
+history, so you see a radio getting worse before it becomes a problem.
+
+![The rules catalog listing every check with its id, category and source file](docs/screenshots/rules.png)
+
+**Rules** lists every check this build knows about and which file it came from. Write
+your own, edit them in the browser, or switch off any built-in one.
+
+> The screenshots are from `make demo`, so this is the sample network — the same one
+> you get before connecting any hardware.
+
+---
+
+## Getting started
+
+### Before you start
+
+| You need | Why |
+|---|---|
+| [uv](https://docs.astral.sh/uv/) | Runs the Python backend. `brew install uv` on macOS. |
+| [Node.js](https://nodejs.org/) 20 or newer | Builds and serves the interface. `brew install node`. |
+| UniFi Network **9.0 or newer** | Only needed to scan your own network — the demo below runs without any hardware. |
+
+### Try it with sample data — no hardware needed
+
+```bash
+git clone https://github.com/anubhabbehera/healing-hertz.git
+cd healing-hertz
+make setup    # one-time: installs everything
+make demo     # opens with realistic sample data
 ```
 
-The **Rules** tab lists every check the app knows about and lets you write, edit
-and delete your own from the browser — it validates a rule before saving, so a
-broken one never lands on disk. You can also switch off any built-in check
-without editing the shipped files.
+Then open **http://localhost:5173** and press **Run scan**. You'll see the full
+interface working against a made-up network with a handful of deliberate problems.
 
-Everything it writes is plain YAML you can edit by hand. See
-**[docs/rules.md](docs/rules.md)** for the full syntax — sources, predicates,
-severity grading and aggregation.
+Press **Ctrl-C** in the terminal to stop it.
+
+### Connecting to your own network
+
+#### 1. Find your console's address
+
+`UNIFI_HOST` is simply **the address you type into your browser to open UniFi**.
+
+| What you have | What to use |
+|---|---|
+| A UniFi gateway or console — Dream Machine, UDM Pro/SE, UDR, Cloud Key, UCG | Your router's address, usually `192.168.1.1`. If `https://192.168.1.1` shows the UniFi login page, that's it. |
+| UniFi Network Server you installed yourself (Docker, Linux, Windows) | That computer's address, plus `UNIFI_PORT=8443` and `UNIFI_API_PREFIX=/integration` |
+
+Don't use `unifi.ui.com` — that's Ubiquiti's cloud portal, not the console on your own
+network, and this app talks directly to your console.
+
+#### 2. Create a read-only local admin
+
+Do this first. One account covers both credentials this app can use — the API key you
+create in step 3 inherits the permissions of whoever creates it, so making it from a
+view-only account is what makes "this tool only reads" a guarantee rather than a
+promise.
+
+In your **Network application**, go to **Admins** in the left navigation, press the
+**+**, and create the account:
+
+| Setting | Choose | Why |
+|---|---|---|
+| Role | **View Only** (named *Viewer* on some builds) | Read-only is the whole point. The API key made from this account cannot change your network even if something tried. |
+| Remote Management | **Off** | Leaving it off creates a *local* admin with its own username and password. An account invited through Site Manager is a Ubiquiti SSO account instead, and the optional extras in step 4 cannot log in with one. |
+| Username / password | Something you'll keep | These are `UNIFI_USERNAME` and `UNIFI_PASSWORD`, which unlock the optional per-client signal and roaming checks — see [Optional extras](#optional-extras). Skip them if you don't want those; the API key alone runs every other check. |
+
+UniFi's menu wording moves between releases. If there's no **Admins** entry in the left
+navigation, look under **Settings → Admins & Users**.
+
+#### 3. Create an API key
+
+Log in as the account you just made, then go to **Settings → Control Plane →
+Integrations → Create API Key**. (On some versions it's under **Settings → API**, or in
+your admin profile.) That key is for the
+[UniFi Network Integration API](https://developer.ui.com/unifi-api/) — Ubiquiti's
+supported, read-and-write-scoped interface, of which this app only ever reads.
+
+Copy the key when it's shown — you won't see it again.
+
+#### 4. Fill in your settings
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and set `UNIFI_HOST` and `UNIFI_API_KEY`. If you want the per-client signal
+and roaming checks, add `UNIFI_USERNAME` and `UNIFI_PASSWORD` for the account from
+step 2 as well. Then:
+
+```bash
+make dev
+```
+
+Open **http://localhost:5173**, go to **Settings → Test connection** to confirm it can
+reach your console, then press **Run scan**.
+
+### Everyday commands
+
+| Command | What it does |
+|---|---|
+| `make dev` | Run against your real network |
+| `make demo` | Run with sample data (uses a separate database — your real history is untouched) |
+| `make stop` | Stop it if you left it running in another window |
+
+Prefer containers? Fill in `.env`, then `make docker-up` (and `make docker-down` to
+stop). Run `make` on its own to see everything available.
+
+### Where your data lives
+
+Everything stays on the machine you run it on. There is no account, no cloud sync and
+nothing phones home.
+
+| What | Where | Notes |
+|---|---|---|
+| Scan history | `./healing_hertz.db` (`DB_PATH`) | One SQLite file. Every scan, finding and dismissal lives here — this is what the trends are built from. |
+| Demo history | A separate database | `make demo` never touches your real history. |
+| Your credentials | `.env` | Never displayed in the app, written to its logs, or included in error messages. |
+| Device icons | `./icon-cache/` (`ICON_CACHE_DIR`) | A cache, safe to delete; set `DEVICE_ICONS=false` to never fetch them. |
+| Your own rules | `RULES_DIR`, if you set one | Plain YAML you can edit by hand. |
+
+**To start over**, stop the app and delete the database file — the next scan begins a
+fresh history. Back it up first if you want to keep your trend line; it's a single file,
+so copying it is the whole backup.
+
+---
 
 ## Health score, trends and history
 
@@ -114,78 +246,6 @@ addresses and serial numbers are stripped out, personal device names are replace
 labels like `client-1`, and WiFi network names are removed. Only equipment names (your
 access points and switches) are included, because the advice has to be able to name them.
 
----
-
-## Try it first — no hardware needed
-
-```bash
-make setup    # one-time: installs everything
-make demo     # opens with realistic sample data
-```
-
-Then open **http://localhost:5173** and press **Run scan**. You'll see the full
-interface working against a made-up network with a handful of deliberate problems.
-
-Press **Ctrl-C** in the terminal to stop it.
-
-> Requires [uv](https://docs.astral.sh/uv/) (Python) and [Node.js](https://nodejs.org/)
-> 20+. On macOS: `brew install uv node`.
-
-## Connecting to your own network
-
-### 1. Find your console's address
-
-`UNIFI_HOST` is simply **the address you type into your browser to open UniFi**.
-
-| What you have | What to use |
-|---|---|
-| A UniFi gateway or console — Dream Machine, UDM Pro/SE, UDR, Cloud Key, UCG | Your router's address, usually `192.168.1.1`. If `https://192.168.1.1` shows the UniFi login page, that's it. |
-| UniFi Network Server you installed yourself (Docker, Linux, Windows) | That computer's address, plus `UNIFI_PORT=8443` and `UNIFI_API_PREFIX=/integration` |
-
-Don't use `unifi.ui.com` — that's Ubiquiti's cloud portal, not the console on your own
-network, and this app talks directly to your console.
-
-### 2. Create an API key
-
-In your UniFi console, go to **Settings → Control Plane → Integrations → Create API
-Key**. (On some versions it's under **Settings → API**, or in your admin profile.
-You'll need UniFi Network 9.0 or newer.) That key is for the
-[UniFi Network Integration API](https://developer.ui.com/unifi-api/) — Ubiquiti's
-supported, read-and-write-scoped interface, of which this app only ever reads.
-
-**Recommended:** first create a separate admin account with the **View Only** role, log
-in as that account, and create the key there. The app never writes to your network, and
-a view-only key makes that a guarantee rather than a promise. Copy the key when it's
-shown — you won't see it again.
-
-### 3. Fill in your settings
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and set `UNIFI_HOST` and `UNIFI_API_KEY`. Then:
-
-```bash
-make dev
-```
-
-Open **http://localhost:5173**, go to **Settings → Test connection** to confirm it can
-reach your console, then press **Run scan**.
-
-### Everyday commands
-
-| Command | What it does |
-|---|---|
-| `make dev` | Run against your real network |
-| `make demo` | Run with sample data (uses a separate database — your real history is untouched) |
-| `make stop` | Stop it if you left it running in another window |
-
-Prefer containers? Fill in `.env`, then `make docker-up` (and `make docker-down` to
-stop). Run `make` on its own to see everything available.
-
----
-
 ## Dismissing findings you can't fix
 
 Sometimes a finding is correct but not something you're going to act on — an access
@@ -204,6 +264,34 @@ Dismissing is a lasting decision, not a temporary hide:
 
 You can review or undo dismissals any time under **Settings → Dismissed findings**.
 
+## Adding your own checks
+
+Every check is a YAML entry in a rule catalog, not code — so you can add your own
+without forking. Point `RULES_DIR` at a directory of rule files and they load
+alongside the built-in ones:
+
+```yaml
+- id: custom.spare_port
+  kind: declarative
+  category: wired
+  emits:
+    - source: device_ports
+      where: [port_state, eq, DOWN]
+      severity: info
+      title: "{device_name} port {port_idx} is down"
+      summary: "Port {port_idx} on {device_name} has no link."
+      recommendation: "Nothing to do if the port is deliberately unused."
+```
+
+The **Rules** tab lists every check the app knows about and lets you write, edit
+and delete your own from the browser — it validates a rule before saving, so a
+broken one never lands on disk. You can also switch off any built-in check
+without editing the shipped files.
+
+Everything it writes is plain YAML you can edit by hand. See
+**[docs/rules.md](docs/rules.md)** for the full syntax — sources, predicates,
+severity grading and aggregation.
+
 ## Optional extras
 
 These fill gaps that UniFi's official API can't cover on its own. Each is off unless
@@ -213,7 +301,7 @@ nothing is silently missing.
 
 | What you gain | How to turn it on |
 |---|---|
-| **Weak-signal clients** and **devices roaming between access points** | Add `UNIFI_USERNAME` / `UNIFI_PASSWORD` for a **View Only** local admin account. Uses an older UniFi interface that Ubiquiti doesn't officially document, so it may change with firmware updates — failures are skipped, never fatal. |
+| **Weak-signal clients** and **devices roaming between access points** | Add `UNIFI_USERNAME` / `UNIFI_PASSWORD` — the read-only local admin from [step 2](#2-create-a-read-only-local-admin). It has to be a *local* admin; a Ubiquiti SSO account can't log in this way. Uses an older UniFi interface that Ubiquiti doesn't officially document, so it may change with firmware updates — failures are skipped, never fatal. |
 | **Internet latency and packet loss** | On by default. Measured from the computer running the app during each scan, and tracked over time. |
 | **DNS problems, malware and phishing blocks** | Add `NEXTDNS_API_KEY` (from your [NextDNS](https://nextdns.io/) account settings) and `NEXTDNS_PROFILE_ID` (the short ID in your profile URL, e.g. `abc123`). Surfaces security blocks and unusual spikes in blocked traffic. See below for pointing your network at NextDNS in the first place. |
 | **Product icons for your hardware** | On by default (`DEVICE_ICONS`). The backend looks each model up in Ubiquiti's public device catalogue, fetches the icon once and caches it under `ICON_CACHE_DIR`, then serves it locally — your browser never talks to ui.com, and a machine with no internet access falls back to drawn glyphs. Set `DEVICE_ICONS=false` to make no outbound request at all. |

@@ -164,8 +164,9 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
+# (The Python template ignores /site here as mkdocs' build output. This project
+# has no mkdocs, and /site is the Astro source for the documentation wiki — it
+# is tracked. The site's own build output is ignored in site/.gitignore.)
 
 # mypy
 .mypy_cache/
