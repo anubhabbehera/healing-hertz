@@ -8,3 +8,4 @@ node_modules/
 # edit those, not these.
 src/pages/*.md
 public/wordmark-dark.svg
+public/screenshots/

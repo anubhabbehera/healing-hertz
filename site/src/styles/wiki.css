@@ -214,10 +214,27 @@
   );
 }
 
-.prose img {
+/* Screenshots are dark UI on a dark page, so without an edge they float. The
+   nesting rule settles what that edge is: sat inside a card, an image is a
+   well, framed by the pit's padding rather than by a border. */
+:root[data-theme="synth"] .prose img {
+  display: block;
   max-width: 100%;
   height: auto;
+  margin: 0 0 6px;
+  padding: 8px;
+  background: var(--bg);
   border-radius: var(--neu-radius-sm);
+  box-shadow: var(--neu-pit);
+}
+
+/* Alt text doubles as the caption — the figure explains itself to someone
+   reading the markdown on github.com, and to a screen reader here. */
+.prose p > img + em,
+.prose img + br + em {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 12.5px;
 }
 
 /* ---------- syntax highlighting ---------- */
