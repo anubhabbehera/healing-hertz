@@ -1,9 +1,13 @@
+import logging
+
 from fastapi import APIRouter
 
 from app.config import get_settings
 from app.unifi.errors import UnifiAuthError, UnifiConnectionError
 
 from .deps import make_unifi_client
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -39,11 +43,25 @@ async def test_connection() -> dict:
             "application_version": info.application_version,
             "sites": [{"id": s.id, "name": s.name} for s in sites],
         }
+    # The two typed failures below are the whole point of this endpoint: they
+    # tell you *why* the console is unreachable, and their messages are composed
+    # by app/unifi/client.py from a status code and an API path — never a
+    # traceback, never a credential.
     except UnifiAuthError as exc:
         return {"ok": False, "error": f"Authentication failed: {exc}"}
     except UnifiConnectionError as exc:
         return {"ok": False, "error": f"Could not reach console: {exc}"}
-    except Exception as exc:  # noqa: BLE001 — connection test reports any failure to the UI
-        return {"ok": False, "error": str(exc)}
+    # Anything else is unbounded — a library error carrying a file path, a config
+    # value, or a URL with something in it. The README promises keys are never
+    # included in error messages, and `str(exc)` on an arbitrary exception cannot
+    # promise that. The detail goes to the log, where the operator can read it;
+    # the response names the failure type so the UI still says something useful.
+    except Exception as exc:
+        logger.exception("Connection test failed")
+        return {
+            "ok": False,
+            "error": f"Connection test failed ({type(exc).__name__}). "
+                     "See the server log for details.",
+        }
     finally:
         await client.aclose()
