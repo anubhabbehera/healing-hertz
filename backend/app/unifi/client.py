@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any, Protocol
 
 import httpx
@@ -18,6 +19,8 @@ from .models import (
     SwitchStack,
     WifiBroadcast,
 )
+
+logger = logging.getLogger(__name__)
 
 MAX_PAGE_SIZE = 200
 MAX_RETRIES = 3
@@ -67,7 +70,11 @@ class UnifiClient:
             try:
                 resp = await self._http.get(path, params=params)
             except httpx.HTTPError as exc:
-                last_exc = UnifiConnectionError(f"GET {path}: {exc}")
+                # str(exc) can carry the full URL and TLS/socket detail; it goes
+                # to the log, and the error that reaches callers names only the
+                # failure type.
+                logger.warning("GET %s failed: %s", path, exc)
+                last_exc = UnifiConnectionError(f"GET {path}: {type(exc).__name__}")
                 await asyncio.sleep(min(2**attempt, 8))
                 continue
 

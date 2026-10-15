@@ -45,12 +45,16 @@ async def test_connection() -> dict:
         }
     # The two typed failures below are the whole point of this endpoint: they
     # tell you *why* the console is unreachable, and their messages are composed
-    # by app/unifi/client.py from a status code and an API path — never a
-    # traceback, never a credential.
+    # by app/unifi/client.py from a status code, an API path and an exception
+    # type name — never a traceback, never a credential. Even so, the connection
+    # failure is returned as a fixed message: its detail is logged by the client.
     except UnifiAuthError as exc:
         return {"ok": False, "error": f"Authentication failed: {exc}"}
-    except UnifiConnectionError as exc:
-        return {"ok": False, "error": f"Could not reach console: {exc}"}
+    except UnifiConnectionError:
+        return {
+            "ok": False,
+            "error": "Could not reach console. See the server log for details.",
+        }
     # Anything else is unbounded — a library error carrying a file path, a config
     # value, or a URL with something in it. The README promises keys are never
     # included in error messages, and `str(exc)` on an arbitrary exception cannot
