@@ -44,12 +44,14 @@ async def test_connection() -> dict:
             "sites": [{"id": s.id, "name": s.name} for s in sites],
         }
     # The two typed failures below are the whole point of this endpoint: they
-    # tell you *why* the console is unreachable, and their messages are composed
-    # by app/unifi/client.py from a status code, an API path and an exception
-    # type name — never a traceback, never a credential. Even so, the connection
-    # failure is returned as a fixed message: its detail is logged by the client.
-    except UnifiAuthError as exc:
-        return {"ok": False, "error": f"Authentication failed: {exc}"}
+    # tell you *why* the console is unreachable. Both are returned as fixed
+    # messages rather than str(exc), so no exception text can reach the response;
+    # the detail is logged by the client.
+    except UnifiAuthError:
+        return {
+            "ok": False,
+            "error": "Authentication failed: the console rejected the API key.",
+        }
     except UnifiConnectionError:
         return {
             "ok": False,
