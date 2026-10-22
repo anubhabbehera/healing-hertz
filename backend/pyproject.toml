@@ -9,14 +9,14 @@ authors = [{ name = "Anubhab Behera" }]
 # can't change behavior; uv.lock holds the exact resolved versions and is what
 # CI and the Docker build install from (`uv sync --frozen`).
 dependencies = [
-    "fastapi>=0.141.1,<0.143",
+    "fastapi>=0.141.1,<0.148",
     "uvicorn[standard]>=0.52.1,<0.53",
     "httpx>=0.28.1,<0.29",
     "sqlalchemy[asyncio]>=2.0.52,<2.1",
     "aiosqlite>=0.22.1,<0.23",
     "pydantic>=2.13.4,<3",
     "pydantic-settings>=2.15.0,<3",
-    "anthropic>=0.121.0,<1.12",
+    "anthropic>=0.121.0,<1.16",
     "sse-starlette>=3.4.8,<4",
     "pyyaml>=6.0,<7",
 ]
@@ -27,7 +27,7 @@ dev = [
     "pytest-asyncio>=1.4.0,<2",
     "pytest-cov>=7.0.0,<8",
     "respx>=0.23.1,<0.24",
-    "ruff>=0.16.2,<0.17",
+    "ruff>=0.16.2,<0.18",
     "pip-audit>=2.7,<3",
 ]
 
